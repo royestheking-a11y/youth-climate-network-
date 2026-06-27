@@ -79,7 +79,11 @@ export function AboutPage() {
 
   return (
     <div>
-      <SEO title="About Us" />
+      <SEO 
+        title="About Us" 
+        description="Learn about the Youth Climate Network's history, mission, vision, and the passionate team working tirelessly to combat climate change in Bangladesh."
+        keywords="about youth climate network, climate organization mission, environmental team bangladesh, youth climate leaders, sustainable vision"
+      />
       {/* Hero */}
       <section
         className="pt-32 pb-20 relative overflow-hidden"

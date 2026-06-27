@@ -363,8 +363,12 @@ export function HomePage() {
   };
 
   return (
-    <div style={{ overflowX: 'hidden' }}>
-      <SEO title="Youth Climate Network" />
+    <div className="min-h-screen bg-white">
+      <SEO 
+        title="Youth Climate Network" 
+        description="Join the Youth Climate Network in our mission to empower young leaders, advocate for sustainable policies, and drive climate action in Bangladesh and globally."
+        keywords="youth climate network, climate action bangladesh, youth leadership, sustainable energy, environmental advocacy, climate change solutions, youth empowerment"
+      />
 
       {/* ══════════════════════════════════════════
           HERO

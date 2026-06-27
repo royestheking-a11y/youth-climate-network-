@@ -79,7 +79,11 @@ export function GetInvolvedPage() {
 
   return (
     <div>
-      <SEO title="Get Involved" />
+      <SEO 
+        title="Get Involved" 
+        description="Join the Youth Climate Network as a volunteer, partner, or advocate. Take real action towards climate solutions and become an environmental leader."
+        keywords="volunteer youth climate network, climate action volunteer, environmental partnership, join climate ngo, become climate advocate"
+      />
       {/* Hero */}
       <section className="pt-32 pb-16 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 70% 50%, #E8521A 0%, transparent 45%)' }} />

@@ -23,7 +23,11 @@ export function ContactPage() {
 
   return (
     <div>
-      <SEO title="Contact" />
+      <SEO 
+        title="Contact" 
+        description="Get in touch with the Youth Climate Network. We welcome questions, partnerships, and ideas from anyone passionate about climate action."
+        keywords="contact youth climate network, climate organization contact, environmental partnership, reach out climate action, contact bangladesh climate ngo"
+      />
       {/* Hero */}
       <section className="pt-32 pb-16 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, #E8521A 0%, transparent 45%)' }} />

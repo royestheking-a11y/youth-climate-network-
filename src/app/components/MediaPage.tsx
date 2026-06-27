@@ -46,7 +46,11 @@ export function MediaPage() {
 
   return (
     <div>
-      <SEO title="Media" />
+      <SEO 
+        title="Media & Gallery" 
+        description="Explore the Youth Climate Network media gallery. View photos and videos of our climate campaigns, tree planting events, and community advocacy."
+        keywords="youth climate network gallery, climate campaign photos, environmental media, youth action videos, tree planting pictures"
+      />
       {/* Hero */}
       <section className="pt-32 pb-0 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
         <div className="absolute inset-0 opacity-15" style={{ backgroundImage: `url(${banner3})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />

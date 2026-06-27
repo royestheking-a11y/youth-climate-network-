@@ -135,7 +135,11 @@ export function AdvocacyPage() {
 
   return (
     <div>
-      <SEO title="Advocacy" />
+      <SEO 
+        title="Advocacy" 
+        description="Discover the Youth Climate Network's advocacy initiatives. We influence environmental policies and organize impactful campaigns for climate justice."
+        keywords="climate advocacy, environmental policy bangladesh, youth campaigns, climate justice, policy change, environmental rights"
+      />
       {/* Hero */}
       <section className="pt-32 pb-16 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 30% 60%, #E8521A 0%, transparent 45%)' }} />

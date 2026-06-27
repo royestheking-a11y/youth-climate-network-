@@ -4,6 +4,7 @@ import { useLanguage } from '../../lib/LanguageContext';
 interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string;
   image?: string;
   url?: string;
   type?: string;
@@ -12,6 +13,7 @@ interface SEOProps {
 export function SEO({
   title = 'Youth Climate Network',
   description = 'Youth Climate Network is a youth-led organization empowering young people to take action against climate change in Bangladesh and beyond.',
+  keywords = 'youth climate network, climate change, bangladesh, youth action, environmental organization, sustainability, climate advocacy',
   image = 'https://res.cloudinary.com/dwyx449il/image/upload/v1/ycn/Asset_1_webp',
   url = 'https://youthclimatenetwork.org',
   type = 'website'
@@ -30,6 +32,7 @@ export function SEO({
     <Helmet>
       <title>{formattedTitle}</title>
       <meta name="description" content={formattedDescription} />
+      <meta name="keywords" content={keywords} />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />

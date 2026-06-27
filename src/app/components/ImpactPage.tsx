@@ -126,7 +126,11 @@ export function ImpactPage() {
 
     return (
       <div ref={ref} className="p-4 sm:p-5 rounded-2xl text-center bg-white shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-center h-full min-w-0">
-      <SEO title="Impact" />
+      <SEO 
+        title="Impact" 
+        description="See the real-world impact of the Youth Climate Network. From trees planted to policy changes, discover our data-driven achievements in environmental action."
+        keywords="youth climate network impact, climate achievements, environmental progress, trees planted, policy success, climate data bangladesh"
+      />
         <div className="font-bold mb-1" style={{ fontSize: 'clamp(1.35rem, 2.5vw, 1.85rem)', fontFamily: 'Poppins, sans-serif', color: '#0A3320', lineHeight: 1.1, wordBreak: 'break-all' }}>
           {displayVal}{displaySuffix}
         </div>

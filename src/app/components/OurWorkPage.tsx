@@ -32,7 +32,11 @@ export function OurWorkPage() {
 
   return (
     <div className="min-h-screen pt-36 pb-20" style={{ backgroundColor: '#F3F4F6' }}>
-      <SEO title="Our Work" />
+      <SEO 
+        title="Our Work" 
+        description="Learn about the Youth Climate Network's key thematic areas: Sustainable Energy, Environmental Education, Disaster Resilience, and Climate Tech."
+        keywords="youth climate network projects, sustainable energy bangladesh, environmental education, disaster resilience, climate tech, youth environmental work"
+      />
       <div className="max-w-7xl mx-auto px-6">
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-16">

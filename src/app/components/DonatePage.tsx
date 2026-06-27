@@ -50,7 +50,11 @@ export function DonatePage() {
 
   return (
     <div>
-      <SEO title="Donate" />
+      <SEO 
+        title="Donate" 
+        description="Support the Youth Climate Network with a donation. Your contribution funds vital youth-led climate projects, tree planting, and sustainability campaigns."
+        keywords="donate youth climate network, climate funding, support environmental cause, donate tree planting bangladesh, climate charity, fund youth action"
+      />
       <section className="pt-32 pb-16 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 70% 50%, #E8521A 0%, transparent 45%)' }} />
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
