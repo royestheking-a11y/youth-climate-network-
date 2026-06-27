@@ -203,12 +203,12 @@ function HeroAccordion() {
   }
 
   return (
-    <section className="relative w-full h-[80svh] sm:h-[90svh] min-h-[480px] sm:min-h-[600px] flex items-center justify-center bg-[#0A3320] p-4 sm:p-8 pt-24 sm:pt-32 pb-8 sm:pb-16 overflow-hidden">
+    <section className="relative w-full h-[85svh] sm:h-[90svh] min-h-[560px] sm:min-h-[600px] flex items-center justify-center bg-[#0A3320] p-4 sm:p-8 pt-24 sm:pt-32 pb-8 sm:pb-16 overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #082819 0%, #0A3320 50%, #0D3E27 100%)' }} />
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
       
-      <div className="relative z-10 w-full h-full max-w-[1400px] mx-auto flex gap-2 sm:gap-4">
+      <div className="relative z-10 w-full h-full max-w-[1400px] mx-auto flex flex-col sm:flex-row gap-2 sm:gap-4">
         {heroCards.map((card, index) => {
           const isActive = hoveredIndex === index;
           return (
@@ -219,11 +219,12 @@ function HeroAccordion() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
               onMouseEnter={() => setHoveredIndex(index)}
-              className="relative rounded-2xl overflow-hidden cursor-pointer"
+              className={`relative rounded-2xl overflow-hidden cursor-pointer ${
+                isActive ? 'min-h-0 sm:min-w-0' : 'min-h-[48px] sm:min-h-0 min-w-0 sm:min-w-[clamp(40px,10vw,70px)]'
+              }`}
               style={{
                 flex: isActive ? 12 : 1,
                 transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
-                minWidth: isActive ? 'auto' : 'clamp(36px, 10vw, 70px)',
                 border: isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.05)'
               }}
             >
@@ -250,23 +251,34 @@ function HeroAccordion() {
                 }} 
               />
 
-              {/* Vertical Text (Collapsed State) */}
+              {/* Collapsed State Text */}
               <div
-                className="absolute inset-0 flex items-end justify-center pb-8"
+                className="absolute inset-0 flex items-center justify-center sm:items-end sm:justify-center sm:pb-8"
                 style={{
                   opacity: isActive ? 0 : 1,
                   transition: 'opacity 0.4s ease',
                   pointerEvents: isActive ? 'none' : 'auto'
                 }}
               >
+                {/* Desktop Vertical Text */}
                 <span
-                  className="text-white font-bold tracking-widest uppercase whitespace-nowrap"
+                  className="hidden sm:block text-white font-bold tracking-widest uppercase whitespace-nowrap"
                   style={{
                     writingMode: 'vertical-rl',
                     textOrientation: 'mixed',
                     transform: 'rotate(180deg)',
                     fontFamily: 'Inter, sans-serif',
                     fontSize: 'clamp(0.7rem, 1vw, 1rem)'
+                  }}
+                >
+                  {t(card.titleEn, card.titleBn)}
+                </span>
+                {/* Mobile Horizontal Text */}
+                <span
+                  className="sm:hidden text-white font-bold tracking-widest uppercase whitespace-nowrap"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '0.85rem'
                   }}
                 >
                   {t(card.titleEn, card.titleBn)}

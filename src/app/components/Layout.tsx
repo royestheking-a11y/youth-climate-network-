@@ -18,7 +18,7 @@ export function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#F3F4F6' }}>
+    <div className="min-h-screen flex flex-col overflow-x-hidden w-full" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#F3F4F6' }}>
       {!isAdmin && <Navbar />}
       <main className="flex-1">
         <Outlet />
