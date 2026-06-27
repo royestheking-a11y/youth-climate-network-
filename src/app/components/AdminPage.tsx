@@ -199,22 +199,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             </button>
           </form>
 
-          {/* Demo hint */}
-          <div className="mt-5 p-4 rounded-xl" style={{ backgroundColor: 'rgba(26,107,60,0.08)', border: '1px solid rgba(26,107,60,0.15)' }}>
-            <p className="text-xs font-semibold mb-1" style={{ color: '#4A7A5A' }}>Demo Credentials</p>
-            <p className="text-xs" style={{ color: '#4A7A5A' }}>
-              Email: <span style={{ color: '#E8521A' }}>admin@ycnbd.org</span><br />
-              Password:{' '}
-              <span
-                className="cursor-pointer font-mono font-semibold hover:text-orange-400 transition-colors"
-                style={{ color: '#E8521A' }}
-                onClick={() => { setEmail('admin@ycnbd.org'); setPassword('ycn@admin2024'); }}
-              >
-                ycn@admin2024
-              </span>
-              {' '}(click to fill)
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
