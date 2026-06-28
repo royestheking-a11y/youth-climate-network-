@@ -78,7 +78,7 @@ export function Navbar() {
           borderBottom: scrolled ? '1px solid rgba(232,82,26,0.15)' : '1px solid transparent',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[84px]">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 group flex items-center">
