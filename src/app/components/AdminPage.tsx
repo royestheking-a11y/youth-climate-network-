@@ -8,12 +8,10 @@ import {
 } from 'lucide-react';
 import {
   checkAdminAuth, adminLogin, adminLogout,
-  getNews, saveNews, getTeam, saveTeam,
-  getPartners, savePartners, getVolunteerApps, updateVolunteerStatus,
+  getVolunteerApps, updateVolunteerStatus,
   getContactMessages, markMessageRead, getDonations,
-  getEvents, saveEvents, getDonationRequests, updateDonationRequestStatus,
-  getPartnershipInquiries, updatePartnershipInquiryStatus, getInternshipApps, updateInternshipAppStatus,
-  getCarouselItems, saveCarouselItems
+  getDonationRequests, updateDonationRequestStatus,
+  getPartnershipInquiries, updatePartnershipInquiryStatus, getInternshipApps, updateInternshipAppStatus
 } from '../lib/storage';
 import type {
   ImpactStats, NewsItem, TeamMember, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, HeroCarouselItem, MediaItem
@@ -227,7 +225,8 @@ const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; styl
 import {
   useStats, useVolunteerApps, useInternshipApps,
   usePartnershipInquiries, useContactMessages, useNewsletter,
-  useDonations, useNews, useMedia, apiMedia, uploadFile
+  useDonations, useNews, useMedia, apiMedia, uploadFile, useCarousel,
+  useEvents, useTeam, usePartners
 } from '../lib/api';
 
 export function AdminPage() {
@@ -374,6 +373,8 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
   const { data: newsletterData } = useNewsletter();
   const { data: donationsData } = useDonations();
   const { data: newsData } = useNews();
+  const { data: teamData } = useTeam();
+  const { data: partnersData } = usePartners();
 
   const stats = statsData || { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any;
   const volunteers = volunteersData || [];
@@ -383,6 +384,8 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
   const newsletter = newsletterData || [];
   const donations = donationsData || [];
   const news = newsData || [];
+  const team = teamData || [];
+  const partners = partnersData || [];
 
   const unread = messages.filter(m => !m.read).length;
   const pending = volunteers.filter(v => v.status === 'pending').length;
@@ -585,8 +588,8 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: 'Stories of Change', count: news.length, color: '#1A6B3C', bg: '#E8F5EE' },
-              { label: 'Team Members', count: getTeam().length, color: '#0E7490', bg: '#E0F7FA' },
-              { label: 'Partners', count: getPartners().length, color: '#D97706', bg: '#FFF8E1' },
+              { label: 'Team Members', count: team.length, color: '#0E7490', bg: '#E0F7FA' },
+              { label: 'Partners', count: partners.length, color: '#D97706', bg: '#FFF8E1' },
               { label: 'Donations', count: donations.length, color: '#E8521A', bg: '#FFF3EE' },
             ].map(({ label, count, color, bg }) => (
               <div key={label} className="p-3 rounded-xl text-center" style={{ backgroundColor: bg }}>
@@ -695,27 +698,33 @@ function StatsTab() {
 
 /* ── NEWS ── */
 function NewsTab() {
-  const [items, setItems] = useState<NewsItem[]>(getNews());
+  const { data: apiItems = [], mutate } = useNews();
   const [editing, setEditing] = useState<NewsItem | null>(null);
   const [isNew, setIsNew] = useState(false);
 
+  const items = apiItems;
+
   const blank: NewsItem = { id: '', title: '', title_bn: '', excerpt: '', excerpt_bn: '', content: '', content_bn: '', date: new Date().toISOString().split('T')[0], category: 'Advocacy', category_bn: 'অ্যাডভোকেসি', image: '', featured: false };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
-    const updated = isNew
-      ? [...items, { ...editing, id: Date.now().toString() }]
-      : items.map(i => i.id === editing.id ? editing : i);
-    setItems(updated);
-    saveNews(updated);
+    const { createNews, updateNews } = await import('../lib/api');
+    if (isNew) {
+      await createNews(editing);
+    } else {
+      await updateNews(editing.id, editing);
+    }
+    mutate();
     setEditing(null);
     setIsNew(false);
   };
 
-  const del = (id: string) => {
-    const updated = items.filter(i => i.id !== id);
-    setItems(updated);
-    saveNews(updated);
+  const del = async (id: string) => {
+    if (confirm('Are you sure you want to delete this article?')) {
+      const { deleteNews } = await import('../lib/api');
+      await deleteNews(id);
+      mutate();
+    }
   };
 
   if (editing) {
@@ -776,20 +785,33 @@ function NewsTab() {
 
 /* ── EVENTS ── */
 function EventsTab() {
-  const [items, setItems] = useState<EventItem[]>(getEvents());
+  const { data: apiItems = [], mutate } = useEvents();
   const [editing, setEditing] = useState<EventItem | null>(null);
   const [isNew, setIsNew] = useState(false);
 
+  const items = apiItems;
+
   const blank: EventItem = { id: '', title: '', title_bn: '', date: new Date().toISOString().split('T')[0], location: '', location_bn: '', description: '', description_bn: '', type: 'Workshop', type_bn: 'কর্মশালা' };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
-    const updated = isNew ? [...items, { ...editing, id: Date.now().toString() }] : items.map(i => i.id === editing.id ? editing : i);
-    setItems(updated); saveEvents(updated); setEditing(null); setIsNew(false);
+    const { apiEvents } = await import('../lib/api');
+    if (isNew) {
+      await apiEvents.create(editing);
+    } else {
+      await apiEvents.update(editing.id, editing);
+    }
+    mutate();
+    setEditing(null);
+    setIsNew(false);
   };
 
-  const del = (id: string) => {
-    const updated = items.filter(i => i.id !== id); setItems(updated); saveEvents(updated);
+  const del = async (id: string) => {
+    if (confirm('Are you sure you want to delete this event?')) {
+      const { apiEvents } = await import('../lib/api');
+      await apiEvents.delete(id);
+      mutate();
+    }
   };
 
   if (editing) {
@@ -848,20 +870,33 @@ function EventsTab() {
 
 /* ── TEAM ── */
 function TeamTab() {
-  const [members, setMembers] = useState<TeamMember[]>(getTeam());
+  const { data: apiMembers = [], mutate } = useTeam();
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const [isNew, setIsNew] = useState(false);
 
+  const members = apiMembers;
+
   const blank: TeamMember = { id: '', name: '', name_bn: '', role: '', role_bn: '', bio: '', bio_bn: '', email: '', image: '' };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
-    const updated = isNew ? [...members, { ...editing, id: Date.now().toString() }] : members.map(m => m.id === editing.id ? editing : m);
-    setMembers(updated); saveTeam(updated); setEditing(null); setIsNew(false);
+    const { apiTeam } = await import('../lib/api');
+    if (isNew) {
+      await apiTeam.create(editing);
+    } else {
+      await apiTeam.update(editing.id, editing);
+    }
+    mutate();
+    setEditing(null);
+    setIsNew(false);
   };
 
-  const del = (id: string) => {
-    const updated = members.filter(m => m.id !== id); setMembers(updated); saveTeam(updated);
+  const del = async (id: string) => {
+    if (confirm('Are you sure you want to delete this team member?')) {
+      const { apiTeam } = await import('../lib/api');
+      await apiTeam.delete(id);
+      mutate();
+    }
   };
 
   if (editing) {
@@ -920,20 +955,33 @@ function TeamTab() {
 
 /* ── PARTNERS ── */
 function PartnersTab() {
-  const [items, setItems] = useState<Partner[]>(getPartners());
+  const { data: apiItems = [], mutate } = usePartners();
   const [editing, setEditing] = useState<Partner | null>(null);
   const [isNew, setIsNew] = useState(false);
 
+  const items = apiItems;
+
   const blank: Partner = { id: '', name: '', category: 'NGO', url: '', logo: '' };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
-    const updated = isNew ? [...items, { ...editing, id: Date.now().toString() }] : items.map(i => i.id === editing.id ? editing : i);
-    setItems(updated); savePartners(updated); setEditing(null); setIsNew(false);
+    const { apiPartners } = await import('../lib/api');
+    if (isNew) {
+      await apiPartners.create(editing);
+    } else {
+      await apiPartners.update(editing.id, editing);
+    }
+    mutate();
+    setEditing(null);
+    setIsNew(false);
   };
 
-  const del = (id: string) => {
-    const updated = items.filter(i => i.id !== id); setItems(updated); savePartners(updated);
+  const del = async (id: string) => {
+    if (confirm('Are you sure you want to delete this partner?')) {
+      const { apiPartners } = await import('../lib/api');
+      await apiPartners.delete(id);
+      mutate();
+    }
   };
 
   if (editing) {
@@ -1788,27 +1836,33 @@ function PartnershipInquiriesTab() {
 
 /* ── CAROUSEL ── */
 function CarouselTab() {
-  const [items, setItems] = useState<HeroCarouselItem[]>(getCarouselItems());
+  const { data: apiItems = [], mutate } = useCarousel();
   const [editing, setEditing] = useState<HeroCarouselItem | null>(null);
   const [isNew, setIsNew] = useState(false);
 
+  const items = apiItems;
+
   const blank: HeroCarouselItem = { id: '', titleEn: '', titleBn: '', image: '', tag: '', headlineEn: '', headlineBn: '', descEn: '', descBn: '' };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
-    const updated = isNew
-      ? [...items, { ...editing, id: Date.now().toString() }]
-      : items.map(i => i.id === editing.id ? editing : i);
-    setItems(updated);
-    saveCarouselItems(updated);
+    const { apiCarousel } = await import('../lib/api');
+    if (isNew) {
+      await apiCarousel.create(editing);
+    } else {
+      await apiCarousel.update(editing.id, editing);
+    }
+    mutate();
     setEditing(null);
     setIsNew(false);
   };
 
-  const del = (id: string) => {
-    const updated = items.filter(i => i.id !== id);
-    setItems(updated);
-    saveCarouselItems(updated);
+  const del = async (id: string) => {
+    if (confirm('Are you sure you want to delete this item?')) {
+      const { apiCarousel } = await import('../lib/api');
+      await apiCarousel.delete(id);
+      mutate();
+    }
   };
 
   if (editing) {
