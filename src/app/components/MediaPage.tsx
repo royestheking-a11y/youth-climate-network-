@@ -7,6 +7,12 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useMedia } from '../lib/api';
 import { MediaSkeleton, VideoSkeleton } from './ui/Skeletons';
 
+export const getYoutubeThumbnail = (url: string | undefined) => {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+  return match ? `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg` : null;
+};
+
 export function MediaPage() {
   const { t } = useLanguage();
   const [activePhotoCategory, setActivePhotoCategory] = useState(t('All', 'সব'));
@@ -16,21 +22,8 @@ export function MediaPage() {
 
   const photoGallery = mediaItems.filter(m => m.type === 'image');
   const videoItems = mediaItems.filter(m => m.type === 'video');
-
-  const pressItems = [
-    { outlet: t('The Daily Star', 'দ্য ডেইলি স্টার'), title: t("Youth climate activists push for Bangladesh voices at COP29", "কপ-২৯ সম্মেলনে বাংলাদেশের কণ্ঠস্বর তুলে ধরছেন তরুণ জলবায়ু কর্মীরা"), date: t('Nov 2024', 'নভেম্বর ২০২৪'), type: t('Print / Online', 'প্রিন্ট / অনলাইন') },
-    { outlet: t('Prothom Alo', 'প্রথম আলো'), title: t('তরুণদের জলবায়ু নেটওয়ার্ক বৈশ্বিক মঞ্চে বাংলাদেশের কণ্ঠস্বর', 'তরুণদের জলবায়ু নেটওয়ার্ক বৈশ্বিক মঞ্চে বাংলাদেশের কণ্ঠস্বর'), date: t('Nov 2024', 'নভেম্বর ২০২৪'), type: t('Print / Online', 'প্রিন্ট / অনলাইন') },
-    { outlet: t('Dhaka Tribune', 'ঢাকা ট্রিবিউন'), title: t("YCN solar project powers 500 homes in Khulna's coastal belt", "খুলনার উপকূলীয় এলাকার ৫০০ বাড়িতে আলো ছড়াচ্ছে ওয়াইসিএন সোলার প্রকল্প"), date: t('Oct 2024', 'অক্টোবর ২০২৪'), type: t('Online', 'অনলাইন') },
-    { outlet: t('Climate Home News', 'ক্লাইমেট হোম নিউজ'), title: t('Bangladeshi youth group demands climate reparations at COP29', 'কপ-২৯ সম্মেলনে জলবায়ু ক্ষতিপূরণের দাবি বাংলাদেশি যুব দলের'), date: t('Nov 2024', 'নভেম্বর ২০২৪'), type: t('Online', 'অনলাইন') },
-    { outlet: t('Asia Pacific Report', 'এশিয়া প্যাসিফিক রিপোর্ট'), title: t('South Asian youth networks amplify loss and damage demands', 'ক্ষয়ক্ষতি ও ক্ষতিপূরণ দাবি জোরালো করছে দক্ষিণ এশিয়ার যুব নেটওয়ার্কগুলো'), date: t('Dec 2024', 'ডিসেম্বর ২০২৪'), type: t('Online', 'অনলাইন') },
-  ];
-
-  const pressKitItems = [
-    { title: t('YCN Press Kit 2024', 'ওয়াইসিএন প্রেস কিট ২০২৪'), desc: t('Brand guidelines, logos, key facts, leadership bios', 'ব্র্যান্ড নির্দেশিকা, লোগো, প্রধান তথ্য এবং নেতৃত্বের বিবরণ'), size: t('12 MB', '১২ মেগাবাইট') },
-    { title: t('High-Resolution Logos', 'উচ্চ-রেজোলিউশন লোগোসমূহ'), desc: t('PNG, SVG, and PDF formats in all color variants', 'সকল রঙের পিএনজি, এসভিজি এবং পিডিএফ ফরম্যাট লোগো'), size: t('5 MB', '৫ মেগাবাইট') },
-    { title: t('Organization Profile — One Pager', 'অর্গানাইজেশন প্রোফাইল — ওয়ান পেজার'), desc: t('One-page overview of YCN for media and partners', 'মিডিয়া ও অংশীদারদের জন্য ওয়াইসিএন-এর এক পৃষ্ঠার রূপরেখা'), size: t('2 MB', '২ মেগাবাইট') },
-    { title: t('Impact Photography Collection', 'কার্যক্রমের ছবি সংগ্রহ'), desc: t('50+ high-resolution field photos for editorial use', 'সম্পাদনা ব্যবহারের জন্য ৫০টিরও বেশি মাঠপর্যায়ের ছবি'), size: t('85 MB', '৮৫ মেগাবাইট') },
-  ];
+  const pressItems = mediaItems.filter(m => m.type === 'press');
+  const pressKitItems = mediaItems.filter(m => m.type === 'pressKit');
 
   const photoCategories = [
     t('All', 'সব'),
@@ -46,8 +39,8 @@ export function MediaPage() {
 
   return (
     <div>
-      <SEO 
-        title="Media & Gallery" 
+      <SEO
+        title="Media & Gallery"
         description="Explore the Youth Climate Network media gallery. View photos and videos of our climate campaigns, tree planting events, and community advocacy."
         keywords="youth climate network gallery, climate campaign photos, environmental media, youth action videos, tree planting pictures"
       />
@@ -163,25 +156,30 @@ export function MediaPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {isLoading ? (
               Array(4).fill(0).map((_, i) => <VideoSkeleton key={i} />)
-            ) : videoItems.map((video) => (
-              <div key={video.id} className="rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer">
+            ) : videoItems.map((video) => {
+              const youtubeThumb = getYoutubeThumbnail(video.url);
+              return (
+              <a href={video.url} target="_blank" rel="noopener noreferrer" key={video.id} className="rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer block">
                 <div className="relative" style={{ aspectRatio: '16/9' }}>
-                  <img src={video.thumbnail || video.url || 'https://via.placeholder.com/400x225?text=Video'} alt={video.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <img src={video.thumbnail || youtubeThumb || video.url || 'https://via.placeholder.com/400x225?text=Video'} alt={video.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(10,51,32,0.4)' }}>
                     <div className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: '#E8521A' }}>
                       <Play size={18} color="#fff" fill="#fff" />
                     </div>
                   </div>
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs text-white font-medium" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-                    {video.duration}
-                  </div>
+                  {video.duration && video.duration !== '0:00' && (
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs text-white font-medium" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+                      {video.duration}
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 bg-white">
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>{t(video.category || '', video.category_bn || video.category || '')}</span>
                   <p className="text-sm font-medium mt-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{t(video.title || '', video.title_bn || video.title || '')}</p>
                 </div>
-              </div>
-            ))}
+              </a>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -197,7 +195,7 @@ export function MediaPage() {
           </div>
           <div className="space-y-4">
             {pressItems.map((item, i) => (
-              <div key={i} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex items-start gap-4">
+              <a href={item.url} target="_blank" rel="noopener noreferrer" key={i} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex items-start gap-4 cursor-pointer">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#E8F5EE' }}>
                   <Newspaper size={16} style={{ color: '#1A6B3C' }} />
                 </div>
@@ -208,9 +206,10 @@ export function MediaPage() {
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}>{item.type}</span>
                   </div>
                   <p className="text-sm font-medium" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{item.title}</p>
+                  <span className="text-xs font-medium mt-2 inline-block hover:underline" style={{ color: '#0A3320' }}>{t('Read Full Article', 'পুরো আর্টিকেলটি পড়ুন')} →</span>
                 </div>
                 <ExternalLink size={14} style={{ color: '#9CA3AF', flexShrink: 0 }} />
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -435,10 +434,18 @@ export function MediaPage() {
                 'সাক্ষাৎকার অনুরোধ, সম্প্রচার মিডিয়া, ছবির অনুমতি বা অন্যান্য মিডিয়া যোগাযোগের জন্য আমাদের মিডিয়া টিমের সাথে যোগাযোগ করুন।'
               )}
             </p>
-            <div className="flex flex-wrap gap-4">
-              <a href="mailto:media@ycnbd.org" className="text-sm font-medium hover:underline" style={{ color: '#E8521A' }}>media@ycnbd.org</a>
+            <div className="flex flex-col gap-2">
+              <a href="mailto:info@youthclimatenetwork.org" className="text-sm font-medium hover:underline" style={{ color: '#E8521A' }}>
+                info@youthclimatenetwork.org
+              </a>
               <span className="text-sm" style={{ color: '#A8C4B0' }}>
-                {t('Priya Saha — Communications & Media Manager', 'প্রিয়া সাহা — যোগাযোগ ও মিডিয়া ব্যবস্থাপক')}
+                {t('Usha Bin Farid - Head of Communications & Content', 'উষা বিন ফরিদ - কমিউনিকেশন ও কনটেন্ট হেড')}
+              </span>
+              <a href="mailto:info@youthclimatenetwork.org" className="text-sm font-medium hover:underline mt-2" style={{ color: '#E8521A' }}>
+                info@youthclimatenetwork.org
+              </a>
+              <span className="text-sm" style={{ color: '#A8C4B0' }}>
+                {t('General Inquiries', 'সাধারণ জিজ্ঞাসা')}
               </span>
             </div>
           </div>

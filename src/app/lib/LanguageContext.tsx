@@ -23,6 +23,7 @@ const dictionary: Record<string, { en: string; bn: string }> = {
   'Media Center': { en: 'Media Center', bn: 'মিডিয়া সেন্টার' },
   'Contact Us': { en: 'Contact Us', bn: 'যোগাযোগ' },
   'Impact': { en: 'Impact', bn: 'প্রভাব' },
+  'Stories of Change': { en: 'Stories of Change', bn: 'পরিবর্তনের গল্প' },
   'Advocacy': { en: 'Advocacy', bn: 'অ্যাডভোকেসি' },
   'Media': { en: 'Media', bn: 'মিডিয়া' },
   'Contact': { en: 'Contact', bn: 'যোগাযোগ' },

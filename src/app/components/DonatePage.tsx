@@ -203,17 +203,17 @@ export function DonatePage() {
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF8F0', color:'#F7941D' }}>Open Nagad → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Confirm</p>
                     </>}
                     {payMethod === 'bank' && <>
-                      <InfoRow label="Bank Name" value="Dutch-Bangla Bank Ltd." />
-                      <InfoRow label="Account Name" value="Youth Climate Network" />
-                      <InfoRow label="Account No." value="XXXX XXXX XXXX" onCopy={() => copyRef('XXXX XXXX XXXX')} copied={copied} />
-                      <InfoRow label="Routing No." value="090275XXX" />
-                      <InfoRow label="Branch" value="Khulna Main Branch" />
+                      <InfoRow label="Bank Name" value="BRAC Bank PLC" />
+                      <InfoRow label="Account Name" value="Youth Climate Network Bangladesh" />
+                      <InfoRow label="Account No." value="" onCopy={() => copyRef('')} copied={copied} />
+                      <InfoRow label="Routing No." value="" />
+                      <InfoRow label="Branch" value="Khulna Branch" />
                       <InfoRow label="Reference" value={`YCN-DON-${finalAmount}`} onCopy={() => copyRef(`YCN-DON-${finalAmount}`)} copied={copied} />
                     </>}
                     {payMethod === 'international' && <>
-                      <InfoRow label="PayPal / Wise" value="donations@ycnbd.org" onCopy={() => copyRef('donations@ycnbd.org')} copied={copied} />
+                      <InfoRow label="PayPal" value="mdrafiqulislam0025@gmail.com" onCopy={() => copyRef('mdrafiqulislam0025@gmail.com')} copied={copied} />
                       <InfoRow label="Reference" value={`YCN-INTL-${finalAmount}`} onCopy={() => copyRef(`YCN-INTL-${finalAmount}`)} copied={copied} />
-                      <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#E8F5EE', color:'#1A6B3C' }}>Send via PayPal or Wise to the email above. Include reference in your payment note.</p>
+                      <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#E8F5EE', color:'#1A6B3C' }}>Send via PayPal to the email above. Include reference in your payment note.</p>
                     </>}
                   </div>
                 </div>

@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router';
 import {
   LayoutDashboard, Newspaper, Users, Handshake, BarChart2,
   Mail, Heart, LogOut, Plus, Trash2, Edit3, Save, X, CheckCircle,
   Eye, EyeOff, TrendingUp, MessageSquare, Bell,
-  Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera
+  Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera, Upload
 } from 'lucide-react';
 import {
   checkAdminAuth, adminLogin, adminLogout,
   getNews, saveNews, getTeam, saveTeam,
   getPartners, savePartners, getVolunteerApps, updateVolunteerStatus,
-  getNewsletter, getContactMessages, markMessageRead, getDonations,
+  getContactMessages, markMessageRead, getDonations,
   getEvents, saveEvents, getDonationRequests, updateDonationRequestStatus,
   getPartnershipInquiries, updatePartnershipInquiryStatus, getInternshipApps, updateInternshipAppStatus,
   getCarouselItems, saveCarouselItems
@@ -17,7 +18,7 @@ import {
 import type {
   ImpactStats, NewsItem, TeamMember, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, HeroCarouselItem, MediaItem
 } from '../lib/storage';
-import logo2 from '../../imports/image-2.webp';
+
 import heroBg from '../../imports/image-4.webp';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { Link } from 'react-router';
@@ -66,7 +67,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <div className="relative z-10 flex flex-col h-full p-12 justify-between">
           {/* Top: logo + org name */}
           <div className="flex items-center gap-3">
-            <img src={logo2} alt="YCN" className="h-10 w-auto" style={{ filter: 'drop-shadow(0 0 12px rgba(232,82,26,0.4))' }} />
+            <img src="/ycnmain.png" alt="YCN" className="h-10 w-auto" style={{ filter: 'drop-shadow(0 0 12px rgba(232,82,26,0.4))' }} />
             <div>
               <p style={{ color: '#F0ECD8', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '0.9rem' }}>Youth Climate Network</p>
               <p style={{ color: '#5A8A6A', fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Admin Portal</p>
@@ -112,14 +113,14 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <span style={{ fontSize: '0.8rem' }}>←</span> Back to Homepage
           </Link>
           {/* Mobile logo */}
-          <img src={logo2} alt="YCN" className="h-8 w-auto lg:hidden" />
+          <img src="/ycnmain.png" alt="YCN" className="h-10 w-auto lg:hidden" />
         </div>
 
         {/* Form card */}
         <div className="w-full max-w-sm">
           {/* Logo + Header */}
           <div className="mb-8 text-center">
-            <img src={logo2} alt="YCN" className="h-20 w-auto mx-auto mb-5" style={{ filter: 'drop-shadow(0 0 16px rgba(232,82,26,0.35))' }} />
+            <img src="/ycnmain.png" alt="YCN" className="h-32 w-auto mx-auto mb-5" style={{ filter: 'drop-shadow(0 0 16px rgba(232,82,26,0.35))' }} />
             <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, color: '#F0ECD8', fontSize: '1.35rem', letterSpacing: '-0.01em' }}>Admin Sign In</h2>
             <p style={{ color: '#4A7A5A', fontSize: '0.78rem', marginTop: 4 }}>Youth Climate Network · Secure Portal</p>
             <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(232,82,26,0.35), transparent)', marginTop: 20 }} />
@@ -211,7 +212,7 @@ const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; styl
   { key: 'stats', label: 'Impact Stats', icon: BarChart2 },
   { key: 'carousel', label: 'Hero Carousel', icon: ImageIcon },
   { key: 'media', label: 'Media', icon: Camera },
-  { key: 'news', label: 'News', icon: Newspaper },
+  { key: 'news', label: 'Stories of Change', icon: Newspaper },
   { key: 'events', label: 'Events', icon: Bell },
   { key: 'team', label: 'Team', icon: Users },
   { key: 'partners', label: 'Partners', icon: Handshake },
@@ -223,7 +224,7 @@ const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; styl
   { key: 'donations', label: 'Donations', icon: TrendingUp },
 ];
 
-import { 
+import {
   useStats, useVolunteerApps, useInternshipApps,
   usePartnershipInquiries, useContactMessages, useNewsletter,
   useDonations, useNews, useMedia, apiMedia, uploadFile
@@ -231,7 +232,11 @@ import {
 
 export function AdminPage() {
   const [authed, setAuthed] = useState(false);
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const { tab } = useParams();
+  const navigate = useNavigate();
+  
+  const activeTab: AdminTab = (tab as AdminTab) && tabs.find(t => t.key === tab) ? (tab as AdminTab) : 'dashboard';
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -247,11 +252,11 @@ export function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F3F4F6', fontFamily: 'Inter, sans-serif' }}>
+    <div className="h-screen w-full flex overflow-hidden" style={{ backgroundColor: '#F3F4F6', fontFamily: 'Inter, sans-serif' }}>
       {/* Mobile overlay */}
       {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -268,7 +273,7 @@ export function AdminPage() {
         {/* Logo */}
         <div className="p-4 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           {sidebarOpen ? (
-            <img src={logo2} alt="YCN" className="h-9 w-auto" />
+            <img src="/ycnmain.png" alt="YCN" className="h-14 w-auto" />
           ) : (
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ backgroundColor: '#E8521A', color: '#fff' }}>YC</div>
           )}
@@ -282,7 +287,7 @@ export function AdminPage() {
               <button
                 key={key}
                 onClick={() => {
-                  setActiveTab(key);
+                  navigate(`/admin/${key}`);
                   setMobileMenuOpen(false);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 transition-all duration-150"
@@ -339,7 +344,7 @@ export function AdminPage() {
         </div>
 
         <div className="p-6">
-          {activeTab === 'dashboard' && <DashboardTab setActiveTab={setActiveTab} />}
+          {activeTab === 'dashboard' && <DashboardTab setActiveTab={(t) => navigate(`/admin/${t}`)} />}
           {activeTab === 'stats' && <StatsTab />}
           {activeTab === 'carousel' && <CarouselTab />}
           {activeTab === 'media' && <MediaTab />}
@@ -369,7 +374,7 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
   const { data: newsletterData } = useNewsletter();
   const { data: donationsData } = useDonations();
   const { data: newsData } = useNews();
-  
+
   const stats = statsData || { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any;
   const volunteers = volunteersData || [];
   const internships = internshipsData || [];
@@ -473,12 +478,12 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
               <AreaChart data={analyticsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} id="area-chart">
                 <defs key="defs">
                   <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1" key="grad1">
-                    <stop offset="5%" stopColor="#1A6B3C" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#1A6B3C" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#1A6B3C" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#1A6B3C" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorEngage" x1="0" y1="0" x2="0" y2="1" key="grad2">
-                    <stop offset="5%" stopColor="#E8521A" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#E8521A" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#E8521A" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#E8521A" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid key="grid" strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
@@ -579,7 +584,7 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
           <h3 className="font-semibold mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>Content Overview</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: 'News Articles', count: news.length, color: '#1A6B3C', bg: '#E8F5EE' },
+              { label: 'Stories of Change', count: news.length, color: '#1A6B3C', bg: '#E8F5EE' },
               { label: 'Team Members', count: getTeam().length, color: '#0E7490', bg: '#E0F7FA' },
               { label: 'Partners', count: getPartners().length, color: '#D97706', bg: '#FFF8E1' },
               { label: 'Donations', count: donations.length, color: '#E8521A', bg: '#FFF3EE' },
@@ -649,7 +654,7 @@ function StatsTab() {
             {saved ? <><CheckCircle size={16} /> Successfully Saved</> : <><Save size={16} /> Save Changes</>}
           </button>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(Object.keys(statConfig) as (keyof ImpactStats)[]).map(key => {
             const config = statConfig[key];
@@ -717,7 +722,7 @@ function NewsTab() {
     return (
       <div className="max-w-2xl bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{isNew ? 'Add News Article' : 'Edit News Article'}</h3>
+          <h3 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{isNew ? 'Add Story of Change' : 'Edit Story of Change'}</h3>
           <button onClick={() => { setEditing(null); setIsNew(false); }}><X size={18} style={{ color: '#9CA3AF' }} /></button>
         </div>
         <div className="space-y-4">
@@ -1042,20 +1047,94 @@ function VolunteersTab() {
 
 /* ── NEWSLETTER ── */
 function NewsletterTab() {
-  const subs = getNewsletter();
+  const { data: subs = [] } = useNewsletter();
+  const [subject, setSubject] = useState('');
+  const [htmlBody, setHtmlBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subject || !htmlBody) return;
+    setSending(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      // Hardcoded API_URL fallback, but better to import if available. We will just use the same pattern as other fetch calls.
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${API_URL}/newsletter/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, html: htmlBody })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send broadcast');
+      setSuccessMsg(`Successfully sent to ${data.count} subscribers!`);
+      setSubject('');
+      setHtmlBody('');
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (subs.length === 0) {
     return <EmptyState icon={Mail} message="No newsletter subscribers yet. Signups from the website will appear here." />;
   }
+  
   return (
-    <div>
-      <p className="text-sm mb-4" style={{ color: '#6B7280' }}>{subs.length} subscribers</p>
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <Mail size={20} className="text-[#E8521A]" /> Compose Newsletter Broadcast
+        </h2>
+        <form onSubmit={handleBroadcast} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
+            <input 
+              type="text" 
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-[#1A6B3C]"
+              placeholder="E.g., Monthly Update from YCN"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Message Body (HTML supported)</label>
+            <textarea 
+              value={htmlBody}
+              onChange={e => setHtmlBody(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-[#1A6B3C] h-40"
+              placeholder="<p>Hello everyone...</p>"
+              required
+            />
+          </div>
+          {errorMsg && <p className="text-red-600 text-sm">{errorMsg}</p>}
+          {successMsg && <p className="text-green-600 text-sm font-semibold">{successMsg}</p>}
+          <button 
+            type="submit" 
+            disabled={sending}
+            className="px-6 py-2 bg-[#E8521A] text-white rounded-xl font-semibold hover:bg-[#c94514] transition-all disabled:opacity-50"
+          >
+            {sending ? 'Sending...' : 'Send to All Subscribers'}
+          </button>
+        </form>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="font-bold text-gray-800">Subscriber List</h3>
+          <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">{subs.length} Total</span>
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>#</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Email</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Date</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Date Joined</th>
             </tr>
           </thead>
           <tbody>
@@ -1072,6 +1151,7 @@ function NewsletterTab() {
     </div>
   );
 }
+
 
 /* ── MESSAGES ── */
 function MessagesTab() {
@@ -1261,7 +1341,7 @@ function MessagesTab() {
 function DonationsTab() {
   const [requests, setRequests] = useState(getDonationRequests());
   const [donations, setDonations] = useState(getDonations());
-  const [activeView, setActiveView] = useState<'pending'|'all'>('pending');
+  const [activeView, setActiveView] = useState<'pending' | 'all'>('pending');
 
   const refresh = () => { setRequests(getDonationRequests()); setDonations(getDonations()); };
 
@@ -1274,11 +1354,11 @@ function DonationsTab() {
   const approved = requests.filter(r => r.status === 'approved');
   const rejected = requests.filter(r => r.status === 'rejected');
   const totalConfirmed = donations.reduce((s, d) => s + d.amount, 0);
-  const methodColors: Record<string,string> = { bkash:'#E2136E', nagad:'#F7941D', bank:'#1565C0', international:'#1A6B3C' };
-  const statusStyle: Record<string,{bg:string;color:string}> = {
-    pending: { bg:'#FFF8F0', color:'#E8521A' },
-    approved: { bg:'#E8F5EE', color:'#1A6B3C' },
-    rejected: { bg:'#FEF2F2', color:'#DC2626' },
+  const methodColors: Record<string, string> = { bkash: '#E2136E', nagad: '#F7941D', bank: '#1565C0', international: '#1A6B3C' };
+  const statusStyle: Record<string, { bg: string; color: string }> = {
+    pending: { bg: '#FFF8F0', color: '#E8521A' },
+    approved: { bg: '#E8F5EE', color: '#1A6B3C' },
+    rejected: { bg: '#FEF2F2', color: '#DC2626' },
   };
 
   return (
@@ -1286,24 +1366,24 @@ function DonationsTab() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label:'Pending', val: pending.length, color:'#E8521A', bg:'#FFF3EE' },
-          { label:'Approved', val: approved.length, color:'#1A6B3C', bg:'#E8F5EE' },
-          { label:'Rejected', val: rejected.length, color:'#DC2626', bg:'#FEF2F2' },
-          { label:'Total Confirmed', val: `৳${totalConfirmed.toLocaleString()}`, color:'#0E7490', bg:'#E0F7FA' },
+          { label: 'Pending', val: pending.length, color: '#E8521A', bg: '#FFF3EE' },
+          { label: 'Approved', val: approved.length, color: '#1A6B3C', bg: '#E8F5EE' },
+          { label: 'Rejected', val: rejected.length, color: '#DC2626', bg: '#FEF2F2' },
+          { label: 'Total Confirmed', val: `৳${totalConfirmed.toLocaleString()}`, color: '#0E7490', bg: '#E0F7FA' },
         ].map(s => (
           <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: s.bg, border: `1px solid ${s.color}20` }}>
-            <p className="text-xs font-medium mb-1" style={{ color:'#6B7280' }}>{s.label}</p>
-            <p className="text-xl font-bold" style={{ color: s.color, fontFamily:'Poppins,sans-serif' }}>{s.val}</p>
+            <p className="text-xs font-medium mb-1" style={{ color: '#6B7280' }}>{s.label}</p>
+            <p className="text-xl font-bold" style={{ color: s.color, fontFamily: 'Poppins,sans-serif' }}>{s.val}</p>
           </div>
         ))}
       </div>
 
       {/* View toggle */}
       <div className="flex gap-2">
-        {(['pending','all'] as const).map(v => (
+        {(['pending', 'all'] as const).map(v => (
           <button key={v} onClick={() => setActiveView(v)}
             className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all"
-            style={{ backgroundColor: activeView===v?'#0A3320':'#F3F4F6', color: activeView===v?'#F0ECD8':'#6B7280' }}>
+            style={{ backgroundColor: activeView === v ? '#0A3320' : '#F3F4F6', color: activeView === v ? '#F0ECD8' : '#6B7280' }}>
             {v === 'pending' ? `Pending Requests (${pending.length})` : `All Requests (${requests.length})`}
           </button>
         ))}
@@ -1315,31 +1395,31 @@ function DonationsTab() {
           {pending.length === 0 ? (
             <EmptyState icon={CheckCircle} message="No pending payment requests. All caught up!" />
           ) : pending.map(r => (
-            <div key={r.id} className="bg-white rounded-2xl overflow-hidden shadow-sm" style={{ border:'1px solid #E5E7EB' }}>
-              <div className="px-5 py-3 flex items-center justify-between" style={{ background:'linear-gradient(135deg,#0A3320,#0D4A28)' }}>
+            <div key={r.id} className="bg-white rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #E5E7EB' }}>
+              <div className="px-5 py-3 flex items-center justify-between" style={{ background: 'linear-gradient(135deg,#0A3320,#0D4A28)' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase" style={{ backgroundColor: methodColors[r.method]||'#6B7280', color:'#fff' }}>{r.method}</span>
-                  <p className="text-sm font-bold" style={{ color:'#F0ECD8', fontFamily:'Poppins,sans-serif' }}>{r.name}</p>
-                  <p className="text-xs" style={{ color:'#A8C4B0' }}>{r.email}</p>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase" style={{ backgroundColor: methodColors[r.method] || '#6B7280', color: '#fff' }}>{r.method}</span>
+                  <p className="text-sm font-bold" style={{ color: '#F0ECD8', fontFamily: 'Poppins,sans-serif' }}>{r.name}</p>
+                  <p className="text-xs" style={{ color: '#A8C4B0' }}>{r.email}</p>
                 </div>
-                <p className="text-xl font-bold" style={{ color:'#E8521A', fontFamily:'Poppins,sans-serif' }}>৳{r.amount.toLocaleString()}</p>
+                <p className="text-xl font-bold" style={{ color: '#E8521A', fontFamily: 'Poppins,sans-serif' }}>৳{r.amount.toLocaleString()}</p>
               </div>
               <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div><p className="text-xs text-gray-400 mb-0.5">Phone</p><p className="text-sm font-medium text-gray-700">{r.phone||'—'}</p></div>
+                <div><p className="text-xs text-gray-400 mb-0.5">Phone</p><p className="text-sm font-medium text-gray-700">{r.phone || '—'}</p></div>
                 <div><p className="text-xs text-gray-400 mb-0.5">Type</p><p className="text-sm font-medium capitalize text-gray-700">{r.type}</p></div>
-                <div><p className="text-xs text-gray-400 mb-0.5">Transaction ID</p><p className="text-sm font-bold" style={{ fontFamily:'monospace', color:'#1F2937', letterSpacing:'0.04em' }}>{r.txnId}</p></div>
-                <div><p className="text-xs text-gray-400 mb-0.5">Date</p><p className="text-sm text-gray-700">{new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</p></div>
+                <div><p className="text-xs text-gray-400 mb-0.5">Transaction ID</p><p className="text-sm font-bold" style={{ fontFamily: 'monospace', color: '#1F2937', letterSpacing: '0.04em' }}>{r.txnId}</p></div>
+                <div><p className="text-xs text-gray-400 mb-0.5">Date</p><p className="text-sm text-gray-700">{new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p></div>
                 {r.note && <div className="col-span-2 sm:col-span-4"><p className="text-xs text-gray-400 mb-0.5">Donor Note</p><p className="text-sm text-gray-600 italic">{r.note}</p></div>}
               </div>
-              <div className="px-5 pb-4 flex gap-3" style={{ borderTop:'1px solid #F3F4F6', paddingTop:12 }}>
-                <button onClick={() => handleStatus(r.id,'approved')}
+              <div className="px-5 pb-4 flex gap-3" style={{ borderTop: '1px solid #F3F4F6', paddingTop: 12 }}>
+                <button onClick={() => handleStatus(r.id, 'approved')}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-                  style={{ background:'linear-gradient(135deg,#1A6B3C,#0A3320)', color:'#F0ECD8', boxShadow:'0 2px 12px rgba(26,107,60,0.25)' }}>
+                  style={{ background: 'linear-gradient(135deg,#1A6B3C,#0A3320)', color: '#F0ECD8', boxShadow: '0 2px 12px rgba(26,107,60,0.25)' }}>
                   <CheckCircle size={14} /> Approve & Confirm
                 </button>
-                <button onClick={() => handleStatus(r.id,'rejected')}
+                <button onClick={() => handleStatus(r.id, 'rejected')}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-                  style={{ backgroundColor:'#FEF2F2', color:'#DC2626' }}>
+                  style={{ backgroundColor: '#FEF2F2', color: '#DC2626' }}>
                   <X size={14} /> Reject
                 </button>
               </div>
@@ -1350,39 +1430,39 @@ function DonationsTab() {
 
       {/* All requests table */}
       {activeView === 'all' && (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border:'1px solid #E5E7EB' }}>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '1px solid #E5E7EB' }}>
           {requests.length === 0 ? (
             <EmptyState icon={TrendingUp} message="No donation requests yet." />
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ backgroundColor:'#F9FAFB', borderBottom:'1px solid #E5E7EB' }}>
-                  {['Donor','Amount','Method','TXN ID','Date','Status','Action'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold" style={{ color:'#374151' }}>{h}</th>
+                <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                  {['Donor', 'Amount', 'Method', 'TXN ID', 'Date', 'Status', 'Action'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {requests.slice().reverse().map(r => (
-                  <tr key={r.id} style={{ borderBottom:'1px solid #F3F4F6' }}>
+                  <tr key={r.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-sm" style={{ color:'#1F2937' }}>{r.name}</p>
-                      <p className="text-xs" style={{ color:'#9CA3AF' }}>{r.email}</p>
+                      <p className="font-semibold text-sm" style={{ color: '#1F2937' }}>{r.name}</p>
+                      <p className="text-xs" style={{ color: '#9CA3AF' }}>{r.email}</p>
                     </td>
-                    <td className="px-4 py-3 font-bold" style={{ color:'#1A6B3C' }}>৳{r.amount.toLocaleString()}</td>
+                    <td className="px-4 py-3 font-bold" style={{ color: '#1A6B3C' }}>৳{r.amount.toLocaleString()}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs font-bold px-2 py-1 rounded-full uppercase text-white" style={{ backgroundColor: methodColors[r.method]||'#6B7280' }}>{r.method}</span>
+                      <span className="text-xs font-bold px-2 py-1 rounded-full uppercase text-white" style={{ backgroundColor: methodColors[r.method] || '#6B7280' }}>{r.method}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono" style={{ color:'#374151' }}>{r.txnId}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color:'#9CA3AF' }}>{new Date(r.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-xs font-mono" style={{ color: '#374151' }}>{r.txnId}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: '#9CA3AF' }}>{new Date(r.date).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
                       <span className="text-xs font-semibold px-2 py-1 rounded-full capitalize" style={{ backgroundColor: statusStyle[r.status]?.bg, color: statusStyle[r.status]?.color }}>{r.status}</span>
                     </td>
                     <td className="px-4 py-3">
                       {r.status === 'pending' && (
                         <div className="flex gap-1">
-                          <button onClick={() => handleStatus(r.id,'approved')} className="p-1.5 rounded-lg" style={{ backgroundColor:'#E8F5EE' }} title="Approve"><CheckCircle size={13} style={{ color:'#1A6B3C' }} /></button>
-                          <button onClick={() => handleStatus(r.id,'rejected')} className="p-1.5 rounded-lg" style={{ backgroundColor:'#FEF2F2' }} title="Reject"><X size={13} style={{ color:'#DC2626' }} /></button>
+                          <button onClick={() => handleStatus(r.id, 'approved')} className="p-1.5 rounded-lg" style={{ backgroundColor: '#E8F5EE' }} title="Approve"><CheckCircle size={13} style={{ color: '#1A6B3C' }} /></button>
+                          <button onClick={() => handleStatus(r.id, 'rejected')} className="p-1.5 rounded-lg" style={{ backgroundColor: '#FEF2F2' }} title="Reject"><X size={13} style={{ color: '#DC2626' }} /></button>
                         </div>
                       )}
                     </td>
@@ -1480,7 +1560,7 @@ function ImageUploader({
   return (
     <div className="space-y-2">
       <label className="block text-xs font-semibold" style={{ color: '#374151' }}>{label}</label>
-      <div 
+      <div
         className={`relative border-2 border-dashed rounded-xl p-4 transition-all flex flex-col items-center justify-center gap-3 bg-gray-50 ${dragActive ? 'border-primary' : 'border-gray-200 hover:border-gray-300'}`}
         style={{ borderColor: dragActive ? '#1A6B3C' : '#E5E7EB', minHeight: '120px' }}
         onDragOver={e => { e.preventDefault(); setDragActive(true); }}
@@ -1496,9 +1576,9 @@ function ImageUploader({
                 <p className="text-xs font-mono text-gray-400 truncate max-w-[200px] sm:max-w-[300px]">{value.startsWith('data:') ? 'Local file uploaded' : value}</p>
               </div>
             </div>
-            <button 
-              type="button" 
-              onClick={() => onChange('')} 
+            <button
+              type="button"
+              onClick={() => onChange('')}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
             >
               <Trash2 size={16} />
@@ -1509,11 +1589,11 @@ function ImageUploader({
             <p className="text-xs text-gray-500 mb-2">Drag & drop your image here, or</p>
             <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-105" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
               Choose Image File
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={e => e.target.files && e.target.files[0] && handleFile(e.target.files[0])} 
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => e.target.files && e.target.files[0] && handleFile(e.target.files[0])}
               />
             </label>
           </div>
@@ -1521,11 +1601,11 @@ function ImageUploader({
       </div>
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-gray-400 font-bold uppercase flex-shrink-0">OR</span>
-        <input 
-          type="text" 
-          placeholder={placeholder} 
-          value={value.startsWith('data:') ? '' : value} 
-          onChange={e => onChange(e.target.value)} 
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={value.startsWith('data:') ? '' : value}
+          onChange={e => onChange(e.target.value)}
           className="w-full px-4 py-2.5 rounded-xl text-xs outline-none bg-gray-50 border border-gray-200 focus:border-gray-300"
           style={{ fontFamily: 'Inter, sans-serif' }}
         />
@@ -1602,12 +1682,11 @@ function InternshipsTab() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                app.status === 'pending' ? 'bg-orange-50 text-orange-600' :
-                app.status === 'accepted' ? 'bg-green-50 text-green-600' :
-                app.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                'bg-blue-50 text-blue-600'
-              }`}>
+              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${app.status === 'pending' ? 'bg-orange-50 text-orange-600' :
+                  app.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                    app.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                      'bg-blue-50 text-blue-600'
+                }`}>
                 {app.status}
               </span>
               <button onClick={() => setViewing(app)} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600">
@@ -1688,12 +1767,11 @@ function PartnershipInquiriesTab() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                inq.status === 'pending' ? 'bg-orange-50 text-orange-600' :
-                inq.status === 'accepted' ? 'bg-green-50 text-green-600' :
-                inq.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                'bg-blue-50 text-blue-600'
-              }`}>
+              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${inq.status === 'pending' ? 'bg-orange-50 text-orange-600' :
+                  inq.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                    inq.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                      'bg-blue-50 text-blue-600'
+                }`}>
                 {inq.status}
               </span>
               <button onClick={() => setViewing(inq)} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600">
@@ -1795,10 +1873,53 @@ function CarouselTab() {
   );
 }
 
+const optimizeImage = (file: File, maxWidth = 1200): Promise<File> => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = (maxWidth / width) * height;
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+};
+
 function MediaTab() {
   const { data: items = [], mutate } = useMedia();
   const [editing, setEditing] = useState<Partial<MediaItem> | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const getYoutubeThumbnail = (url: string | undefined) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+    return match ? `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg` : null;
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1825,7 +1946,8 @@ function MediaTab() {
     if (file) {
       try {
         setUploading(true);
-        const url = await uploadFile(file);
+        const optimizedFile = await optimizeImage(file);
+        const url = await uploadFile(optimizedFile);
         setEditing({ ...editing, url });
       } catch (err) {
         alert('File upload failed');
@@ -1848,60 +1970,166 @@ function MediaTab() {
       </div>
 
       {editing && (
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 relative">
-          <button onClick={() => setEditing(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 mb-8 relative overflow-hidden transition-all duration-300 transform origin-top">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1A6B3C] to-[#E8521A]"></div>
+          <button onClick={() => setEditing(null)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-full p-2 transition-all">
             <X size={20} />
           </button>
-          <h4 className="font-semibold mb-4 text-lg" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>
-            {editing.id ? 'Edit Media Item' : 'New Media Item'}
-          </h4>
-          <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-              <select
-                className="input-field w-full"
-                value={editing.type}
-                onChange={e => setEditing({ ...editing, type: e.target.value as any })}
-                required
-              >
-                <option value="image">Image (Photo Gallery)</option>
-                <option value="video">Video</option>
-              </select>
+          
+          <div className="mb-8 pr-12">
+            <h4 className="font-bold text-2xl" style={{ color: '#0A3320', fontFamily: 'Poppins, sans-serif' }}>
+              {editing.id ? 'Edit Media Item' : 'Add New Media'}
+            </h4>
+            <p className="text-gray-500 mt-2 text-sm leading-relaxed max-w-xl">
+              Fill in the details below to add or update this media entry in your gallery. For videos, you can use YouTube or Facebook URLs.
+            </p>
+          </div>
+          
+          <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2 bg-gray-50/50 p-5 rounded-xl border border-gray-100">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Media Type</label>
+              <div className="relative">
+                <select
+                  className="w-full bg-white border border-gray-200 text-gray-800 rounded-lg px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]/50 focus:border-[#1A6B3C] transition-all font-medium shadow-sm"
+                  value={editing.type}
+                  onChange={e => setEditing({ ...editing, type: e.target.value as any })}
+                  required
+                >
+                  <option value="image">Image (Photo Gallery)</option>
+                  <option value="video">Video (Video Gallery)</option>
+                  <option value="press">Press Coverage</option>
+                  <option value="pressKit">Press Kit File</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title (EN)</label>
-              <input type="text" className="input-field w-full" value={editing.title || ''} onChange={e => setEditing({ ...editing, title: e.target.value })} required />
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Title (English) <span className="text-red-500">*</span></label>
+                <input type="text" className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]/50 focus:border-[#1A6B3C] transition-all placeholder:text-gray-400" placeholder="Enter title..." value={editing.title || ''} onChange={e => setEditing({ ...editing, title: e.target.value })} required />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Category (English)</label>
+                <input type="text" className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]/50 focus:border-[#1A6B3C] transition-all placeholder:text-gray-400" placeholder="e.g. Advocacy, Campaign" value={editing.category || ''} onChange={e => setEditing({ ...editing, category: e.target.value })} />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title (BN)</label>
-              <input type="text" className="input-field w-full" value={editing.title_bn || ''} onChange={e => setEditing({ ...editing, title_bn: e.target.value })} />
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Title (Bengali)</label>
+                <input type="text" className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]/50 focus:border-[#1A6B3C] transition-all font-bengali placeholder:text-gray-400" placeholder="শিরোনাম লিখুন..." value={editing.title_bn || ''} onChange={e => setEditing({ ...editing, title_bn: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Category (Bengali)</label>
+                <input type="text" className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]/50 focus:border-[#1A6B3C] transition-all font-bengali placeholder:text-gray-400" placeholder="ক্যাটাগরি..." value={editing.category_bn || ''} onChange={e => setEditing({ ...editing, category_bn: e.target.value })} />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category (EN)</label>
-              <input type="text" className="input-field w-full" value={editing.category || ''} onChange={e => setEditing({ ...editing, category: e.target.value })} />
+
+            <div className="md:col-span-2 pt-2 min-w-0">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Media Source</label>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-gray-50/50 p-5 rounded-xl border border-gray-100">
+                <div className="border-2 border-dashed border-gray-300 bg-white rounded-xl p-6 text-center hover:border-[#1A6B3C] transition-colors relative group min-w-0">
+                  {editing.type === 'image' && editing.url ? (
+                    <div className="relative w-full h-full min-h-[120px] flex items-center justify-center">
+                      <img src={editing.url} alt="Preview" className="max-h-32 object-contain rounded-lg" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
+                        <Upload size={24} className="text-white" />
+                        <span className="text-white font-medium text-sm ml-2">Change Image</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-12 h-12 bg-green-50 text-[#1A6B3C] rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-[#1A6B3C] group-hover:text-white transition-all duration-300 shadow-sm">
+                        <Upload size={20} />
+                      </div>
+                      <div>
+                        <span className="text-sm font-semibold text-gray-700 group-hover:text-[#1A6B3C] transition-colors">Click to upload file</span>
+                        <p className="text-xs text-gray-400 mt-1">PNG, JPG, MP4 up to 50MB</p>
+                      </div>
+                    </div>
+                  )}
+                  <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileUpload} accept={editing.type === 'video' ? 'video/*' : 'image/*'} disabled={uploading} />
+                  {uploading && (
+                    <div className="absolute inset-0 bg-white/95 flex items-center justify-center rounded-xl backdrop-blur-sm z-10">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-3 border-[#1A6B3C] border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-xs font-semibold text-[#1A6B3C] tracking-wide uppercase">Uploading...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col justify-center space-y-4 min-w-0">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="h-px bg-gray-200 flex-1"></div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">OR ENTER URL</span>
+                    <div className="h-px bg-gray-200 flex-1"></div>
+                  </div>
+                  <div className="relative w-full">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Globe size={16} className="text-gray-400" />
+                    </div>
+                    <input type="text" className="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]/50 focus:border-[#1A6B3C] transition-all shadow-sm placeholder:text-gray-400 truncate" placeholder="https://example.com/image.jpg" value={editing.url || ''} onChange={e => setEditing({ ...editing, url: e.target.value })} required />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category (BN)</label>
-              <input type="text" className="input-field w-full" value={editing.category_bn || ''} onChange={e => setEditing({ ...editing, category_bn: e.target.value })} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Upload File (Image/Video)</label>
-              <input type="file" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100" onChange={handleFileUpload} accept={editing.type === 'image' ? 'image/*' : 'video/*'} disabled={uploading} />
-              {uploading && <p className="text-xs text-blue-500 mt-1">Uploading...</p>}
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Or enter URL directly</label>
-              <input type="text" className="input-field w-full" value={editing.url || ''} onChange={e => setEditing({ ...editing, url: e.target.value })} required />
-            </div>
-            {editing.type === 'video' && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (e.g. 5:30)</label>
-                <input type="text" className="input-field w-full" value={editing.duration || ''} onChange={e => setEditing({ ...editing, duration: e.target.value })} />
+
+            {(editing.type === 'video' || editing.type === 'press' || editing.type === 'pressKit') && (
+              <div className="md:col-span-2 bg-[#FEF3C7]/30 rounded-xl p-5 border border-yellow-100/50 mt-2">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1.5 h-4 bg-yellow-400 rounded-full"></div>
+                  <h5 className="text-sm font-semibold text-yellow-800">Additional Details</h5>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                  {editing.type === 'video' && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-yellow-700/70 uppercase tracking-wider mb-1.5">Duration</label>
+                      <input type="text" className="w-full bg-white/80 border border-yellow-200/50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all placeholder:text-yellow-700/30" placeholder="e.g. 5:30" value={editing.duration || ''} onChange={e => setEditing({ ...editing, duration: e.target.value })} />
+                    </div>
+                  )}
+                  {editing.type === 'press' && (
+                    <>
+                      <div>
+                        <label className="block text-[11px] font-bold text-yellow-700/70 uppercase tracking-wider mb-1.5">Outlet</label>
+                        <input type="text" className="w-full bg-white/80 border border-yellow-200/50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all placeholder:text-yellow-700/30" placeholder="e.g. Daily Star" value={editing.outlet || ''} onChange={e => setEditing({ ...editing, outlet: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-yellow-700/70 uppercase tracking-wider mb-1.5">Date</label>
+                        <input type="text" className="w-full bg-white/80 border border-yellow-200/50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all placeholder:text-yellow-700/30" placeholder="e.g. 10 Oct 2024" value={editing.date || ''} onChange={e => setEditing({ ...editing, date: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-yellow-700/70 uppercase tracking-wider mb-1.5">Link</label>
+                        <input type="text" className="w-full bg-white/80 border border-yellow-200/50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all placeholder:text-yellow-700/30" placeholder="https://..." value={editing.url || ''} onChange={e => setEditing({ ...editing, url: e.target.value })} />
+                      </div>
+                    </>
+                  )}
+                  {editing.type === 'pressKit' && (
+                    <>
+                      <div>
+                        <label className="block text-[11px] font-bold text-yellow-700/70 uppercase tracking-wider mb-1.5">Description</label>
+                        <input type="text" className="w-full bg-white/80 border border-yellow-200/50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all placeholder:text-yellow-700/30" placeholder="Short description" value={editing.desc || ''} onChange={e => setEditing({ ...editing, desc: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-yellow-700/70 uppercase tracking-wider mb-1.5">File Size</label>
+                        <input type="text" className="w-full bg-white/80 border border-yellow-200/50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all placeholder:text-yellow-700/30" placeholder="e.g. 12 MB" value={editing.size || ''} onChange={e => setEditing({ ...editing, size: e.target.value })} />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
-            <div className="md:col-span-2 mt-4 flex justify-end gap-3">
-              <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1A6B3C] transition-colors shadow-sm">Cancel</button>
-              <button type="submit" className="btn-primary flex items-center gap-2 text-sm px-5 py-2 shadow-sm" disabled={uploading}><Save size={16} /> Save</button>
+
+            <div className="md:col-span-2 pt-6 mt-2 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button type="button" onClick={() => setEditing(null)} className="px-5 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-800 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl transition-all shadow-sm">
+                Cancel
+              </button>
+              <button type="submit" className="bg-[#1A6B3C] hover:bg-[#124f2b] text-white px-7 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-green-900/20 flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95" disabled={uploading}>
+                <Save size={18} /> {editing.id ? 'Save Changes' : 'Create Media'}
+              </button>
             </div>
           </form>
         </div>
@@ -1917,9 +2145,13 @@ function MediaTab() {
           <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm flex flex-col gap-4 border border-gray-100">
             {item.url && item.type === 'image' && <img src={item.url} alt="" className="w-full h-40 rounded-lg object-cover bg-gray-50" />}
             {item.url && item.type === 'video' && (
-               <div className="w-full h-40 rounded-lg bg-gray-100 flex items-center justify-center">
-                 <span className="text-gray-500 font-medium">Video</span>
-               </div>
+              <div className="w-full h-40 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                {getYoutubeThumbnail(item.url) ? (
+                  <img src={getYoutubeThumbnail(item.url)!} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-500 font-medium">Video</span>
+                )}
+              </div>
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">

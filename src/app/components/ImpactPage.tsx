@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { SEO } from './ui/SEO';
 import { Link } from 'react-router';
-import { Download, ArrowRight, TrendingUp } from 'lucide-react';
+import { Download, ArrowRight, TrendingUp, X } from 'lucide-react';
 import { useStats, useNews } from '../lib/api';
 import type { NewsItem } from '../lib/storage';
 import { CardSkeleton } from './ui/Skeletons';
@@ -41,7 +41,8 @@ export function ImpactPage() {
   const { t } = useLanguage();
   const { data: stats = { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any } = useStats();
   const { data: news = [], isLoading: newsLoading } = useNews();
-  
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+
   const programImpact = [
     { name: t('Climate Justice', 'জলবায়ু ন্যায়বিচার'), value: 85 },
     { name: t('Education', 'শিক্ষা'), value: 92 },
@@ -70,52 +71,56 @@ export function ImpactPage() {
 
   const caseStudies = [
     {
-      name: t('Rohima Khatun, 34', 'রহিমা খাতুন, ৩৪'),
-      location: t('Shyamnagar, Satkhira', 'শ্যামনগর, সাতক্ষীরা'),
-      program: t('Women Empowerment', 'নারী ক্ষমতায়ন'),
+      name: t('Azim Kha', 'আজিম খাঁ'),
+      location: t('Age 26 · Paikgaca, Khulna', 'বয়স ২৬ · পাইকগাছা, খুলনা'),
+      program: t('Climate Action', 'জলবায়ু পদক্ষেপ'),
       story: t(
-        'After joining YCN\'s Women\'s Climate Leadership Program, Rohima formed a 20-member savings group in her village. The group now manages a collective fund that helped 8 families recover after Cyclone Remal destroyed their crops.',
-        'ওয়াইসিএন-এর নারীদের জলবায়ু নেতৃত্ব কর্মসূচিতে যোগদানের পর রহিমা তার গ্রামে ২০ সদস্যের একটি সঞ্চয় দল গঠন করেন। এই দলটি এখন একটি যৌথ তহবিল পরিচালনা করে যা ঘূর্ণিঝড় রেমালের পর ৮টি পরিবারকে তাদের ফসলহানি কাটিয়ে উঠতে সহায়তা করেছে।'
+        'A frontline climate activist working to protect his community from the impacts of coastal salinity and extreme weather events in Paikgaca.',
+        'পাইকগাছায় উপকূলীয় লবণাক্ততা এবং চরম আবহাওয়ার প্রভাব থেকে তার সম্প্রদায়কে রক্ষা করার জন্য কাজ করা একজন সম্মুখ সমরের জলবায়ু কর্মী।'
       ),
-      impact: t('Led community climate resilience group · Secured BDT 80,000 emergency fund', 'সামাজিক জলবায়ু সহনশীলতা দলের নেতৃত্ব · ৮০,০০০ টাকা জরুরি তহবিল সংগ্রহ'),
-      color: '#AD1457',
-      bg: '#FCE4EC',
+      impact: t('Community Resilience · Coastal Protection', 'সামাজিক স্থিতিস্থাপকতা · উপকূল সুরক্ষা'),
+      image: '/voice_frontline/azim_kha.jpg',
+      color: '#0A3320',
+      bg: '#E8F5EE',
     },
     {
-      name: t('Karim Uddin, 22', 'করিম উদ্দিন, ২২'),
-      location: t('Dacope, Khulna', 'দাকোপ, খুলনা'),
-      program: t('Youth Leadership Academy', 'যুব নেতৃত্ব একাডেমি'),
+      name: t('Nurul Islam Fakir', 'নুরুল ইসলাম ফকির'),
+      location: t('Age 65 · Dacope, Khulna', 'বয়স ৬৫ · দাকোপ, খুলনা'),
+      program: t('Livelihoods', 'জীবিকা'),
       story: t(
-        'A fisherman\'s son who joined YCN\'s Youth Leadership Academy, Karim is now training 30 other young people in climate-smart fishing practices and coordinating the local youth disaster response team.',
-        'জেলে পরিবারের সন্তান করিম ওয়াইসিএন-এর যুব নেতৃত্ব একাডেমিতে যোগ দেন। তিনি এখন অন্য ৩০ জন যুবককে জলবায়ু-সহনশীল মাছ ধরার বিষয়ে প্রশিক্ষণ দিচ্ছেন এবং স্থানীয় যুব দুর্যোগ সাড়াদান দলের সমন্বয় করছেন।'
+        'An experienced community member adapting traditional farming methods to survive amidst the growing climate challenges in Dacope.',
+        'দাকোপে ক্রমবর্ধমান জলবায়ু চ্যালেঞ্জের মধ্যে টিকে থাকার জন্য ঐতিহ্যবাহী কৃষি পদ্ধতিগুলো মানিয়ে নেওয়া একজন অভিজ্ঞ সম্প্রদায়ের সদস্য।'
       ),
-      impact: t('Youth leader training 30 peers · Disaster response coordinator', '৩০ জন সহকর্মীকে প্রশিক্ষণ দেওয়া যুবনেতা · দুর্যোগ সাড়াদান সমন্বয়কারী'),
+      impact: t('Climate Adaptation · Sustainable Farming', 'জলবায়ু অভিযোজন · টেকসই কৃষি'),
+      image: '/voice_frontline/nurul_islam.jpg',
       color: '#E8521A',
       bg: '#FFF3EE',
     },
     {
-      name: t('Fatema Akter, 16', 'ফাতেমা আক্তার, ১৬'),
-      location: t('Mongla, Bagerhat', 'মোংলা, বাগেরহাট'),
-      program: t('Girls\' Education', 'মেয়েদের শিক্ষা'),
+      name: t('Taslima Begum', 'তাসলিমা বেগম'),
+      location: t('Age 39 · Dacope, Khulna', 'বয়স ৩৯ · দাকোপ, খুলনা'),
+      program: t('Women Empowerment', 'নারী ক্ষমতায়ন'),
       story: t(
-        'Fatema was at risk of dropping out due to family financial pressure worsened by flooding. Through YCN\'s scholarship program and community mentoring, she has returned to school and joined the school climate club.',
-        'বন্যার কারণে সৃষ্ট পারিবারিক আর্থিক সংকটে ফাতেমার স্কুল ছাড়ার উপক্রম হয়েছিল। ওয়াইসিএন-এর বৃত্তি কার্যক্রম এবং সামাজিক দিকনির্দেশনার মাধ্যমে সে আবার স্কুলে ফিরে গেছে এবং স্কুলের জলবায়ু ক্লাবে যোগ দিয়েছে।'
+        'Leading local women\'s groups to secure clean drinking water access and alternative livelihoods in the salinity-prone region of Dacope.',
+        'দাকোপের লবণাক্ততা-প্রবণ অঞ্চলে নিরাপদ পানীয় জলের অ্যাক্সেস এবং বিকল্প জীবিকা সুরক্ষিত করতে স্থানীয় নারী দলগুলোর নেতৃত্ব দিচ্ছেন।'
       ),
-      impact: t('Returned to school · Climate club member · Academic scholarship recipient', 'স্কুলে প্রত্যাবর্তন · জলবায়ু ক্লাবের সদস্য · শিক্ষাবৃত্তি প্রাপ্তি'),
-      color: '#1A6B3C',
-      bg: '#E8F5EE',
+      impact: t('WASH · Alternative Livelihoods', 'ওয়াশ · বিকল্প জীবিকা'),
+      image: '/voice_frontline/taslima_begum.png',
+      color: '#D97706',
+      bg: '#FEF3C7',
     },
     {
-      name: t('Abdul Malek, 55', 'আব্দুল মালেক, ৫৫'),
-      location: t('Koyra, Khulna', 'কয়রা, খুলনা'),
-      program: t('Resilience Agriculture', 'সহনশীল কৃষি'),
+      name: t('Fatema Akter', 'ফাতেমা আক্তার'),
+      location: t('Age 16', 'বয়স ১৬'),
+      program: t('Climate School Member', 'ক্লাইমেট স্কুল সদস্য'),
       story: t(
-        'A farmer whose fields turned saline after cyclone storm surge, Abdul transitioned to floating garden farming through YCN\'s resilience agriculture program. His income has increased by 40% and he now mentors 12 other farmers.',
-        'ঘূর্ণিঝড়ের জলোচ্ছ্বাসের পর চাষের জমি লবণাক্ত হয়ে যাওয়ায় আব্দুল চাষাবাদে বড় লোকসানে পড়েন। ওয়াইসিএন-এর সহনশীল কৃষি কর্মসূচির মাধ্যমে তিনি ভাসমান সবজি চাষ শুরু করেন। তার আয় ৪০% বৃদ্ধি পেয়েছে এবং এখন তিনি ১২ জন অন্য কৃষককে পরামর্শ দিচ্ছেন।'
+        'A dedicated member of the Climate School, learning about environmental conservation and inspiring her peers to take action for a greener future.',
+        'পরিবেশ সংরক্ষণ সম্পর্কে শেখা এবং তার সহকর্মীদের একটি সবুজ ভবিষ্যতের জন্য পদক্ষেপ নিতে অনুপ্রাণিত করা ক্লাইমেট স্কুলের একজন নিবেদিত সদস্য।'
       ),
-      impact: t('40% income increase · Mentors 12 farmers · Climate-smart farmer advocate', '৪০% আয় বৃদ্ধি · ১২ জন কৃষককে পরামর্শ দান · জলবায়ু সহনশীল কৃষি প্রচারক'),
-      color: '#0E7490',
-      bg: '#E0F7FA',
+      impact: t('Youth Education · Climate Advocacy', 'যুব শিক্ষা · জলবায়ু অ্যাডভোকেসি'),
+      image: '',
+      color: '#1A6B3C',
+      bg: '#F0FDF4',
     },
   ];
 
@@ -126,11 +131,11 @@ export function ImpactPage() {
 
     return (
       <div ref={ref} className="p-4 sm:p-5 rounded-2xl text-center bg-white shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-center h-full min-w-0">
-      <SEO 
-        title="Impact" 
-        description="See the real-world impact of the Youth Climate Network. From trees planted to policy changes, discover our data-driven achievements in environmental action."
-        keywords="youth climate network impact, climate achievements, environmental progress, trees planted, policy success, climate data bangladesh"
-      />
+        <SEO
+          title="Impact"
+          description="See the real-world impact of the Youth Climate Network. From trees planted to policy changes, discover our data-driven achievements in environmental action."
+          keywords="youth climate network impact, climate achievements, environmental progress, trees planted, policy success, climate data bangladesh"
+        />
         <div className="font-bold mb-1" style={{ fontSize: 'clamp(1.35rem, 2.5vw, 1.85rem)', fontFamily: 'Poppins, sans-serif', color: '#0A3320', lineHeight: 1.1, wordBreak: 'break-all' }}>
           {displayVal}{displaySuffix}
         </div>
@@ -147,7 +152,10 @@ export function ImpactPage() {
     );
 
     return (
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col">
+      <div
+        className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col cursor-pointer"
+        onClick={() => setSelectedNews(item)}
+      >
         <div className="h-44 overflow-hidden">
           <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
         </div>
@@ -168,10 +176,10 @@ export function ImpactPage() {
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 30% 50%, #E8521A 0%, transparent 50%)' }} />
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: 'rgba(232,82,26,0.15)', color: '#E8521A' }}>
-            {t('Impact & Results', 'প্রভাব ও ফলাফল')}
+            {t('Stories of Change', 'পরিবর্তনের গল্প')}
           </div>
           <h1 className="mb-6" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#F0ECD8' }}>
-            {t('Our Impact & Stories', 'আমাদের প্রভাব ও অনন্য গল্প')}
+            {t('Stories of Change', 'পরিবর্তনের গল্প')}
           </h1>
           <p className="max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: 'Inter, sans-serif', color: '#A8C4B0', fontSize: '1.05rem' }}>
             {t(
@@ -201,12 +209,12 @@ export function ImpactPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
-            <StatBig value={stats.peopleReached} label={t("People Reached", "উপকৃত মানুষ")} sublabel={t("Direct beneficiaries", "সরাসরি উপকারভোগী")} />
-            <StatBig value={stats.treesPlanted} label={t("Trees Planted", "রোপিত বৃক্ষ")} sublabel={t("50% survival rate+", "৫০%+ বেঁচে থাকার হার")} />
-            <StatBig value={stats.volunteers} label={t("Volunteers", "স্বেচ্ছাসেবক")} sublabel={t("Active network", "সক্রিয় নেটওয়ার্ক")} />
-            <StatBig value={stats.projects} label={t("Projects", "প্রকল্প")} sublabel={t("Across 8 districts", "৮টি জেলা জুড়ে")} />
-            <StatBig value={stats.partners} label={t("Partners", "অংশীদার")} sublabel={t("Govt., NGO, UN", "সরকারি, এনজিও ও জাতিসংঘ")} />
-            <StatBig value={stats.districts} label={t("Districts", "জেলাসমূহ")} sublabel={t("Bangladesh coverage", "বাংলাদেশ কভারেজ")} />
+            <StatBig value={stats.districts} label={t("District", "জেলা")} sublabel={t("Across Bangladesh", "সারাদেশে")} />
+            <StatBig value={stats.partners} label={t("Partner Org", "অংশীদার সংস্থা")} sublabel={t("NGOs & Corporate", "এনজিও এবং কর্পোরেট")} />
+            <StatBig value={stats.projects} label={t("Completed Projects", "সম্পন্ন প্রকল্প")} sublabel={t("Targeted climate action", "লক্ষ্যভিত্তিক জলবায়ু পদক্ষেপ")} />
+            <StatBig value={stats.volunteers} label={t("Volunteers", "স্বেচ্ছাসেবক")} sublabel={t("YCN Chapters", "ওয়াইসিএন চ্যাপ্টার")} />
+            <StatBig value={stats.treesPlanted} label={t("Trees Plantation", "বৃক্ষরোপণ")} sublabel={t("Across 64 districts", "৬৪টি জেলা জুড়ে")} />
+            <StatBig value={stats.peopleReached} label={t("People Reached", "উপকৃত মানুষ")} sublabel={t("Communities impacted", "প্রভাবিত সম্প্রদায়")} />
           </div>
 
           {/* Charts */}
@@ -304,12 +312,16 @@ export function ImpactPage() {
             {caseStudies.map((cs) => (
               <div key={cs.name} className="rounded-2xl p-6 hover:shadow-lg transition-all duration-300" style={{ backgroundColor: cs.bg, border: `1px solid ${cs.color}20` }}>
                 <div className="flex items-start gap-4 mb-4">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
-                    style={{ backgroundColor: cs.color, color: '#fff', fontFamily: 'Poppins, sans-serif' }}
-                  >
-                    {cs.name[0]}
-                  </div>
+                  {cs.image ? (
+                    <img src={cs.image} alt={cs.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
+                      style={{ backgroundColor: cs.color, color: '#fff', fontFamily: 'Poppins, sans-serif' }}
+                    >
+                      {cs.name[0]}
+                    </div>
+                  )}
                   <div>
                     <h4 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{cs.name}</h4>
                     <p className="text-xs" style={{ color: '#6B7280' }}>{cs.location}</p>
@@ -375,7 +387,7 @@ export function ImpactPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              {t('Latest News & Updates', 'সর্বশেষ সংবাদ ও আপডেট')}
+              {t('Stories of Change', 'পরিবর্তনের গল্প')}
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -403,6 +415,46 @@ export function ImpactPage() {
           </Link>
         </div>
       </section>
+
+      {/* News Modal */}
+      {selectedNews && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedNews(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col overflow-hidden animate-fade-in">
+            <button
+              onClick={() => setSelectedNews(null)}
+              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition-colors"
+            >
+              <X size={18} />
+            </button>
+            <div className="h-64 sm:h-80 w-full flex-shrink-0 relative">
+              <img src={selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6 text-white">
+                <span className="inline-block text-xs font-semibold px-2 py-1 rounded-md mb-3" style={{ backgroundColor: '#E8521A' }}>
+                  {selectedNews.category}
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {selectedNews.title}
+                </h2>
+                <p className="text-sm mt-2 opacity-90 text-gray-200">
+                  {t(
+                    new Date(selectedNews.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    new Date(selectedNews.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="p-6 sm:p-8">
+              <div
+                className="prose prose-sm sm:prose-base max-w-none prose-p:leading-relaxed prose-headings:font-poppins prose-a:text-[#E8521A] text-gray-700 whitespace-pre-wrap"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+                dangerouslySetInnerHTML={{ __html: selectedNews.content }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

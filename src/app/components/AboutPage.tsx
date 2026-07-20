@@ -1,48 +1,80 @@
 import { Link } from 'react-router';
 import { SEO } from './ui/SEO';
 import { ArrowRight, Shield, Lightbulb, Heart, Users, Eye, Target, Waves, Wind, Droplets, Scale, Sprout, MapPin } from 'lucide-react';
-import { getTeam } from '../lib/storage';
+import { useState } from 'react';
 import logo2 from '../../imports/image-2.webp';
 import { useLanguage } from '../lib/LanguageContext';
 
-function TeamMemberCard({ member }: { member: { id: string; name: string; role: string; bio: string; email: string } }) {
+function TeamMemberCard({ member }: { member: { id: string; name: string; role: string; bio: string; email: string; image?: string } }) {
   const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold"
-        style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}
-      >
-        {initials}
-      </div>
+      {member.image ? (
+        <img src={member.image} alt={member.name} className="w-24 h-24 rounded-2xl mb-4 object-cover" style={{ border: '2px solid #E8521A' }} />
+      ) : (
+        <div
+          className="w-24 h-24 rounded-2xl flex items-center justify-center mb-4 text-2xl font-bold"
+          style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}
+        >
+          {initials}
+        </div>
+      )}
       <h3 className="font-semibold mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{member.name}</h3>
       <p className="text-xs font-medium mb-3" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif' }}>{member.role}</p>
-      <p className="text-sm leading-relaxed" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{member.bio}</p>
-      <a
-        href={`mailto:${member.email}`}
-        className="mt-4 inline-block text-xs hover:underline transition-colors"
-        style={{ color: '#1A6B3C', fontFamily: 'Inter, sans-serif' }}
-      >
-        {member.email}
-      </a>
+      {member.bio && <p className="text-sm leading-relaxed" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{member.bio}</p>}
+      {member.email && (
+        <a
+          href={`mailto:${member.email}`}
+          className="mt-4 inline-block text-xs hover:underline transition-colors"
+          style={{ color: '#1A6B3C', fontFamily: 'Inter, sans-serif' }}
+        >
+          {member.email}
+        </a>
+      )}
     </div>
   );
 }
 
 export function AboutPage() {
   const { t } = useLanguage();
-  const team = getTeam();
-
-  const timeline = [
-    { year: '2022', title: t('Founded', 'প্রতিষ্ঠিত'), desc: t('Youth Climate Network established in Khulna, Bangladesh with a founding team of 12 young climate activists. Registered under DYD/Khulna/Reg-104.', 'খুলনা, বাংলাদেশে ১২ জন তরুণ জলবায়ু কর্মীর একটি প্রতিষ্ঠাতা দলের মাধ্যমে ইয়ুথ ক্লাইমেট নেটওয়ার্ক প্রতিষ্ঠিত হয়। এটি DYD/Khulna/Reg-104 এর অধীনে নিবন্ধিত।') },
-    { year: '2022', title: t('First Programs', 'প্রথম কার্যক্রম'), desc: t('Launched initial climate education sessions and tree plantation drives across Khulna division, reaching 500 participants in year one.', 'খুলনা বিভাগ জুড়ে প্রাথমিক জলবায়ু শিক্ষা সেশন এবং বৃক্ষরোপণ অভিযান শুরু হয়, প্রথম বছরে ৫০০ জনের কাছে পৌঁছায়।') },
-    { year: '2023', title: t('Regional Expansion', 'আঞ্চলিক সম্প্রসারণ'), desc: t('Extended operations to 5 additional districts. Launched WASH and Disaster Risk Management programs in coastal communities.', 'আরও ৫টি জেলায় কার্যক্রম সম্প্রসারিত হয়। উপকূলীয় সম্প্রদায়গুলোতে ওয়াশ (WASH) এবং দুর্যোগ ঝুঁকি ব্যবস্থাপনা প্রোগ্রাম শুরু হয়।') },
-    { year: '2023', title: t('UNFCCC Debut', 'কপ (COP) সম্মেলনে প্রথম অংশগ্রহণ'), desc: t('First YCN delegation at COP28 in Dubai, joining the YOUNGO constituency and presenting Bangladesh\'s frontline community perspectives.', 'দুবাইয়ে অনুষ্ঠিত কপ-২৮ (COP28) সম্মেলনে প্রথম ওয়াইসিএন প্রতিনিধি দল অংশগ্রহণ করে, বাংলাদেশ ও উপকূলীয় অঞ্চলের তরুণদের মতামত তুলে ধরে।') },
-    { year: '2024', title: t('Youth Leadership Academy', 'যুব নেতৃত্ব একাডেমি'), desc: t('Third cohort of the Youth Leadership Academy graduates 120 climate champions. Program recognized by Department of Youth Development.', 'যুব নেতৃত্ব একাডেমির তৃতীয় ব্যাচ থেকে ১২০ জন জলবায়ু চ্যাম্পিয়ন স্নাতক লাভ করেন। এই প্রোগ্রামটি যুব উন্নয়ন অধিদপ্তর কর্তৃক স্বীকৃত।') },
-    { year: '2024', title: t('Solar Homes Milestone', 'সোলার হোম মাইলফলক'), desc: t('500 off-grid families receive solar home systems through YCN\'s Renewable Energy program. 50,000 trees planted cumulative milestone.', 'ওয়াইসিএন-এর নবায়নযোগ্য শক্তি প্রোগ্রামের মাধ্যমে ৫০০টি গ্রিড-বহির্ভূত পরিবার সোলার হোম সিস্টেম লাভ করে। মোট ৫০,০০০ বৃক্ষরোপণের মাইলফলক স্পর্শ।') },
-    { year: '2024', title: t('Asia Pacific Network', 'এশিয়া প্যাসিফিক নেটওয়ার্ক'), desc: t('Formal membership in Asia Pacific Youth Climate Coalition. Active representation at South Asian regional climate forums.', 'এশিয়া প্যাসিফিক ইয়ুথ ক্লাইমেট কোয়ালিশনে আনুষ্ঠানিক সদস্যপদ লাভ এবং দক্ষিণ এশীয় আঞ্চলিক জলবায়ু ফোরামে সক্রিয় প্রতিনিধিত্ব।') },
-    { year: '2025', title: t('Scaling Up', 'কার্যক্রম আরও বাড়ানো'), desc: t('Expanding to 15 program pillars covering financial inclusion, legal aid, and climate migration with support from international partners.', 'আন্তর্জাতিক অংশীদারদের সহায়তায় আর্থিক অন্তর্ভুক্তি, আইনি সহায়তা এবং জলবায়ু অভিবাসন সহ ১৫টি প্রোগ্রাম পিলারে কার্যক্রম সম্প্রসারণ।') },
+  const advisors = [
+    { name: 'Dr. Sue Maxam', role: 'Assistant Provost for Wellness at Pace University, USA and Inaugural Co Chair of the MCN Civic Learning Council', image: '/members/Dr. Sue Maxam ,  Assistant Provost for Wellness at  Pace University , USA  and  Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council  - Advisor .webp' },
+    { name: 'Dr. Dave Dowland', role: 'Registrar, BRAC University and Inaugural Co Chair of the MCN Civic Learning Council', image: '/members/Dr. Dave Dowland , Registrar, BRAC University  and Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council - Advisor .jpg' },
+    { name: 'Dr. Navid Saleh', role: 'Professor, Department of Civil, Architectural and Environmental Engineering at the University of Texas at Austin, USA', image: '/members/Dr. Navid Saleh ,  Professor , Department of Civil , Architectural and Environmental Engineering at the University of Texas at Austin , USA..jpg' },
+    { name: 'Abel Atares', role: 'Humanitarian', image: '/members/Abel Atares - Humanitarian .jpg' },
+    { name: 'Pablo Bescos', role: 'Humanitarian', image: '/members/Pablo Bescos - Humanitarian .jpg' },
+    { name: 'Dr. Tuhin Roy', role: 'Sociology Discipline, University of Khulna', email: 'tuhinroy@soc.ku.ac.bd', image: '/members/Dr. Tuhin Roy , Sociology Discipline , University of Khulna .jpeg' },
+    { name: 'Dr Hanif Miah', role: 'Associate Professor, Department of Sociology at University of Chittagong', email: 'miah.hanif@cu.ac.bd', image: '/members/Dr Hanif Miah , Associate Professor , Department of Sociology at University of Chittagong   - Advisor .jpg' },
+    { name: 'Dr. Md. Wasiul Islam', role: 'Professor, Forestry and Wood Technology Discipline, University of Khulna', email: 'wislam@fwt.ku.ac.bd', image: '/members/Dr. Md. Wasiul Islam , Professor ,  Forestry and Wood Technology Discipline , University of Khulna  .jpg' },
+    { name: 'Dr. Md Hafizur Rahman', role: 'Founder & Executive Director - Education for Development and Sustainability - EDS', image: '/members/Dr. Md Hafizur Rahman , Founder & Executive Director - Education for Development  and Sustainability - EDS - Advisor .jpg' },
+    { name: 'Dr. Md. Hasan Howlader', role: 'Associate Professor, Development Studies Discipline, University of Khulna', email: 'hasan@ds.ku.ac.bd', image: '/members/Dr. Md.  Hasan  Howlader , Associate Professor , Development Studies Discipline , University of Khulna .jpg' },
+    { name: 'Dr. Shapla Singha', role: 'Assistant Professor, Drawing and Painting Discipline, University of Khulna', email: 'shaplasingha@ku.ac.bd', image: '/members/Dr. Shapla Singha, Assistant Professor , Drawing and Painting Discipline , University of Khulna  .jpg' },
+    { name: 'M RIAD AKTER (Aadib)', role: 'Founder & CEO at EDAXIS Global', email: 'mail.me@riyadaadib.com' },
+    { name: 'MUTLUBA NACHRIN (Meete)', role: 'Founder & CEO @ Tourng Travelers', email: 'director@tourng.com' },
+    { name: 'MD. Matiur Rahman Talukder', role: 'Retired Deputy Director - Department of Youth Development', image: '/members/MD. Matiur Rahman Talukder  Retired Deputy Director - Department of Youth Development,  Ministry of Youth and Sports_.jpg' },
+    { name: 'Mohammed Mofizur Rahman', role: 'Scientist, Potsdam Institute for Climate Impact Research', image: '/members/Mohammed Mofizur Rahman - Scientist , Potsdam Institute for Climate Impact Research ..jpg' },
   ];
+
+  const teamList = [
+    { name: 'Arafat Hossain Akash', role: 'Founder & Executive Director', image: '/members/Arafat Hossain Akash - Founder & Executive Director .png' },
+    { name: 'Madhusudan Mondal', role: 'Head of Programs & Climate Action', image: '/members/Madhusudan Mondal - Head of Programs & Climate Action .jpeg' },
+    { name: 'Sadique Haseen Ratul', role: 'Head of Digital Engagement & Advocacy', image: '/members/Sadique Haseen Ratul - Head of Digital Engagement & Advocacy .jpeg' },
+    { name: 'Ashikur Rahman', role: 'Head of Operations', image: '/members/Ashikur Rahman - Head of Operations .jpeg' },
+    { name: 'Hasibul Alam Hridoy', role: 'Head of Research, Policy & Innovation', image: '/members/Hasibul Alam Hridoy - Head of Research, Policy & Innovation .jpg.jpeg' },
+    { name: 'Anupurba sarkar', role: 'Head of People & Culture (HR)', image: '/members/Anupurba sarkar  -  Head of People & Culture .jpeg' },
+    { name: 'Antora Akter Nodee', role: 'Head of Safeguarding & Ethics', image: '/members/Antora  Akter Nodee - Head of Safeguarding & Ethics .jpeg' },
+    { name: 'Puja Gain', role: 'Head of Volunteer Operations', image: '/members/Head of Volunteer Operations -   Puja Gain (1).jpg' },
+    { name: 'Imran Hosen', role: 'Head of Events & Campaigns', image: '/members/Head of Events & Campaigns —  Imran Hosen .jpg' },
+    { name: 'Ariful Islam', role: 'Head of Inclusion', image: '/members/Ariful Islam -  Head of Inclusion .jpeg' },
+    { name: 'Azibar Hossain', role: 'Head of Partnerships & Resource Mobilization', image: '/members/Azibar Hossain - Head of Partnerships & Resource Mobilization .jpeg' },
+    { name: 'Md. Arif Morol', role: 'Head of Finance & Administration', image: '/members/Md. Arif Morol   -  Head of Finance & Administration .jpeg' },
+    { name: 'Usha Bin Farid', role: 'Head of Communications & Content', image: '/members/Head of Communications & Content -    Usha Bin Farid .jpeg' },
+    { name: 'Jobaer Hossain', role: 'Head of Monitoring, Evaluation & Learning (MEL)', image: '/members/Jobaer Hossain -   Head of Monitoring, Evaluation & Learning (MEL)  .jpeg' },
+    { name: 'Riaz Afrin', role: 'Head of Legal & Governance', image: '/members/Head of Legal & Governance   — Riaz Afrin .jpg' },
+    { name: 'Rifat Sana', role: 'Head of Management Information Systems (MIS)', image: '/members/Rifat Sana   -   Head of Management Information Systems (MIS).jpeg' },
+  ];
+
+  const [expandedStatement, setExpandedStatement] = useState(false);
 
   const values = [
     {
@@ -396,37 +428,68 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* Timeline */}
+      {/* Founder Statement */}
       <section className="py-20" style={{ backgroundColor: '#F3F4F6' }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              {t('Our Journey', 'আমাদের যাত্রা')}
-            </h2>
-            <p className="mt-3" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{t('Building a climate-just future since 2022', '২০২২ সাল থেকে জলবায়ু ন্যায়সঙ্গত ভবিষ্যৎ গড়ে তোলা')}</p>
-          </div>
-          <div className="relative">
-            <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ backgroundColor: '#D1D5DB' }} />
-            <div className="space-y-8">
-              {timeline.map((item, i) => (
-                <div key={i} className="flex gap-6 relative">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 z-10 text-xs font-bold"
-                    style={{ backgroundColor: i % 2 === 0 ? '#0A3320' : '#E8521A', color: '#F0ECD8', fontFamily: 'Poppins, sans-serif' }}
-                  >
-                    {item.year.slice(2)}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="bg-white rounded-3xl p-8 lg:p-12 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-12 items-start">
+            <div className="lg:w-1/3 flex-shrink-0">
+              <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-200 mb-6">
+                <img src="/members/Arafat Hossain Akash - Founder & Executive Director .png" alt="Arafat Hossain Akash" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <div className="w-full h-full flex items-center justify-center text-gray-400" style={{ display: 'none' }}>Photo Placeholder</div>
+              </div>
+              <h3 className="font-bold text-xl mb-1" style={{ color: '#1F2937' }}>Arafat Hossain Akash</h3>
+              <p className="text-sm font-medium" style={{ color: '#E8521A' }}>Founder & Executive Director, Youth Climate Network</p>
+            </div>
+            <div className="lg:w-2/3">
+              <h2 className="mb-6 font-bold" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '2rem', color: '#1F2937' }}>
+                Founder & Executive Director's Statement
+              </h2>
+              <div className="space-y-4 text-gray-600 leading-relaxed font-inter">
+                <p>
+                  On 25 May 2009, Cyclone Aila struck the coast of Bangladesh. Our home, everything we had — washed away in hours. I was nine years old, and I lost my school before I ever fully understood what I was losing. That was not the only storm of my childhood.
+                </p>
+                {expandedStatement && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <p>
+                      I grew up watching cyclone after cyclone tear through our coast — Sidr, Aila, Fani, Amphan — each one arriving with a different name but the same devastating signature: homes destroyed, harvests lost, children pulled out of school, families pushed deeper into hardship. Year after year, I watched the same communities rebuild, only to be struck down again. That repetition — of suffering, survival, and starting over — moved something in me that has never left. It was not abstract data or distant news. It was my neighbors. It was people I loved, losing everything, again and again, through no fault of their own.
+                    </p>
+                    <p>
+                      Somewhere in the middle of all that loss, I made a decision I could not unmake: I would not simply survive this crisis. I would stand up and act — as a changemaker — to change the condition of the people around me who had suffered exactly as I had.
+                    </p>
+                    <p>
+                      In 2021, that conviction led me to establish Humanity Public Library, so that children and families in climate-vulnerable coastal communities — like the one I grew up in — would never have to lose their education to a disaster the way I nearly did. It was never meant to be the end of the work. It was only the beginning.
+                    </p>
+                    <p>
+                      That same conviction led to the founding of Youth Climate Network (YCN).
+                    </p>
+                    <p>
+                      Our Mission is to mobilize, equip, and amplify the power of young people to drive transformative action on climate change, environmental justice, and sustainable development — building the capacity of youth leaders and frontline communities, advocating for systemic change at local, national, and regional levels, and delivering life-changing programs in education, livelihoods, water, sanitation, disaster preparedness, and renewable energy, so that no community is left behind.
+                    </p>
+                    <p>
+                      Our Vision is a climate-resilient, environmentally just, and sustainably developed South Asia and Asia Pacific — where every young person has the knowledge, power, and opportunity to shape a thriving planet for present and future generations.
+                    </p>
+                    <p>
+                      Every program YCN runs today — from safe water access to disaster risk reduction to youth leadership training — carries the memory of a broken embankment, three years of uncertain tides, and a childhood measured out in cyclones. It is personal, and it is precisely why our work stays honest, urgent, and rooted in what frontline communities actually need — because I was one of them, and in many ways, I still am.
+                    </p>
+                    <p>
+                      We are deeply grateful to the partners, donors, and institutions who have chosen to invest in that belief — trusting young people from Bangladesh's coast not just to survive the climate crisis, but to lead the fight against it.
+                    </p>
+                    <p>
+                      There is an enormous distance still to travel. But I have seen what a cyclone can take from a community — and I have also seen what young people, given the trust and the tools, can rebuild in its place.
+                    </p>
+                    <p>
+                      This is only the beginning of that journey.
+                    </p>
                   </div>
-                  <div className="flex-1 pb-2">
-                    <div className="bg-white rounded-xl p-5 shadow-sm">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-xs font-bold" style={{ color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}>{item.year}</span>
-                        <h4 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{item.title}</h4>
-                      </div>
-                      <p className="text-sm leading-relaxed" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{item.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                )}
+                <button
+                  onClick={() => setExpandedStatement(!expandedStatement)}
+                  className="mt-4 font-semibold hover:underline flex items-center gap-1 transition-colors"
+                  style={{ color: '#1A6B3C' }}
+                >
+                  {expandedStatement ? 'Show Less ↑' : 'Read Full Story →'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -447,7 +510,43 @@ export function AboutPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {team.map((member) => <TeamMemberCard key={member.id} member={member} />)}
+            {teamList.map((member, i) => (
+              <TeamMemberCard key={i} member={{ id: `${i}`, name: member.name, role: member.role, bio: '', email: '', image: member.image }} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Advisors */}
+      <section className="py-20" style={{ backgroundColor: '#F9FAFB' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>
+              Advisors
+            </div>
+            <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
+              Meet Our Advisors
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {advisors.map((advisor, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center">
+                {advisor.image ? (
+                  <img src={advisor.image} alt={advisor.name} className="w-24 h-24 rounded-full object-cover mb-4 border-2" style={{ borderColor: '#E8521A' }} />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-[#0A3320] text-[#E8521A] flex items-center justify-center font-bold text-2xl mb-4">
+                    {advisor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </div>
+                )}
+                <h3 className="font-semibold mb-2 text-[#1F2937]">{advisor.name}</h3>
+                <p className="text-sm text-gray-500 mb-2">{advisor.role}</p>
+                {advisor.email && (
+                  <a href={`mailto:${advisor.email}`} className="text-xs text-[#1A6B3C] hover:underline mt-auto">
+                    {advisor.email}
+                  </a>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>

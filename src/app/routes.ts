@@ -8,6 +8,7 @@ import { ImpactPage } from './components/ImpactPage';
 import { GetInvolvedPage } from './components/GetInvolvedPage';
 import { DonatePage } from './components/DonatePage';
 import { AdvocacyPage } from './components/AdvocacyPage';
+import { MindShantaraPage } from './components/MindShantaraPage';
 import { MediaPage } from './components/MediaPage';
 import { ContactPage } from './components/ContactPage';
 import { AdminPage } from './components/AdminPage';
@@ -27,12 +28,14 @@ export const router = createBrowserRouter([
       { path: 'impact', Component: ImpactPage },
       { path: 'get-involved', Component: GetInvolvedPage },
       { path: 'donate', Component: DonatePage },
-      { path: 'advocacy', Component: AdvocacyPage },
+      { path: 'our-work/mind-shantara', Component: MindShantaraPage },
+      { path: 'our-work/advocacy', Component: AdvocacyPage },
       { path: 'media', Component: MediaPage },
       { path: 'contact', Component: ContactPage },
       { path: 'privacy', Component: PrivacyPage },
       { path: 'terms', Component: TermsPage },
       { path: 'admin', Component: AdminPage },
+      { path: 'admin/:tab', Component: AdminPage },
       { path: '*', Component: NotFoundPage },
     ],
   },

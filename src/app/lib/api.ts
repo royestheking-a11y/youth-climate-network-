@@ -121,12 +121,12 @@ export const apiMedia = createApiClient<MediaItem>('media');
 export const uploadFile = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   const res = await fetch(`${API_URL}/upload`, {
     method: 'POST',
     body: formData,
   });
-  
+
   if (!res.ok) throw new Error('File upload failed');
   const data = await res.json();
   return data.url;

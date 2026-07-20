@@ -1,5 +1,6 @@
 import {
   Scale, BookOpen, Droplets, Shield, Leaf, Zap, Sprout, Users, Heart, Activity, Coins, MapPin,
+  TreePine, Bird, Brain, Waves, Building2,
   LucideIcon
 } from 'lucide-react';
 
@@ -411,6 +412,116 @@ export const allPrograms: Program[] = [
       'জলবায়ু তথ্য কিয়স্ক — সামাজিক কিয়স্ক এবং পাবলিক নোটিশ বোর্ডের মাধ্যমে প্রচারিত স্থানীয় আবহাওয়া, বন্যার প্রাথমিক সতর্কতা, কৃষি পরামর্শ এবং সরকারি প্রকল্পের তথ্য।',
       'যুব স্টাডি সার্কেল — তরুণদের জলবায়ু বিজ্ঞান, নাগরিক সমস্যা এবং টেকসই উন্নয়ন বিষয়গুলো অন্বেষণ করার জন্য নিয়মিত সুবিধাজনক আলোচনা এবং সমকক্ষ-শিক্ষা গ্রুপ।',
       'কমিউনিটি রেডিও ও স্থানীয় মিডিয়া — স্থানীয় উপভাষায় জলবায়ু, স্বাস্থ্য, অধিকার, জীবিকা এবং উন্নয়নমূলক বিষয়ে কমুনিটি রেডিও প্রোগ্রামিং এবং স্থানীয় মিডিয়া প্রযোজনায় সহায়তা করা।',
+    ],
+  },
+  {
+    id: 'biodiversity',
+    title: 'Biodiversity in Action',
+    title_bn: 'জীববৈচিত্র্য সংরক্ষণে পদক্ষেপ',
+    icon: TreePine,
+    theme: 'Biodiversity',
+    theme_bn: 'জীববৈচিত্র্য',
+    color: '#33691E',
+    bg: '#F1F8E9',
+    description: 'Protecting natural habitats, large-scale afforestation, and preserving biodiversity.',
+    description_bn: 'প্রাকৃতিক আবাসস্থল রক্ষা, বৃহত্তর বনায়ন এবং জীববৈচিত্র্য সংরক্ষণ।',
+    keyPrograms: [
+      'Community-led Biodiversity Monitoring — Establishing local committees to track and protect vulnerable plant and animal species.',
+      'Reforestation Initiatives — Partnering with local authorities to restore degraded forests using native species.',
+      'Environmental Education for Youth — Workshops on the importance of local ecosystems and conservation.'
+    ],
+    keyPrograms_bn: [
+      'সম্প্রদায়-নেতৃত্বাধীন জীববৈচিত্র্য পর্যবেক্ষণ — দুর্বল উদ্ভিদ এবং প্রাণীর প্রজাতি ট্র্যাক এবং সুরক্ষার জন্য স্থানীয় কমিটি গঠন।',
+      'বনায়ন উদ্যোগ — দেশীয় প্রজাতি ব্যবহার করে ক্ষয়প্রাপ্ত বন পুনরুদ্ধারের জন্য স্থানীয় কর্তৃপক্ষের সাথে অংশীদারিত্ব।',
+      'যুবকদের জন্য পরিবেশগত শিক্ষা — স্থানীয় বাস্তুতন্ত্র এবং সংরক্ষণের গুরুত্ব নিয়ে কর্মশালা।'
+    ],
+  },
+  {
+    id: 'wildlife',
+    title: 'Wildlife & Welfare',
+    title_bn: 'বন্যপ্রাণী ও কল্যাণ',
+    icon: Bird,
+    theme: 'Wildlife',
+    theme_bn: 'বন্যপ্রাণী',
+    color: '#827717',
+    bg: '#F9FBE7',
+    description: 'Protecting endangered species and ensuring welfare for wildlife in climate-vulnerable zones.',
+    description_bn: 'বিপন্ন প্রজাতি রক্ষা এবং জলবায়ু-ঝুঁকিপূর্ণ অঞ্চলে বন্যপ্রাণীর কল্যাণ নিশ্চিত করা।',
+    keyPrograms: [
+      'Anti-Poaching Campaigns — Raising awareness and working with local authorities to stop illegal hunting.',
+      'Wildlife Rescue & Rehabilitation — Providing support for injured or displaced wildlife due to extreme weather.',
+      'Habitat Preservation — Securing vital corridors and breeding grounds for endangered species.'
+    ],
+    keyPrograms_bn: [
+      'শিকার বিরোধী অভিযান — সচেতনতা বৃদ্ধি এবং অবৈধ শিকার বন্ধ করতে স্থানীয় কর্তৃপক্ষের সাথে কাজ করা।',
+      'বন্যপ্রাণী উদ্ধার ও পুনর্বাসন — চরম আবহাওয়ার কারণে আহত বা বাস্তুচ্যুত বন্যপ্রাণীদের সহায়তা প্রদান।',
+      'আবাসস্থল সংরক্ষণ — বিপন্ন প্রজাতির জন্য গুরুত্বপূর্ণ করিডোর এবং প্রজনন স্থল সুরক্ষিত করা।'
+    ],
+  },
+  {
+    id: 'mental-health',
+    title: 'Mental Health & Psychosocial Support',
+    title_bn: 'মানসিক স্বাস্থ্য ও মনস্তাত্ত্বিক সহায়তা',
+    icon: Brain,
+    theme: 'Mental Health',
+    theme_bn: 'মানসিক স্বাস্থ্য',
+    color: '#00695C',
+    bg: '#E0F2F1',
+    description: 'Connecting survivors to psychosocial support and specialized climate-anxiety care.',
+    description_bn: 'মানসিক স্বাস্থ্য সহায়তা এবং বিশেষায়িত জলবায়ু-উদ্বেগ সেবার সাথে ক্ষতিগ্রস্তদের সংযুক্ত করা।',
+    keyPrograms: [
+      'Climate Anxiety Counseling — Offering specialized support groups for youth experiencing eco-anxiety.',
+      'Disaster Trauma Recovery — Deploying psychological first aid to communities affected by severe weather events.',
+      'Community Wellbeing Workshops — Building emotional resilience and strong support networks in vulnerable areas.'
+    ],
+    keyPrograms_bn: [
+      'জলবায়ু উদ্বেগ কাউন্সেলিং — ইকো-অ্যাংজাইটি বা পরিবেশগত উদ্বেগ অনুভবকারী তরুণদের জন্য বিশেষ সহায়তা গ্রুপ।',
+      'দুর্যোগ ট্রমা পুনরুদ্ধার — মারাত্মক আবহাওয়ার ঘটনা দ্বারা ক্ষতিগ্রস্ত সম্প্রদায়গুলোতে মনস্তাত্ত্বিক প্রাথমিক চিকিৎসা মোতায়েন করা।',
+      'কমিউনিটি ওয়েলবিয়িং ওয়ার্কশপ — ঝুঁকিপূর্ণ এলাকায় মানসিক স্থিতিস্থাপকতা এবং শক্তিশালী সহায়তা নেটওয়ার্ক তৈরি করা।'
+    ],
+  },
+  {
+    id: 'coastal-marine',
+    title: 'Coastal & Marine Ecosystem Protection',
+    title_bn: 'উপকূলীয় এবং সামুদ্রিক ইকোসিস্টেম সুরক্ষা',
+    icon: Waves,
+    theme: 'Coastal & Marine',
+    theme_bn: 'উপকূলীয় ও সামুদ্রিক',
+    color: '#0277BD',
+    bg: '#E1F5FE',
+    description: 'Restoring mangrove forests and protecting fragile coastlines from cyclones and tidal surges.',
+    description_bn: 'ম্যানগ্রোভ বন পুনরুদ্ধার এবং ঘূর্ণিঝড় ও জলোচ্ছ্বাস থেকে ভঙ্গুর উপকূলরেখা রক্ষা করা।',
+    keyPrograms: [
+      'Mangrove Afforestation — Planting mangroves to serve as natural barriers against storm surges.',
+      'Marine Debris Cleanup — Organizing regular coastal cleanups to reduce plastic pollution in the ocean.',
+      'Sustainable Fishing Advocacy — Working with local fishing communities to promote eco-friendly practices.'
+    ],
+    keyPrograms_bn: [
+      'ম্যানগ্রোভ বনায়ন — জলোচ্ছ্বাসের বিরুদ্ধে প্রাকৃতিক বাধা হিসেবে কাজ করার জন্য ম্যানগ্রোভ রোপণ।',
+      'সামুদ্রিক ধ্বংসাবশেষ পরিষ্কার — মহাসাগরে প্লাস্টিক দূষণ কমাতে নিয়মিত উপকূলীয় পরিচ্ছন্নতা অভিযানের আয়োজন।',
+      'টেকসই মৎস্য অ্যাডভোকেসি — পরিবেশবান্ধব অনুশীলন প্রচারের জন্য স্থানীয় মৎস্যজীবী সম্প্রদায়ের সাথে কাজ করা।'
+    ],
+  },
+  {
+    id: 'urban-climate',
+    title: 'Urban Climate Resilience',
+    title_bn: 'শহুরে জলবায়ু স্থিতিস্থাপকতা',
+    icon: Building2,
+    theme: 'Urban Resilience',
+    theme_bn: 'শহুরে স্থিতিস্থাপকতা',
+    color: '#EF6C00',
+    bg: '#FFF3E0',
+    description: 'Building resilience against urban flooding, heat stress, and infrastructure strain in cities.',
+    description_bn: 'শহরাঞ্চলে বন্যা, তাপের চাপ এবং অবকাঠামোগত চাপের বিরুদ্ধে সহনশীলতা তৈরি করা।',
+    keyPrograms: [
+      'Urban Heat Island Mitigation — Promoting green roofs, urban tree planting, and cool pavements.',
+      'Flood Resilience Infrastructure — Advocating for improved drainage and permeable surfaces to manage heavy rainfall.',
+      'Sustainable Urban Planning — Partnering with city planners to integrate climate resilience into urban development.'
+    ],
+    keyPrograms_bn: [
+      'আরবান হিট আইল্যান্ড প্রশমন — সবুজ ছাদ, শহুরে বৃক্ষরোপণ এবং শীতল ফুটপাথ প্রচার করা।',
+      'বন্যা স্থিতিস্থাপকতা অবকাঠামো — ভারী বৃষ্টিপাত পরিচালনার জন্য উন্নত নিষ্কাশন এবং ব্যাপ্ত পৃষ্ঠের পক্ষে ওকালতি করা।',
+      'টেকসই নগর পরিকল্পনা — নগর উন্নয়নে জলবায়ু স্থিতিস্থাপকতা সংহত করার জন্য নগর পরিকল্পনাবিদদের সাথে অংশীদারিত্ব।'
     ],
   }
 ];

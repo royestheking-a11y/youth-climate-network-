@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
-import { Mail, Phone, MapPin, Clock, CheckCircle, MessageSquare, ExternalLink, MessageCircle, Users } from 'lucide-react';
-import { addContactMessage, getTeam } from '../lib/storage';
+import { Mail, MapPin, CheckCircle, MessageCircle, Users, Phone } from 'lucide-react';
+import { addContactMessage } from '../lib/storage';
 import { useLanguage } from '../lib/LanguageContext';
 
 export function ContactPage() {
   const { t } = useLanguage();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [success, setSuccess] = useState(false);
-  const team = getTeam().slice(0, 4);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +23,8 @@ export function ContactPage() {
 
   return (
     <div>
-      <SEO 
-        title="Contact" 
+      <SEO
+        title="Contact"
         description="Get in touch with the Youth Climate Network. We welcome questions, partnerships, and ideas from anyone passionate about climate action."
         keywords="contact youth climate network, climate organization contact, environmental partnership, reach out climate action, contact bangladesh climate ngo"
       />
@@ -65,10 +65,10 @@ export function ContactPage() {
                 </h2>
                 <div className="space-y-4">
                   {[
-                    { icon: MapPin, label: t('Address', 'ঠিকানা'), text: t('Khulna Division, Bangladesh\n(Coastal Climate Frontline HQ)', 'খুলনা বিভাগ, বাংলাদেশ\n(উপকূলীয় জলবায়ু ফ্রন্টলাইন সদর দপ্তর)'), color: '#E8521A' },
-                    { icon: Mail, label: t('Email', 'ইমেইল'), text: 'info@ycnbd.org\nadvocacy@ycnbd.org', color: '#1A6B3C', link: 'mailto:info@ycnbd.org' },
-                    { icon: Phone, label: t('Phone', 'ফোন'), text: '+880-XXX-XXXXXXX', color: '#0E7490' },
-                    { icon: Clock, label: t('Office Hours', 'অফিসের সময়'), text: t('Sunday – Thursday\n9:00 AM – 6:00 PM BST', 'রবিবার – বৃহস্পতিবার\nসকাল ৯:০০ – সন্ধ্যা ৬:০০ BST'), color: '#D97706' },
+                    { icon: MapPin, label: t('Headquarters', 'সদর দপ্তর'), text: t('15/KA, Shyamoli, Mirpur Road\nDhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড\nঢাকা-১২০৭, বাংলাদেশ'), color: '#E8521A', link: 'https://maps.google.com/?q=15/KA,+Shyamoli,+Mirpur+Road,+Dhaka' },
+                    { icon: MapPin, label: t('Regional Office', 'আঞ্চলিক অফিস'), text: t('Village + Post: Nalian 9273\nUnion: Sutrakhali, Dacope, Khulna', 'গ্রাম + ডাক: নলিয়ান ৯২৭৩\nইউনিয়ন: সুতারখালী, দাকোপ, খুলনা'), color: '#D97706', link: 'https://maps.google.com/?q=Nalian+9273,+Sutrakhali,+Dacope,+Khulna' },
+                    { icon: Mail, label: t('Email', 'ইমেইল'), text: 'info@youthclimatenetworkbd.org\ncontact@youthclimatenetworkbd.org\nyouthclimatenetworkbd@gmail.com', color: '#1A6B3C', link: 'mailto:info@youthclimatenetworkbd.org' },
+                    { icon: Phone, label: t('Phone', 'ফোন'), text: '+88 01911 368538', color: '#0077B5', link: 'tel:+8801911368538' },
                   ].map(({ icon: Icon, label, text, color, link }) => (
                     <div key={label} className="flex gap-4 p-4 rounded-xl bg-white shadow-sm">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
@@ -77,7 +77,7 @@ export function ContactPage() {
                       <div>
                         <p className="text-xs font-semibold mb-1" style={{ color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>{label}</p>
                         {link ? (
-                          <a href={link} className="text-sm whitespace-pre-line hover:underline" style={{ color: '#1F2937', fontFamily: 'Inter, sans-serif' }}>{text}</a>
+                          <a href={link} target={link.startsWith('http') ? '_blank' : undefined} rel={link.startsWith('http') ? 'noopener noreferrer' : undefined} className="text-sm whitespace-pre-line hover:underline" style={{ color: '#1F2937', fontFamily: 'Inter, sans-serif' }}>{text}</a>
                         ) : (
                           <p className="text-sm whitespace-pre-line" style={{ color: '#1F2937', fontFamily: 'Inter, sans-serif' }}>{text}</p>
                         )}
@@ -111,7 +111,7 @@ export function ContactPage() {
                   )}
                 </p>
                 <a
-                  href="https://wa.me/880XXXXXXXXX"
+                  href="https://whatsapp.com/channel/0029VbDURgAADTOEJvOAEX2z"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
@@ -134,15 +134,17 @@ export function ContactPage() {
                 </p>
                 <div className="space-y-2.5">
                   {[
-                    { platform: t('Facebook', 'ফেসবুক'), handle: '@YouthClimateNetworkBD', color: '#1877F2', bg: '#EBF5FF' },
-                    { platform: t('Instagram', 'ইনস্টাগ্রাম'), handle: '@ycn_bangladesh', color: '#E1306C', bg: '#FFF0F5' },
-                    { platform: t('Twitter / X', 'টুইটার / X'), handle: '@YCN_BD', color: '#1DA1F2', bg: '#EBF8FF' },
-                    { platform: t('LinkedIn', 'লিঙ্কডইন'), handle: 'Youth Climate Network', color: '#0077B5', bg: '#EBF4FF' },
-                    { platform: t('YouTube', 'ইউটিউব'), handle: 'YCN Bangladesh', color: '#FF0000', bg: '#FFF0F0' },
-                  ].map(({ platform, handle, color, bg }) => (
+                    { platform: t('Facebook', 'ফেসবুক'), handle: 'Youth Climate Network', color: '#1877F2', bg: '#EBF5FF', link: 'https://www.facebook.com/youthclimatenetwork' },
+                    { platform: t('Instagram', 'ইনস্টাগ্রাম'), handle: 'youthclimatenetworkbd', color: '#E1306C', bg: '#FFF0F5', link: 'https://www.instagram.com/youthclimatenetworkbd/' },
+                    { platform: t('Twitter / X', 'টুইটার / X'), handle: '@ycnorgbd', color: '#1DA1F2', bg: '#EBF8FF', link: 'https://x.com/ycnorgbd' },
+                    { platform: t('LinkedIn', 'লিঙ্কডইন'), handle: 'Youth Climate Network', color: '#0077B5', bg: '#EBF4FF', link: 'https://x.com/ycnorgbd' },
+                    { platform: t('YouTube', 'ইউটিউব'), handle: 'YouthClimateNetwork', color: '#FF0000', bg: '#FFF0F0', link: 'https://www.youtube.com/@YouthClimateNetwork' },
+                  ].map(({ platform, handle, color, bg, link }) => (
                     <a
                       key={platform}
-                      href="#"
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex items-center gap-3 py-2 px-3 rounded-lg transition-all hover:scale-[1.02]"
                       style={{ backgroundColor: bg }}
                     >
@@ -156,156 +158,127 @@ export function ContactPage() {
                 </div>
               </div>
 
-              {/* Registration */}
-              <div className="p-5 rounded-xl" style={{ backgroundColor: '#0A3320' }}>
-                <p className="text-xs font-semibold mb-2" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif' }}>{t('Official Registration', 'অফিসিয়াল নিবন্ধন')}</p>
-                <p className="text-sm" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif', lineHeight: 1.7 }}>
-                  DYD/Khulna/Reg-104<br />
-                  {t('Dept. of Youth Development', 'যুব উন্নয়ন অধিদপ্তর')}<br />
-                  {t('Ministry of Youth and Sports', 'যুব ও ক্রীড়া মন্ত্রণালয়')}<br />
-                  {t("Govt. of the People's Republic of Bangladesh", 'গণপ্রজাতন্ত্রী বাংলাদেশ সরকার')}
-                </p>
-              </div>
             </div>
 
-            {/* Right column: form */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="flex items-center gap-3 mb-6">
-                  <MessageSquare size={22} style={{ color: '#E8521A' }} />
-                  <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1.4rem', color: '#1F2937' }}>
-                    {t('Send a Message', 'বার্তা পাঠান')}
-                  </h2>
-                </div>
-                {success ? (
-                  <div className="text-center py-16">
-                    <CheckCircle size={48} className="mx-auto mb-4" style={{ color: '#1A6B3C' }} />
-                    <h3 className="font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{t('Message Received!', 'বার্তা গ্রহণ করা হয়েছে!')}</h3>
-                    <p className="text-sm" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
-                      {t('Thank you for contacting YCN. We typically respond within 2–3 business days.', 'ওয়াইসিএন-এর সাথে যোগাযোগ করার জন্য আপনাকে ধন্যবাদ। আমরা সাধারণত ২-৩ কার্যদিবসের মধ্যে সাড়া দিয়ে থাকি।')}
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Full Name *', 'সম্পূর্ণ নাম *')}</label>
-                        <input
-                          className={inputCls}
-                          style={inputStyle}
-                          value={form.name}
-                          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                          placeholder={t('Your full name', 'আপনার সম্পূর্ণ নাম')}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Email Address *', 'ইমেইল ঠিকানা *')}</label>
-                        <input
-                          type="email"
-                          className={inputCls}
-                          style={inputStyle}
-                          value={form.email}
-                          onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                          placeholder="your@email.com"
-                          required
-                        />
-                      </div>
+            {/* Right column: form and map */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              {/* Form */}
+              <div>
+                <h2 className="mb-6" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1.4rem', color: '#1F2937' }}>
+                  {t('Send a Message', 'বার্তা পাঠান')}
+                </h2>
+                <div className="bg-white rounded-2xl p-8 shadow-sm">
+                  {success ? (
+                    <div className="text-center py-16">
+                      <CheckCircle size={48} className="mx-auto mb-4" style={{ color: '#1A6B3C' }} />
+                      <h3 className="font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{t('Message Received!', 'বার্তা গ্রহণ করা হয়েছে!')}</h3>
+                      <p className="text-sm" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
+                        {t('Thank you for contacting YCN. We typically respond within 2–3 business days.', 'ওয়াইসিএন-এর সাথে যোগাযোগ করার জন্য আপনাকে ধন্যবাদ। আমরা সাধারণত ২-৩ কার্যদিবসের মধ্যে সাড়া দিয়ে থাকি।')}
+                      </p>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Subject *', 'বিষয় *')}</label>
-                      <select
-                        className={inputCls}
-                        style={{ ...inputStyle, cursor: 'pointer' }}
-                        value={form.subject}
-                        onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-                        required
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Full Name *', 'সম্পূর্ণ নাম *')}</label>
+                          <input
+                            className={inputCls}
+                            style={inputStyle}
+                            value={form.name}
+                            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                            placeholder={t('Your full name', 'আপনার সম্পূর্ণ নাম')}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Email Address *', 'ইমেইল ঠিকানা *')}</label>
+                          <input
+                            type="email"
+                            className={inputCls}
+                            style={inputStyle}
+                            value={form.email}
+                            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                            placeholder="your@email.com"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Subject *', 'বিষয় *')}</label>
+                        <select
+                          className={inputCls}
+                          style={{ ...inputStyle, cursor: 'pointer' }}
+                          value={form.subject}
+                          onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
+                          required
+                        >
+                          <option value="">{t('Select a subject', 'একটি বিষয় নির্বাচন করুন')}</option>
+                          <option>{t('General Inquiry', 'সাধারণ জিজ্ঞাসা')}</option>
+                          <option>{t('Partnership Proposal', 'অংশীদারিত্বের প্রস্তাব')}</option>
+                          <option>{t('Media & Press Inquiry', 'মিডিয়া ও প্রেস জিজ্ঞাসা')}</option>
+                          <option>{t('Program Information', 'কর্মসূচি সম্পর্কিত তথ্য')}</option>
+                          <option>{t('Volunteer / Internship', 'স্বেচ্ছাসেবক / ইন্টার্নশিপ')}</option>
+                          <option>{t('Donation & Funding', 'অনুদান ও অর্থায়ন')}</option>
+                          <option>{t('Academic / Research Collaboration', 'একাডেমিক / গবেষণা সহযোগিতা')}</option>
+                          <option>{t('Other', 'অন্যান্য')}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Message *', 'বার্তা *')}</label>
+                        <textarea
+                          className={inputCls}
+                          style={{ ...inputStyle, resize: 'vertical' }}
+                          rows={6}
+                          value={form.message}
+                          onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                          placeholder={t('Tell us how we can help or collaborate...', 'আমরা কীভাবে আপনাকে সাহায্য করতে পারি বা সহযোগিতা করতে পারি তা জানান...')}
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01]"
+                        style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
                       >
-                        <option value="">{t('Select a subject', 'একটি বিষয় নির্বাচন করুন')}</option>
-                        <option>{t('General Inquiry', 'সাধারণ জিজ্ঞাসা')}</option>
-                        <option>{t('Partnership Proposal', 'অংশীদারিত্বের প্রস্তাব')}</option>
-                        <option>{t('Media & Press Inquiry', 'মিডিয়া ও প্রেস জিজ্ঞাসা')}</option>
-                        <option>{t('Program Information', 'কর্মসূচি সম্পর্কিত তথ্য')}</option>
-                        <option>{t('Volunteer / Internship', 'স্বেচ্ছাসেবক / ইন্টার্নশিপ')}</option>
-                        <option>{t('Donation & Funding', 'অনুদান ও অর্থায়ন')}</option>
-                        <option>{t('Academic / Research Collaboration', 'একাডেমিক / গবেষণা সহযোগিতা')}</option>
-                        <option>{t('Other', 'অন্যান্য')}</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Message *', 'বার্তা *')}</label>
-                      <textarea
-                        className={inputCls}
-                        style={{ ...inputStyle, resize: 'vertical' }}
-                        rows={6}
-                        value={form.message}
-                        onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                        placeholder={t('Tell us how we can help or collaborate...', 'আমরা কীভাবে আপনাকে সাহায্য করতে পারি বা সহযোগিতা করতে পারি তা জানান...')}
-                        required
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01]"
-                      style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
-                    >
-                      {t('Send Message', 'বার্তা পাঠান')}
-                    </button>
-                  </form>
-                )}
+                        {t('Send Message', 'বার্তা পাঠান')}
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
 
-              {/* Map placeholder */}
-              <div
-                className="mt-6 rounded-2xl overflow-hidden flex items-center justify-center"
-                style={{ height: 220, backgroundColor: '#E8F5EE', border: '1px solid #C8E6C9' }}
-              >
-                <div className="text-center">
-                  <MapPin size={32} className="mx-auto mb-2" style={{ color: '#1A6B3C' }} />
-                  <p className="text-sm font-medium" style={{ color: '#1A6B3C', fontFamily: 'Poppins, sans-serif' }}>{t('YCN Headquarters', 'ওয়াইসিএন সদর দপ্তর')}</p>
-                  <p className="text-xs" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{t('Khulna Division, Bangladesh', 'খুলনা বিভাগ, বাংলাদেশ')}</p>
-                  <a
-                    href="https://maps.google.com/?q=Khulna,Bangladesh"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 mt-3 text-xs font-medium hover:underline"
-                    style={{ color: '#E8521A' }}
-                  >
-                    {t('View on Google Maps', 'গুগল ম্যাপে দেখুন')} <ExternalLink size={10} />
-                  </a>
+              {/* Maps replacing the white space */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-2xl p-3 shadow-sm h-[250px] w-full flex flex-col flex-shrink-0">
+                  <p className="text-xs font-semibold mb-2 text-center" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif' }}>{t('Headquarters', 'সদর দপ্তর')}</p>
+                  <div className="flex-1 overflow-hidden rounded-lg">
+                    <iframe
+                      src="https://maps.google.com/maps?q=15/KA,+Shyamoli,+Mirpur+Road,+Dhaka,+Bangladesh&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl p-3 shadow-sm h-[250px] w-full flex flex-col flex-shrink-0">
+                  <p className="text-xs font-semibold mb-2 text-center" style={{ color: '#D97706', fontFamily: 'Inter, sans-serif' }}>{t('Regional Office', 'আঞ্চলিক অফিস')}</p>
+                  <div className="flex-1 overflow-hidden rounded-lg">
+                    <iframe
+                      src="https://maps.google.com/maps?q=Sutrakhali,+Dacope,+Khulna,+Bangladesh&t=&z=13&ie=UTF8&iwloc=&output=embed"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Team Directory */}
-      <section className="py-16" style={{ backgroundColor: '#fff' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="mb-8" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1.4rem', color: '#1F2937' }}>
-            {t('Key Contacts', 'প্রধান যোগাযোগ')}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {team.map((member) => {
-              const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
-              return (
-                <div key={member.id} className="p-5 rounded-xl bg-white border hover:shadow-lg transition-all duration-300" style={{ border: '1px solid #E5E7EB' }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 text-lg font-bold" style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}>
-                    {initials}
-                  </div>
-                  <p className="font-semibold text-sm mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{member.name}</p>
-                  <p className="text-xs mb-3" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif' }}>{member.role}</p>
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="text-xs flex items-center gap-1 hover:underline"
-                    style={{ color: '#1A6B3C', fontFamily: 'Inter, sans-serif' }}
-                  >
-                    <Mail size={10} /> {member.email}
-                  </a>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>

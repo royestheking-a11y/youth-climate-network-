@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Menu, X, ChevronDown, HandCoins } from 'lucide-react';
-import logo1 from '../../imports/image-1.webp';
+// removed unused logo import
 import { useLanguage } from '../lib/LanguageContext';
 
 const navLinks = [
@@ -18,11 +18,12 @@ const navLinks = [
       { label: 'Renewable Energy', path: '/our-work/renewable-energy' },
       { label: 'Youth Development', path: '/our-work/youth-development' },
       { label: 'Women Empowerment', path: '/our-work/women-empowerment' },
+      { label: 'Advocacy', path: '/our-work/advocacy' },
+      { label: 'Mind Shantara', path: '/our-work/mind-shantara' },
     ],
   },
-  { label: 'Impact', path: '/impact' },
+  { label: 'Stories of Change', path: '/impact' },
   { label: 'Get Involved', path: '/get-involved' },
-  { label: 'Advocacy', path: '/advocacy' },
   { label: 'Media', path: '/media' },
   { label: 'Contact', path: '/contact' },
 ];
@@ -83,10 +84,9 @@ export function Navbar() {
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 group flex items-center">
               <img
-                src={logo1}
+                src="/ycnmain.png"
                 alt="Youth Climate Network"
-                className="h-[74px] w-auto transition-all duration-300 group-hover:scale-105"
-                style={{ filter: 'brightness(1.15)' }}
+                className="h-12 lg:h-16 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 

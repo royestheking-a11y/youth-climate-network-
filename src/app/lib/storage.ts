@@ -158,12 +158,12 @@ export interface InternshipApp {
 }
 
 const DEFAULT_STATS: ImpactStats = {
-  peopleReached: 12500,
-  treesPlanted: 50000,
-  volunteers: 850,
-  projects: 45,
-  partners: 28,
-  districts: 8,
+  peopleReached: 75000,
+  treesPlanted: 10000,
+  volunteers: 1200,
+  projects: 15,
+  partners: 20,
+  districts: 64,
 };
 
 const DEFAULT_CAROUSEL: HeroCarouselItem[] = [
@@ -539,7 +539,7 @@ export function initializeStorage(): void {
     setItem('ycn_team', DEFAULT_TEAM);
     setItem('ycn_partners', DEFAULT_PARTNERS);
     setItem('ycn_advocacy', DEFAULT_ADVOCACY);
-    
+
     // Retain existing records if present
     const oldApps = localStorage.getItem('ycn_volunteer_apps');
     if (!oldApps) setItem('ycn_volunteer_apps', []);
@@ -553,7 +553,7 @@ export function initializeStorage(): void {
     if (!oldPartnerships) setItem('ycn_partnership_inquiries', []);
     const oldInternships = localStorage.getItem('ycn_internship_apps');
     if (!oldInternships) setItem('ycn_internship_apps', []);
-    
+
     localStorage.setItem('ycn_initialized_v2', 'true');
     localStorage.setItem('ycn_initialized', 'true');
   }

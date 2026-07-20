@@ -9,6 +9,12 @@ import {
 
 const router = express.Router();
 
+const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_js7tgz8';
+const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || 'template_byqqj3n';
+const EMAILJS_USER_ID = process.env.EMAILJS_PUBLIC_KEY || 'lnfsoU0tZZVZk15EY';      // Public Key
+const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY || 'U6F85h13cCGXN3D6L6Egn'; // Private Key
+
+
 // Generic CRUD factory
 const createCrudRoutes = (model: any, path: string) => {
   // Get all
@@ -70,6 +76,93 @@ createCrudRoutes(Event, 'events');
 createCrudRoutes(Team, 'team');
 createCrudRoutes(Partner, 'partners');
 createCrudRoutes(VolunteerApp, 'volunteer-apps');
+// Custom Newsletter Routes
+router.post('/newsletter', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Check for duplicate
+    const existing = await NewsletterSub.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ error: 'already_subscribed' });
+    }
+
+    // Save to DB
+    const newItem = new NewsletterSub(req.body);
+    await newItem.save();
+    
+    // Send Welcome Email via EmailJS
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_USER_ID,
+        accessToken: EMAILJS_PRIVATE_KEY,
+        template_params: {
+          to_email: email,
+          user_email: email, // some templates use this instead
+          email: email,      // this matches {{email}}
+          to_name: 'Subscriber',
+          name: 'Climate Advocate', // this matches {{name}}
+          reply_to: 'youthclimatenetworkbd@gmail.com'
+        }
+      })
+    });
+
+    const obj = newItem.toObject() as any;
+    obj.id = obj._id;
+    res.status(201).json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/newsletter/broadcast', async (req, res) => {
+  try {
+    const { subject, html } = req.body;
+    
+    // Fetch all subscribers
+    const subs = await NewsletterSub.find();
+    if (subs.length === 0) {
+      return res.status(400).json({ error: 'No subscribers found.' });
+    }
+
+    const emails = subs.map(s => s.email).filter(Boolean) as string[];
+
+    // Send broadcast via EmailJS (looping due to API limits/design)
+    // NOTE: EmailJS free tier has a 200 emails/day limit.
+    for (const email of emails) {
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_USER_ID,
+          accessToken: EMAILJS_PRIVATE_KEY,
+          template_params: {
+            to_email: email,
+            user_email: email,
+            email: email,
+            name: 'Climate Advocate',
+            subject: subject || 'Update from Youth Climate Network',
+            message: html,
+            reply_to: 'youthclimatenetworkbd@gmail.com'
+          }
+        })
+      });
+      // sleep a bit to avoid hitting rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    res.status(200).json({ success: true, count: emails.length });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 createCrudRoutes(NewsletterSub, 'newsletter');
 createCrudRoutes(ContactMessage, 'contact-messages');
 createCrudRoutes(Donation, 'donations');
@@ -129,7 +222,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
 router.post('/migrate-all', async (req, res) => {
   try {
     const data = req.body;
-    
+
     // Clear existing data first
     await Promise.all([
       News.deleteMany({}),

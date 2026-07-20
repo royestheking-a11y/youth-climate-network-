@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { Mail, Phone, MapPin, ExternalLink, Facebook, Twitter, Instagram, Youtube, Linkedin, ArrowRight, MessageCircle, Globe } from 'lucide-react';
-import logo1 from '../../imports/image-1.webp';
+import { apiNewsletter } from '../lib/api';
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowRight, MessageCircle, Globe } from 'lucide-react';
+// removed unused logo import
 import footerBg from '../../imports/image-4.webp';
 import { useLanguage } from '../lib/LanguageContext';
 
@@ -26,15 +28,37 @@ const programLinks = [
 ];
 
 const socials = [
-  { Icon: Facebook, href: '#', label: 'Facebook' },
+  { Icon: Facebook, href: 'https://www.facebook.com/youthclimatenetworkbd', label: 'Facebook' },
   { Icon: Twitter, href: '#', label: 'Twitter' },
-  { Icon: Instagram, href: '#', label: 'Instagram' },
-  { Icon: Youtube, href: '#', label: 'YouTube' },
-  { Icon: Linkedin, href: '#', label: 'LinkedIn' },
+  { Icon: Instagram, href: 'https://www.instagram.com/ycnbd/', label: 'Instagram' },
+  { Icon: Linkedin, href: 'https://www.linkedin.com/company/ycnbd/', label: 'LinkedIn' },
 ];
 
 export function Footer() {
   const { lang, toggleLanguage, t } = useLanguage();
+  const [email, setEmail] = useState('');
+  const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setIsSubmitting(true);
+    try {
+      await apiNewsletter.create({ email, date: new Date().toISOString() });
+      setSubStatus('success');
+      setEmail('');
+    } catch (err: any) {
+      if (err.message && err.message.includes('409')) {
+        setSubStatus('exists');
+      } else {
+        setSubStatus('exists');
+      }
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setSubStatus(null), 4000);
+    }
+  };
 
   return (
     <footer style={{ backgroundColor: '#071E13', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
@@ -58,7 +82,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           {/* Brand col */}
           <div className="lg:col-span-4">
-            <img src={logo1} alt="Youth Climate Network" className="h-28 w-auto mb-6" style={{ filter: 'brightness(1.15)' }} />
+            <img src="/ycnmain.png" alt="Youth Climate Network" className="h-16 lg:h-20 w-auto mb-6 object-contain" />
             <p className="text-sm leading-relaxed mb-6" style={{ color: '#F0ECD8', opacity: 0.9, maxWidth: 280 }}>
               {t(
                 'A grassroots, youth-led non-profit driving climate justice across Bangladesh, South Asia and Asia Pacific since 2022.',
@@ -191,29 +215,29 @@ export function Footer() {
                   <MapPin size={14} style={{ color: '#E8521A' }} />
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: '#F0ECD8' }}>
-                  {t('Khulna Division, Bangladesh')}<br />
-                  <span className="text-xs opacity-75">{t('Coastal Climate Frontline HQ', 'উপকূলীয় জলবায়ু ফ্রন্টলাইন সদর দপ্তর')}</span>
+                  {t('15/KA, Shyamoli, Mirpur Road')}<br />
+                  <span className="text-xs opacity-75">{t('Dhaka-1207, Bangladesh', 'ঢাকা-১২০৭, বাংলাদেশ')}</span>
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(232,82,26,0.12)' }}>
                   <Mail size={14} style={{ color: '#E8521A' }} />
                 </div>
-                <a href="mailto:info@ycnbd.org" className="text-sm transition-colors hover:text-[#E8521A]" style={{ color: '#F0ECD8' }}>
-                  info@ycnbd.org
+                <a href="mailto:info@youthclimatenetworkbd.org" className="text-sm transition-colors hover:text-[#E8521A]" style={{ color: '#F0ECD8' }}>
+                  info@youthclimatenetworkbd.org
                 </a>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(232,82,26,0.12)' }}>
                   <Phone size={14} style={{ color: '#E8521A' }} />
                 </div>
-                <span className="text-sm" style={{ color: '#F0ECD8' }}>+880-XXX-XXXXXXX</span>
+                <span className="text-sm" style={{ color: '#F0ECD8' }}>+88 01911 368538</span>
               </div>
             </div>
 
             {/* Official Registration Card */}
             <div
-              className="rounded-xl p-4"
+              className="rounded-xl p-4 mb-6"
               style={{
                 background: 'linear-gradient(135deg, rgba(26,107,60,0.3) 0%, rgba(10,51,32,0.5) 100%)',
                 border: '1px solid rgba(26,107,60,0.3)',
@@ -232,6 +256,50 @@ export function Footer() {
                 {t("Govt. of the People's Republic of Bangladesh")}
               </p>
             </div>
+
+            {/* Newsletter Mini */}
+            <h4 className="text-xs font-bold mb-3 uppercase tracking-widest" style={{ color: '#E8521A' }}>
+              {t('Newsletter')}
+            </h4>
+            <form onSubmit={handleSubscribe} className="relative">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('Email address')}
+                className="w-full pl-4 pr-[100px] py-2.5 rounded-xl text-sm focus:outline-none transition-colors disabled:opacity-50"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#fff',
+                }}
+                disabled={isSubmitting}
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="absolute right-1 top-1 bottom-1 px-4 text-xs font-medium rounded-lg transition-colors flex items-center justify-center min-w-[80px]"
+                style={{ backgroundColor: '#E8521A', color: '#fff' }}
+              >
+                {isSubmitting ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  t('Subscribe')
+                )}
+              </button>
+            </form>
+            {subStatus === 'success' && (
+              <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> {t('Successfully subscribed!', 'সফলভাবে সাবস্ক্রাইব হয়েছে!')}
+              </p>
+            )}
+            {subStatus === 'exists' && (
+              <p className="text-xs text-[#E8521A] mt-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E8521A]"></span> {t('You are already subscribed.', 'আপনি ইতিমধ্যে সাবস্ক্রাইব করেছেন।')}
+              </p>
+            )}
+
           </div>
         </div>
 
@@ -263,14 +331,6 @@ export function Footer() {
               style={{ color: '#7FAF8A' }}
             >
               {t('Terms of Use')}
-            </Link>
-            <span className="mx-2 text-xs" style={{ color: '#2A4A32' }}>·</span>
-            <Link
-              to="/admin"
-              className="text-xs flex items-center gap-1 hover:text-[#E8521A] transition-colors"
-              style={{ color: '#7FAF8A' }}
-            >
-              {t('Admin', 'অ্যাডমিন')} <ExternalLink size={9} />
             </Link>
           </div>
         </div>

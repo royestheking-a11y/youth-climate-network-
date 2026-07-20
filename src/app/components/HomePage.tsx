@@ -4,9 +4,10 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import {
   Scale, BookOpen, Droplets, Shield, Leaf, Zap,
-  ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users
+  ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users,
+  Brain, Waves, Building2, Bird
 } from 'lucide-react';
-import { addNewsletter } from '../lib/storage';
+import { apiNewsletter } from '../lib/api';
 import { useStats, useNews, useEvents, useCarousel } from '../lib/api';
 import type { NewsItem, EventItem, HeroCarouselItem } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
@@ -50,12 +51,17 @@ const programs = [
   { icon: Shield, title: 'Disaster Risk Management', desc: 'Community preparedness and rapid response for climate-induced floods and cyclones.', color: '#7B1FA2', light: '#F3E5F5', path: '/our-work/disaster-risk' },
   { icon: Leaf, title: 'Sustainable Livelihoods', desc: 'Climate-smart agriculture, alternative incomes, and resilient food systems.', color: '#2E7D32', light: '#E8F5E9', path: '/our-work/sustainable-livelihoods' },
   { icon: Zap, title: 'Renewable Energy', desc: 'Solar & biogas access for off-grid households while tackling plastic and e-waste.', color: '#E65100', light: '#FFF3E0', path: '/our-work/renewable-energy' },
+  { icon: TreePine, title: 'Biodiversity in Action', desc: 'Protecting natural habitats, large-scale afforestation, and preserving biodiversity.', color: '#33691E', light: '#F1F8E9', path: '/our-work/biodiversity' },
+  { icon: Bird, title: 'Wildlife & Welfare', desc: 'Protecting endangered species and ensuring welfare for wildlife in climate-vulnerable zones.', color: '#827717', light: '#F9FBE7', path: '/our-work/wildlife' },
+  { icon: Brain, title: 'Mental Health & Psychosocial Support', desc: 'Connecting survivors to psychosocial support and specialized climate-anxiety care.', color: '#00695C', light: '#E0F2F1', path: '/our-work/mental-health' },
+  { icon: Waves, title: 'Coastal & Marine Ecosystem Protection', desc: 'Restoring mangrove forests and protecting fragile coastlines from cyclones and tidal surges.', color: '#0277BD', light: '#E1F5FE', path: '/our-work/coastal-marine' },
+  { icon: Building2, title: 'Urban Climate Resilience', desc: 'Building resilience against urban flooding, heat stress, and infrastructure strain in cities.', color: '#EF6C00', light: '#FFF3E0', path: '/our-work/urban-climate' },
 ];
 
 const partners = [
-  'UNFCCC YOUNGO', 'UNDP Bangladesh', 'UNICEF', 'UN Women', 'ActionAid Bangladesh',
-  'Practical Action', 'WWF Bangladesh', 'Dept. of Youth Development', 'Khulna University',
-  'Asia Pacific Youth Climate Coalition', 'Climate Home Network', 'YOUNGO South Asia',
+  'ICCCAD', 'Shuloban', 'Humanity Public Library', 'RizQara Tech', 'EDS',
+  'শিশুদের জন্য আমরা', 'Youth for coastal Resilience (YCR)', 'Dept of Youth Development',
+  'Initiative of coastal development - ICD', 'Moner Alo', 'Rohingya Green Nature Society (RGNS)'
 ];
 
 /* ───── SUB-COMPONENTS ───── */
@@ -364,14 +370,27 @@ export function HomePage() {
   
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    const ok = addNewsletter(email);
-    setSubStatus(ok ? 'success' : 'exists');
-    if (ok) setEmail('');
-    setTimeout(() => setSubStatus(null), 4000);
+    setIsSubmitting(true);
+    try {
+      await apiNewsletter.create({ email, date: new Date().toISOString() });
+      setSubStatus('success');
+      setEmail('');
+    } catch (err: any) {
+      if (err.message && err.message.includes('409')) {
+        setSubStatus('exists');
+      } else {
+        // If it's a generic error but we still want to show exists
+        setSubStatus('exists');
+      }
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setSubStatus(null), 4000);
+    }
   };
 
   return (
@@ -426,12 +445,12 @@ export function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { v: stats.peopleReached, l: 'People Reached', d: 0 },
-              { v: stats.treesPlanted, l: 'Trees Planted', d: 0.08 },
-              { v: stats.volunteers, l: 'Volunteers', d: 0.16 },
-              { v: stats.projects, l: 'Active Projects', d: 0.24 },
-              { v: stats.partners, l: 'Partner Orgs', d: 0.32 },
-              { v: stats.districts, l: 'Districts', d: 0.4 },
+              { v: stats.districts, l: 'District', d: 0 },
+              { v: stats.partners, l: 'Partner Org', d: 0.08 },
+              { v: stats.projects, l: 'Completed Project', d: 0.16 },
+              { v: stats.volunteers, l: 'Volunteer', d: 0.24 },
+              { v: stats.treesPlanted, l: 'Trees plantation', d: 0.32 },
+              { v: stats.peopleReached, l: 'People reached', d: 0.4 },
             ].map(({ v, l, d }) => (
               <div key={l} className="rounded-2xl py-5 px-2 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', minWidth: 0 }}>
                 <StatCounter value={v} label={l} delay={d} />
@@ -826,7 +845,8 @@ export function HomePage() {
                 />
                 <button
                   type="submit"
-                  className="px-10 py-4.5 rounded-xl text-base font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                  disabled={isSubmitting}
+                  className="px-10 py-4.5 rounded-xl text-base font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap flex items-center justify-center min-w-[140px]"
                   style={{
                     background: 'linear-gradient(135deg, #E8521A, #D97706)',
                     color: '#fff',
@@ -834,7 +854,11 @@ export function HomePage() {
                     boxShadow: '0 6px 20px rgba(232,82,26,0.35)'
                   }}
                 >
-                  {t('Subscribe Free', 'বিনামূল্যে সাবস্ক্রাইব করুন')}
+                  {isSubmitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    t('Subscribe Free', 'বিনামূল্যে সাবস্ক্রাইব করুন')
+                  )}
                 </button>
               </motion.form>
 
