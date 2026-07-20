@@ -8,7 +8,7 @@ import {
   Brain, Waves, Building2, Bird
 } from 'lucide-react';
 import { apiNewsletter } from '../lib/api';
-import { useStats, useNews, useEvents, useCarousel } from '../lib/api';
+import { useStats, useNews, useEvents, useCarousel, usePartners } from '../lib/api';
 import type { NewsItem, EventItem, HeroCarouselItem } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
@@ -58,11 +58,7 @@ const programs = [
   { icon: Building2, title: 'Urban Climate Resilience', desc: 'Building resilience against urban flooding, heat stress, and infrastructure strain in cities.', color: '#EF6C00', light: '#FFF3E0', path: '/our-work/urban-climate' },
 ];
 
-const partners = [
-  'ICCCAD', 'Shuloban', 'Humanity Public Library', 'RizQara Tech', 'EDS',
-  'শিশুদের জন্য আমরা', 'Youth for coastal Resilience (YCR)', 'Dept of Youth Development',
-  'Initiative of coastal development - ICD', 'Moner Alo', 'Rohingya Green Nature Society (RGNS)'
-];
+
 
 /* ───── SUB-COMPONENTS ───── */
 function StatCounter({ value, label, suffix = '+', delay = 0 }: { value: number; label: string; suffix?: string; delay?: number }) {
@@ -318,6 +314,7 @@ export function HomePage() {
   const { data: stats = { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any } = useStats();
   const { data: allNews, isLoading: newsLoading } = useNews();
   const { data: allEvents, isLoading: eventsLoading } = useEvents();
+  const { data: partnersData = [] } = usePartners();
   
   const news = allNews ? allNews.slice(0, 3) : [];
   const events = allEvents ? allEvents.slice(0, 4) : [];
@@ -368,10 +365,10 @@ export function HomePage() {
         style={{ background: 'linear-gradient(135deg, #E8521A 0%, #D97706 100%)' }}
       >
         <div className="flex marquee-track" style={{ width: 'max-content', gap: '3rem' }}>
-          {[...partners, ...partners].map((p, i) => (
-            <span key={i} className="whitespace-nowrap text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
-              {p} <span style={{ color: 'rgba(255,255,255,0.4)', marginLeft: '1rem' }}>·</span>
-            </span>
+          {[...partnersData, ...partnersData, ...partnersData, ...partnersData].map((p, i) => (
+            <a key={i} href={p.url || '#'} target={p.url && p.url !== '#' ? '_blank' : undefined} rel="noopener noreferrer" className="whitespace-nowrap text-sm font-semibold flex items-center hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em', textDecoration: 'none' }}>
+              {p.name} <span style={{ color: 'rgba(255,255,255,0.4)', marginLeft: '1rem' }}>·</span>
+            </a>
           ))}
         </div>
       </div>
