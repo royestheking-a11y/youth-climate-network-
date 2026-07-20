@@ -1842,7 +1842,7 @@ function CarouselTab() {
 
   const items = apiItems;
 
-  const blank: HeroCarouselItem = { id: '', titleEn: '', titleBn: '', image: '', tag: '', headlineEn: '', headlineBn: '', descEn: '', descBn: '' };
+  const blank: HeroCarouselItem = { id: '', titleEn: '', titleBn: '', image: '', link: '' };
 
   const save = async () => {
     if (!editing) return;
@@ -1877,15 +1877,7 @@ function CarouselTab() {
             <InputField label="Title (English)" value={editing.titleEn} onChange={v => setEditing(e => e ? { ...e, titleEn: v } : null)} />
             <InputField label="Title (Bengali)" value={editing.titleBn} onChange={v => setEditing(e => e ? { ...e, titleBn: v } : null)} />
           </div>
-          <InputField label="Tag" value={editing.tag} onChange={v => setEditing(e => e ? { ...e, tag: v } : null)} />
-          <div className="grid grid-cols-2 gap-4">
-            <InputField label="Headline (English)" value={editing.headlineEn} onChange={v => setEditing(e => e ? { ...e, headlineEn: v } : null)} />
-            <InputField label="Headline (Bengali)" value={editing.headlineBn} onChange={v => setEditing(e => e ? { ...e, headlineBn: v } : null)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <InputField label="Description (English)" value={editing.descEn} onChange={v => setEditing(e => e ? { ...e, descEn: v } : null)} multiline />
-            <InputField label="Description (Bengali)" value={editing.descBn} onChange={v => setEditing(e => e ? { ...e, descBn: v } : null)} multiline />
-          </div>
+          <InputField label="Link (e.g. /about or https://google.com)" value={editing.link} onChange={v => setEditing(e => e ? { ...e, link: v } : null)} />
           <ImageUploader label="Background Image URL" value={editing.image} onChange={v => setEditing(e => e ? { ...e, image: v } : null)} />
           <button onClick={save} className="w-full py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>Save Carousel Item</button>
         </div>
@@ -1911,10 +1903,8 @@ function CarouselTab() {
           <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm flex flex-col gap-4">
             {item.image && <img src={item.image} alt="" className="w-full h-32 rounded-lg object-cover" />}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>{item.tag}</span>
-              </div>
               <p className="text-sm font-medium truncate" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{item.titleEn}</p>
+              <p className="text-xs text-gray-500 mt-1 truncate">{item.link || 'No link set'}</p>
             </div>
             <div className="flex justify-end gap-2 mt-2">
               <button onClick={() => setEditing(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"><Edit3 size={14} style={{ color: '#6B7280' }} /></button>

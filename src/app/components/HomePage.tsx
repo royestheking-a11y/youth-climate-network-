@@ -225,6 +225,17 @@ function HeroAccordion() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
               onMouseEnter={() => setHoveredIndex(index)}
+              onClick={() => {
+                if (isActive && card.link) {
+                  if (card.link.startsWith('http')) {
+                    window.open(card.link, '_blank');
+                  } else {
+                    window.location.href = card.link; // or use navigate(card.link) if useNavigate is available
+                  }
+                } else if (!isActive) {
+                  setHoveredIndex(index);
+                }
+              }}
               className={`relative rounded-2xl overflow-hidden cursor-pointer ${
                 isActive ? 'min-h-0 sm:min-w-0' : 'min-h-[48px] sm:min-h-0 min-w-0 sm:min-w-[clamp(40px,10vw,70px)]'
               }`}
@@ -248,10 +259,10 @@ function HeroAccordion() {
               
               {/* Gradient Overlay */}
               <div 
-                className="absolute inset-0" 
+                className="absolute inset-0 pointer-events-none" 
                 style={{ 
                   background: isActive 
-                    ? 'linear-gradient(to right, rgba(10,51,32,0.95) 0%, rgba(10,51,32,0.5) 45%, transparent 100%)'
+                    ? 'transparent'
                     : 'linear-gradient(to top, rgba(10,51,32,0.9) 0%, transparent 100%)',
                   transition: 'background 0.8s ease'
                 }} 
@@ -291,63 +302,6 @@ function HeroAccordion() {
                 </span>
               </div>
 
-              {/* Expanded Content */}
-              <div
-                className="absolute inset-0 p-4 sm:p-12 flex flex-col justify-end sm:justify-center"
-                style={{
-                  opacity: isActive ? 1 : 0,
-                  transition: 'opacity 0.6s ease 0.2s',
-                  pointerEvents: isActive ? 'auto' : 'none'
-                }}
-              >
-                <div className="max-w-xl">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6" style={{ background: 'rgba(232,82,26,0.15)', border: '1px solid rgba(232,82,26,0.3)', backdropFilter: 'blur(8px)' }}>
-                    <span style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em' }}>
-                      {t(card.tag, card.tag)}
-                    </span>
-                  </div>
-                  
-                  <h2 style={{
-                    fontFamily: 'Poppins, sans-serif',
-                    fontWeight: 900,
-                    fontSize: 'clamp(1.4rem, 5vw, 4rem)',
-                    color: '#F0ECD8',
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
-                    marginBottom: '0.75rem'
-                  }}>
-                    {t(card.headlineEn, card.headlineBn)}
-                  </h2>
-                  
-                  <p style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: 'clamp(0.8rem, 1.5vw, 1.2rem)',
-                    color: '#A8E6BB',
-                    lineHeight: 1.5,
-                    marginBottom: '1.5rem',
-                    maxWidth: '480px'
-                  }}>
-                    {t(card.descEn, card.descBn)}
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link
-                      to="/our-work"
-                      className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all hover:scale-105"
-                      style={{ background: 'linear-gradient(135deg, #E8521A, #D97706)', color: '#fff', fontFamily: 'Inter, sans-serif', boxShadow: '0 4px 20px rgba(232,82,26,0.4)' }}
-                    >
-                      {t('Explore Our Work', 'আমাদের কার্যক্রম দেখুন')} <ArrowRight size={15} />
-                    </Link>
-                    <Link
-                      to="/get-involved"
-                      className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all hover:scale-105 hover:bg-white/10"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#F0ECD8', border: '1px solid rgba(255,255,255,0.18)', fontFamily: 'Inter, sans-serif', backdropFilter: 'blur(8px)' }}
-                    >
-                      {t('Get Involved', 'যুক্ত হোন')}
-                    </Link>
-                  </div>
-                </div>
-              </div>
             </motion.div>
           );
         })}

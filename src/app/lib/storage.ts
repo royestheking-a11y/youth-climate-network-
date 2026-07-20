@@ -113,11 +113,7 @@ export interface HeroCarouselItem {
   titleEn: string;
   titleBn: string;
   image: string;
-  tag: string;
-  headlineEn: string;
-  headlineBn: string;
-  descEn: string;
-  descBn: string;
+  link: string;
 }
 
 export interface AdvocacyItem {
@@ -172,44 +168,28 @@ const DEFAULT_CAROUSEL: HeroCarouselItem[] = [
     titleEn: 'YOUTH CLIMATE ACTION',
     titleBn: 'যুব জলবায়ু পদক্ষেপ',
     image: '/youth_climate_action.png',
-    tag: 'YOUTH EMPOWERMENT',
-    headlineEn: 'Empowering Youth. Protecting the Planet.',
-    headlineBn: 'তরুণদের ক্ষমতায়ন। পৃথিবীর সুরক্ষা।',
-    descEn: "Bangladesh's frontline youth-led organization driving transformative climate action.",
-    descBn: 'অনন্য জলবায়ু পদক্ষেপ পরিচালনাকারী বাংলাদেশের ফ্রন্টলাইন যুব-নেতৃত্বাধীন সংস্থা।'
+    link: '/about'
   },
   {
     id: '2',
     titleEn: 'SUSTAINABLE ENERGY',
     titleBn: 'টেকসই শক্তি',
     image: '/sustainable_energy.png',
-    tag: 'RENEWABLE ENERGY',
-    headlineEn: 'Transitioning to Clean Power.',
-    headlineBn: 'পরিচ্ছন্ন শক্তিতে রূপান্তর।',
-    descEn: 'Bringing solar and biogas solutions to off-grid coastal communities.',
-    descBn: 'উপকূলীয় সম্প্রদায়গুলোতে সৌর ও বায়োগ্যাস সমাধান সরবরাহ করা।'
+    link: '/impact'
   },
   {
     id: '3',
     titleEn: 'DISASTER RESILIENCE',
     titleBn: 'দুর্যোগ সহনশীলতা',
     image: '/disaster_resilience.png',
-    tag: 'CLIMATE ADAPTATION',
-    headlineEn: 'Building Resilient Communities.',
-    headlineBn: 'সহনশীল সম্প্রদায় গড়ে তোলা।',
-    descEn: 'Community preparedness and rapid response for climate-induced floods and cyclones.',
-    descBn: 'জলবায়ু-প্ররোচিত বন্যা এবং ঘূর্ণিঝড়ের জন্য সম্প্রদায়ের প্রস্তুতি এবং দ্রুত সাড়া।'
+    link: '/programs'
   },
   {
     id: '4',
     titleEn: 'EDUCATION & RESEARCH',
     titleBn: 'শিক্ষা ও গবেষণা',
     image: '/education_research.png',
-    tag: 'CLIMATE LITERACY',
-    headlineEn: 'Driving Climate Literacy.',
-    headlineBn: 'জলবায়ু সাক্ষরতা বৃদ্ধি।',
-    descEn: 'Building environmental awareness from classrooms to communities.',
-    descBn: 'শ্রেণীকক্ষ থেকে সম্প্রদায় পর্যন্ত পরিবেশগত সচেতনতা তৈরি করা।'
+    link: '/get-involved'
   }
 ];
 

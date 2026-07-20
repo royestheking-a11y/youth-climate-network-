@@ -96,11 +96,7 @@ const heroCarouselSchema = new mongoose.Schema({
   titleEn: String,
   titleBn: String,
   image: String,
-  tag: String,
-  headlineEn: String,
-  headlineBn: String,
-  descEn: String,
-  descBn: String,
+  link: String,
 });
 
 const advocacySchema = new mongoose.Schema({
