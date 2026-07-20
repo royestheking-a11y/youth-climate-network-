@@ -50,7 +50,7 @@ export function Layout() {
     <div className="min-h-screen flex flex-col overflow-x-hidden w-full" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#F3F4F6' }}>
       {!isAdmin && <Navbar />}
       <ScrollRestoration />
-      <main className="flex-1">
+      <main className="flex-1 w-full overflow-x-hidden">
         <Outlet />
       </main>
       {!isAdmin && <Footer />}

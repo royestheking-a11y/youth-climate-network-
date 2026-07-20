@@ -80,13 +80,13 @@ export function Navbar() {
         }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[84px]">
+          <div className="flex items-center justify-between h-16 lg:h-[84px]">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 group flex items-center">
               <img
                 src="/ycnmain.png"
                 alt="Youth Climate Network"
-                className="h-12 lg:h-16 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                className="h-10 lg:h-16 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 
@@ -228,7 +228,7 @@ export function Navbar() {
 
       {/* Mobile Menu Panel */}
       <div
-        className="fixed top-[84px] bottom-0 left-0 right-0 z-40 lg:hidden overflow-y-auto"
+        className="fixed top-16 lg:top-[84px] bottom-0 left-0 right-0 z-40 lg:hidden overflow-y-auto"
         style={{
           backgroundColor: '#0A3320',
           transform: mobileOpen ? 'translateY(0)' : 'translateY(-10px)',
