@@ -172,7 +172,7 @@ export function DonatePage() {
                       { key:'bkash', label:'bKash', icon: CreditCard, color:'#E2136E', bg:'#FFF0F7' },
                       { key:'nagad', label:'Nagad', icon: CreditCard, color:'#F7941D', bg:'#FFF8F0' },
                       { key:'bank',  label:'Bank Transfer', icon: Building2, color:'#1565C0', bg:'#EBF4FF' },
-                      { key:'international', label:'International', icon: Globe2, color:'#1A6B3C', bg:'#E8F5EE' },
+                      { key:'international', label:'PayPal/Western Union', icon: Globe2, color:'#1A6B3C', bg:'#E8F5EE' },
                     ] as const).map(m => (
                       <button key={m.key} type="button" onClick={() => setPayMethod(m.key)}
                         className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all"
@@ -187,33 +187,34 @@ export function DonatePage() {
                 {/* Payment details card */}
                 <div className="rounded-2xl overflow-hidden" style={{ border:'1px solid #E5E7EB' }}>
                   <div className="px-5 py-3" style={{ background: payMethod==='bkash'?'#E2136E': payMethod==='nagad'?'#F7941D': payMethod==='bank'?'#1565C0':'#1A6B3C' }}>
-                    <p className="text-sm font-bold text-white">{payMethod==='bkash'?'bKash Payment': payMethod==='nagad'?'Nagad Payment': payMethod==='bank'?'Bank Transfer':'International Transfer'}</p>
+                    <p className="text-sm font-bold text-white">{payMethod==='bkash'?'bKash Payment': payMethod==='nagad'?'Nagad Payment': payMethod==='bank'?'Bank Transfer':'PayPal / Western Union'}</p>
                   </div>
                   <div className="p-5 space-y-3 bg-white">
                     {payMethod === 'bkash' && <>
-                      <InfoRow label="Send Money To" value="+880 1XXX-XXXXXX" onCopy={() => copyRef('+880 1XXX-XXXXXX')} copied={copied} />
+                      <InfoRow label="Send Money To" value="+880 1999-625197" onCopy={() => copyRef('+880 1999-625197')} copied={copied} />
                       <InfoRow label="Account Type" value="Personal" />
                       <InfoRow label="Reference" value={`YCN-${finalAmount}`} onCopy={() => copyRef(`YCN-${finalAmount}`)} copied={copied} />
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF0F7', color:'#E2136E' }}>Open bKash → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Reference: YCN-{finalAmount} → Confirm</p>
                     </>}
                     {payMethod === 'nagad' && <>
-                      <InfoRow label="Send Money To" value="+880 1XXX-XXXXXX" onCopy={() => copyRef('+880 1XXX-XXXXXX')} copied={copied} />
+                      <InfoRow label="Send Money To" value="+880 1999-625197" onCopy={() => copyRef('+880 1999-625197')} copied={copied} />
                       <InfoRow label="Account Type" value="Personal" />
                       <InfoRow label="Reference" value={`YCN-${finalAmount}`} onCopy={() => copyRef(`YCN-${finalAmount}`)} copied={copied} />
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF8F0', color:'#F7941D' }}>Open Nagad → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Confirm</p>
                     </>}
                     {payMethod === 'bank' && <>
-                      <InfoRow label="Bank Name" value="BRAC Bank PLC" />
-                      <InfoRow label="Account Name" value="Youth Climate Network Bangladesh" />
-                      <InfoRow label="Account No." value="" onCopy={() => copyRef('')} copied={copied} />
-                      <InfoRow label="Routing No." value="" />
-                      <InfoRow label="Branch" value="Khulna Branch" />
+                      <InfoRow label="Bank Name" value="Bangladesh Krishi Bank" />
+                      <InfoRow label="Account Name" value="Youth Climate Network" />
+                      <InfoRow label="Account No." value="1322 0311100509" onCopy={() => copyRef('1322 0311100509')} copied={copied} />
+                      <InfoRow label="Routing No." value="035471938" onCopy={() => copyRef('035471938')} copied={copied} />
+                      <InfoRow label="Branch" value="Nalian sub branch, Dacope, Khulna" />
+                      <InfoRow label="Cell No." value="01730 708543" />
                       <InfoRow label="Reference" value={`YCN-DON-${finalAmount}`} onCopy={() => copyRef(`YCN-DON-${finalAmount}`)} copied={copied} />
                     </>}
                     {payMethod === 'international' && <>
-                      <InfoRow label="PayPal" value="mdrafiqulislam0025@gmail.com" onCopy={() => copyRef('mdrafiqulislam0025@gmail.com')} copied={copied} />
+                      <InfoRow label="Method" value="PayPal / Western Union" />
                       <InfoRow label="Reference" value={`YCN-INTL-${finalAmount}`} onCopy={() => copyRef(`YCN-INTL-${finalAmount}`)} copied={copied} />
-                      <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#E8F5EE', color:'#1A6B3C' }}>Send via PayPal to the email above. Include reference in your payment note.</p>
+                      <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#E8F5EE', color:'#1A6B3C' }}>Please contact us for PayPal or Western Union payment details.</p>
                     </>}
                   </div>
                 </div>
