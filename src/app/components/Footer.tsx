@@ -31,7 +31,7 @@ const socials = [
   { Icon: Facebook, href: 'https://www.facebook.com/youthclimatenetwork', label: 'Facebook' },
   { Icon: Twitter, href: 'https://x.com/ycnorgbd', label: 'Twitter' },
   { Icon: Instagram, href: 'https://www.instagram.com/youthclimatenetworkbd/', label: 'Instagram' },
-  { Icon: Linkedin, href: 'https://www.linkedin.com/company/ycnbd/', label: 'LinkedIn' },
+  { Icon: Linkedin, href: 'https://www.linkedin.com/company/youth-climate-network', label: 'LinkedIn' },
   { Icon: Youtube, href: 'https://www.youtube.com/@YouthClimateNetwork', label: 'YouTube' },
 ];
 

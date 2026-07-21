@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
-import { Play, Camera, Newspaper, Download, ExternalLink, ThumbsUp, MessageCircle, Share2, Facebook, Instagram } from 'lucide-react';
+import { Play, Camera, Newspaper, Download, ExternalLink } from 'lucide-react';
 import banner4 from '../../imports/Asset_4.webp';
 import banner3 from '../../imports/Asset_3.webp';
 import { useLanguage } from '../lib/LanguageContext';
