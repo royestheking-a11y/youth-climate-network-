@@ -191,13 +191,13 @@ export function DonatePage() {
                   </div>
                   <div className="p-5 space-y-3 bg-white">
                     {payMethod === 'bkash' && <>
-                      <InfoRow label="Send Money To" value="+880 1999-625197" onCopy={() => copyRef('+880 1999-625197')} copied={copied} />
+                      <InfoRow label="Send Money To" value="+880 0000-000000" onCopy={() => copyRef('+880 0000-000000')} copied={copied} />
                       <InfoRow label="Account Type" value="Personal" />
                       <InfoRow label="Reference" value={`YCN-${finalAmount}`} onCopy={() => copyRef(`YCN-${finalAmount}`)} copied={copied} />
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF0F7', color:'#E2136E' }}>Open bKash → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Reference: YCN-{finalAmount} → Confirm</p>
                     </>}
                     {payMethod === 'nagad' && <>
-                      <InfoRow label="Send Money To" value="+880 1999-625197" onCopy={() => copyRef('+880 1999-625197')} copied={copied} />
+                      <InfoRow label="Send Money To" value="+880 0000-000000" onCopy={() => copyRef('+880 0000-000000')} copied={copied} />
                       <InfoRow label="Account Type" value="Personal" />
                       <InfoRow label="Reference" value={`YCN-${finalAmount}`} onCopy={() => copyRef(`YCN-${finalAmount}`)} copied={copied} />
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF8F0', color:'#F7941D' }}>Open Nagad → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Confirm</p>
