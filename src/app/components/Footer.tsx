@@ -224,8 +224,8 @@ export function Footer() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(232,82,26,0.12)' }}>
                   <Mail size={14} style={{ color: '#E8521A' }} />
                 </div>
-                <a href="mailto:info@youthclimatenetworkbd.org" className="text-sm transition-colors hover:text-[#E8521A]" style={{ color: '#F0ECD8' }}>
-                  info@youthclimatenetworkbd.org
+                <a href="mailto:youthclimatenetworkbd@gmail.com" className="text-sm transition-colors hover:text-[#E8521A]" style={{ color: '#F0ECD8' }}>
+                  youthclimatenetworkbd@gmail.com
                 </a>
               </div>
               <div className="flex items-center gap-3">

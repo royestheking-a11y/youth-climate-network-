@@ -182,7 +182,7 @@ export function PrivacyPage() {
                 </ul>
                 <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                   <p className="text-xs text-emerald-800 leading-relaxed">
-                    <strong>{t('Questions or Requests?', 'যেকোনো প্রশ্ন বা অনুরোধ?')}</strong> {t("Please contact YCN's dedicated Data Protection Lead at", 'অনুগ্রহ করে ওয়াইসিএন-এর ডেটা সুরক্ষা প্রধানের সাথে যোগাযোগ করুন এই ইমেইলে:')} <a href="mailto:privacy@ycnbd.org" className="underline font-semibold hover:text-[#E8521A]">privacy@ycnbd.org</a> {t('or visit our central office in Khulna Division, Bangladesh.', 'অথবা আমাদের বাংলাদেশের খুলনা বিভাগের প্রধান কার্যালয়ে সরাসরি যোগাযোগ করুন।')}
+                    <strong>{t('Questions or Requests?', 'যেকোনো প্রশ্ন বা অনুরোধ?')}</strong> {t("Please contact YCN's dedicated Data Protection Lead at", 'অনুগ্রহ করে ওয়াইসিএন-এর ডেটা সুরক্ষা প্রধানের সাথে যোগাযোগ করুন এই ইমেইলে:')} <a href="mailto:youthclimatenetworkbd@gmail.com" className="underline font-semibold hover:text-[#E8521A]">youthclimatenetworkbd@gmail.com</a> {t('or visit our central office in Khulna Division, Bangladesh.', 'অথবা আমাদের বাংলাদেশের খুলনা বিভাগের প্রধান কার্যালয়ে সরাসরি যোগাযোগ করুন।')}
                   </p>
                 </div>
               </div>

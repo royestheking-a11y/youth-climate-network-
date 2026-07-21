@@ -425,8 +425,8 @@ export function GetInvolvedPage() {
                     </p>
                     <p className="text-xs" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>
                       {t(
-                        'Deadline: 31 March 2025 · 60 places available · Cohort begins May 2025. Contact us at info@ycnbd.org with your CV and a 300-word motivation statement.',
-                        'সময়সীমা: ৩১ মার্চ ২০২৫ · ৬০টি আসন উপলব্ধ · ব্যাচ শুরু মে ২০২৫। আপনার সিভি এবং ৩০০ শব্দের মোটিভেশন স্টেইটমেন্ট সহ info@ycnbd.org এ আমাদের সাথে যোগাযোগ করুন।'
+                        'Deadline: 31 March 2025 · 60 places available · Cohort begins May 2025. Contact us at youthclimatenetworkbd@gmail.com with your CV and a 300-word motivation statement.',
+                        'সময়সীমা: ৩১ মার্চ ২০২৫ · ৬০টি আসন উপলব্ধ · ব্যাচ শুরু মে ২০২৫। আপনার সিভি এবং ৩০০ শব্দের মোটিভেশন স্টেইটমেন্ট সহ youthclimatenetworkbd@gmail.com এ আমাদের সাথে যোগাযোগ করুন।'
                       )}
                     </p>
                   </div>

@@ -156,7 +156,7 @@ export function TermsPage() {
                     <strong>{t('Receipts:', 'রসিদসমূহ:')}</strong> {t("Donors will receive a formal digital donation receipt containing YCN's official registration license and details.", 'দাতাগণ ওয়াইসিএন-এর অফিসিয়াল নিবন্ধন লাইসেন্স এবং বিবরণ সম্বলিত একটি ডিজিটাল অনুদান রসিদ পাবেন।')}
                   </li>
                   <li>
-                    <strong>{t('Refund Policy:', 'রিফান্ড নীতি:')}</strong> {t('If a donation was made in error, please contact YCN finance within 7 working days at finance@ycnbd.org to request a review and refund.', 'যদি ভুলবশত অনুদান দেওয়া হয়ে থাকে, তবে অনুগ্রহ করে ৭ কার্যদিবসের মধ্যে ওয়াইসিএন ফাইন্যান্স বিভাগে finance@ycnbd.org ইমেইলে রিফান্ড ও পর্যালোচনার জন্য অনুরোধ করুন।')}
+                    <strong>{t('Refund Policy:', 'রিফান্ড নীতি:')}</strong> {t('If a donation was made in error, please contact YCN finance within 7 working days at youthclimatenetworkbd@gmail.com to request a review and refund.', 'যদি ভুলবশত অনুদান দেওয়া হয়ে থাকে, তবে অনুগ্রহ করে ৭ কার্যদিবসের মধ্যে ওয়াইসিএন ফাইন্যান্স বিভাগে youthclimatenetworkbd@gmail.com ইমেইলে রিফান্ড ও পর্যালোচনার জন্য অনুরোধ করুন।')}
                   </li>
                 </ul>
               </div>
@@ -179,7 +179,7 @@ export function TermsPage() {
                 </p>
                 <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                   <p className="text-xs text-emerald-800 leading-relaxed">
-                    <strong>{t('Have Questions About YCN Terms?', 'ওয়াইসিএন শর্তাবলী সম্পর্কে প্রশ্ন আছে?')}</strong> {t('Get in touch with our legal compliance lead at', 'আমাদের আইনি প্রধানের সাথে এই ইমেইলে যোগাযোগ করুন:')} <a href="mailto:info@ycnbd.org" className="underline font-semibold hover:text-[#E8521A]">info@ycnbd.org</a>.
+                    <strong>{t('Have Questions About YCN Terms?', 'ওয়াইসিএন শর্তাবলী সম্পর্কে প্রশ্ন আছে?')}</strong> {t('Get in touch with our legal compliance lead at', 'আমাদের আইনি প্রধানের সাথে এই ইমেইলে যোগাযোগ করুন:')} <a href="mailto:youthclimatenetworkbd@gmail.com" className="underline font-semibold hover:text-[#E8521A]">youthclimatenetworkbd@gmail.com</a>.
                   </p>
                 </div>
               </div>

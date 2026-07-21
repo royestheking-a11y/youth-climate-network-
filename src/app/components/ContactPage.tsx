@@ -67,7 +67,7 @@ export function ContactPage() {
                   {[
                     { icon: MapPin, label: t('Headquarters', 'সদর দপ্তর'), text: t('15/KA, Shyamoli, Mirpur Road\nDhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড\nঢাকা-১২০৭, বাংলাদেশ'), color: '#E8521A', link: 'https://maps.google.com/?q=15/KA,+Shyamoli,+Mirpur+Road,+Dhaka' },
                     { icon: MapPin, label: t('Regional Office', 'আঞ্চলিক অফিস'), text: t('Village + Post: Nalian 9273\nUnion: Sutrakhali, Dacope, Khulna', 'গ্রাম + ডাক: নলিয়ান ৯২৭৩\nইউনিয়ন: সুতারখালী, দাকোপ, খুলনা'), color: '#D97706', link: 'https://maps.google.com/?q=Nalian+9273,+Sutrakhali,+Dacope,+Khulna' },
-                    { icon: Mail, label: t('Email', 'ইমেইল'), text: 'info@youthclimatenetworkbd.org\ncontact@youthclimatenetworkbd.org\nyouthclimatenetworkbd@gmail.com', color: '#1A6B3C', link: 'mailto:info@youthclimatenetworkbd.org' },
+                    { icon: Mail, label: t('Email', 'ইমেইল'), text: 'youthclimatenetworkbd@gmail.com', color: '#1A6B3C', link: 'mailto:youthclimatenetworkbd@gmail.com' },
                     { icon: Phone, label: t('Phone', 'ফোন'), text: '+88 01911 368538', color: '#0077B5', link: 'tel:+8801911368538' },
                   ].map(({ icon: Icon, label, text, color, link }) => (
                     <div key={label} className="flex gap-4 p-4 rounded-xl bg-white shadow-sm">

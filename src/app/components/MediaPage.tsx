@@ -249,14 +249,14 @@ export function MediaPage() {
               )}
             </p>
             <div className="flex flex-col gap-2">
-              <a href="mailto:info@youthclimatenetwork.org" className="text-sm font-medium hover:underline" style={{ color: '#E8521A' }}>
-                info@youthclimatenetwork.org
+              <a href="mailto:youthclimatenetworkbd@gmail.com" className="text-sm font-medium hover:underline" style={{ color: '#E8521A' }}>
+                youthclimatenetworkbd@gmail.com
               </a>
               <span className="text-sm" style={{ color: '#A8C4B0' }}>
                 {t('Usha Bin Farid - Head of Communications & Content', 'উষা বিন ফরিদ - কমিউনিকেশন ও কনটেন্ট হেড')}
               </span>
-              <a href="mailto:info@youthclimatenetwork.org" className="text-sm font-medium hover:underline mt-2" style={{ color: '#E8521A' }}>
-                info@youthclimatenetwork.org
+              <a href="mailto:youthclimatenetworkbd@gmail.com" className="text-sm font-medium hover:underline mt-2" style={{ color: '#E8521A' }}>
+                youthclimatenetworkbd@gmail.com
               </a>
               <span className="text-sm" style={{ color: '#A8C4B0' }}>
                 {t('General Inquiries', 'সাধারণ জিজ্ঞাসা')}
