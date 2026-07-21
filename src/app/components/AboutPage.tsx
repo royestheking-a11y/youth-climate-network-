@@ -192,7 +192,7 @@ export function AboutPage() {
                 {[
                   { label: t('Founded', 'প্রতিষ্ঠিত'), value: '2022' },
                   { label: t('Registration', 'নিবন্ধন'), value: 'DYD/Khulna/Reg-104' },
-                  { label: t('Headquarters', 'প্রধান কার্যালয়'), value: t('Khulna, Bangladesh', 'খুলনা, বাংলাদেশ') },
+                  { label: t('Headquarters', 'প্রধান কার্যালয়'), value: t('15/KA, Shyamoli, Mirpur Road, Dhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড, ঢাকা-১২০৭, বাংলাদেশ') },
                   { label: t('Scope', 'পরিধি'), value: t('South Asia & Asia Pacific', 'দক্ষিণ এশিয়া ও এশিয়া প্যাসিফিক') },
                 ].map(({ label, value }) => (
                   <div key={label} className="p-4 rounded-xl bg-white" style={{ border: '1px solid #E5E7EB' }}>
