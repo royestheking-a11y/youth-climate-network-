@@ -5,32 +5,34 @@ import { useState } from 'react';
 import logo2 from '../../imports/image-2.webp';
 import { useLanguage } from '../lib/LanguageContext';
 
-function TeamMemberCard({ member }: { member: { id: string; name: string; role: string; bio: string; email: string; image?: string } }) {
+function UnifiedMemberCard({ member }: { member: { id?: string; name: string; role: string; bio?: string; email?: string; image?: string } }) {
   const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <div className="relative rounded-2xl overflow-hidden group aspect-[3/4] bg-gray-100 flex items-center justify-center hover:shadow-xl transition-all duration-300">
       {member.image ? (
-        <img src={member.image} alt={member.name} className="w-24 h-24 rounded-2xl mb-4 object-cover" style={{ border: '2px solid #E8521A' }} />
+        <img src={member.image} alt={member.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : (
-        <div
-          className="w-24 h-24 rounded-2xl flex items-center justify-center mb-4 text-2xl font-bold"
-          style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}
-        >
-          {initials}
-        </div>
+        <div className="text-4xl font-bold text-gray-300">{initials}</div>
       )}
-      <h3 className="font-semibold mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{member.name}</h3>
-      <p className="text-xs font-medium mb-3" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif' }}>{member.role}</p>
-      {member.bio && <p className="text-sm leading-relaxed" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{member.bio}</p>}
-      {member.email && (
-        <a
-          href={`mailto:${member.email}`}
-          className="mt-4 inline-block text-xs hover:underline transition-colors"
-          style={{ color: '#1A6B3C', fontFamily: 'Inter, sans-serif' }}
-        >
-          {member.email}
-        </a>
-      )}
+      
+      {/* Gradient overlay at the bottom */}
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+      
+      {/* Name and Role Box */}
+      <div className="absolute bottom-3 left-3 right-3 rounded-xl p-3 text-center transition-transform duration-300 group-hover:-translate-y-1" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95), rgba(30,30,30,0.75))', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <h3 className="font-semibold text-white mb-0.5 text-[15px]" style={{ fontFamily: 'Poppins, sans-serif' }}>{member.name}</h3>
+        <p className="text-[11px] text-gray-300 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>{member.role}</p>
+        {member.email && (
+          <a
+            href={`mailto:${member.email}`}
+            className="mt-2 inline-block text-[10px] hover:text-white transition-colors text-gray-400"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {member.email}
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -49,8 +51,8 @@ export function AboutPage() {
     { name: 'Dr. Md Hafizur Rahman', role: 'Founder & Executive Director - Education for Development and Sustainability - EDS', image: '/members/Dr. Md Hafizur Rahman , Founder & Executive Director - Education for Development  and Sustainability - EDS - Advisor .jpg' },
     { name: 'Dr. Md. Hasan Howlader', role: 'Associate Professor, Development Studies Discipline, University of Khulna', email: 'hasan@ds.ku.ac.bd', image: '/members/Dr. Md.  Hasan  Howlader , Associate Professor , Development Studies Discipline , University of Khulna .jpg' },
     { name: 'Dr. Shapla Singha', role: 'Assistant Professor, Drawing and Painting Discipline, University of Khulna', email: 'shaplasingha@ku.ac.bd', image: '/members/Dr. Shapla Singha, Assistant Professor , Drawing and Painting Discipline , University of Khulna  .jpg' },
-    { name: 'M RIAD AKTER (Aadib)', role: 'Founder & CEO at EDAXIS Global', email: 'mail.me@riyadaadib.com' },
-    { name: 'MUTLUBA NACHRIN (Meete)', role: 'Founder & CEO @ Tourng Travelers', email: 'director@tourng.com' },
+    { name: 'M RIAD AKTER (Aadib)', role: 'Founder & CEO at EDAXIS Global', email: 'mail.me@riyadaadib.com', image: '/members/M RIAD AKTER (Aadib).jpeg' },
+    { name: 'MUTLUBA NACHRIN (Meete)', role: 'Founder & CEO @ Tourng Travelers', email: 'director@tourng.com', image: '/members/MUTLUBA NACHRIN (Meete).jpeg' },
     { name: 'MD. Matiur Rahman Talukder', role: 'Retired Deputy Director - Department of Youth Development', image: '/members/MD. Matiur Rahman Talukder  Retired Deputy Director - Department of Youth Development,  Ministry of Youth and Sports_.jpg' },
     { name: 'Mohammed Mofizur Rahman', role: 'Scientist, Potsdam Institute for Climate Impact Research', image: '/members/Mohammed Mofizur Rahman - Scientist , Potsdam Institute for Climate Impact Research ..jpg' },
   ];
@@ -511,7 +513,7 @@ export function AboutPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {teamList.map((member, i) => (
-              <TeamMemberCard key={i} member={{ id: `${i}`, name: member.name, role: member.role, bio: '', email: '', image: member.image }} />
+              <UnifiedMemberCard key={i} member={{ id: `${i}`, name: member.name, role: member.role, bio: '', email: '', image: member.image }} />
             ))}
           </div>
         </div>
@@ -528,24 +530,9 @@ export function AboutPage() {
               Meet Our Advisors
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {advisors.map((advisor, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center">
-                {advisor.image ? (
-                  <img src={advisor.image} alt={advisor.name} className="w-24 h-24 rounded-full object-cover mb-4 border-2" style={{ borderColor: '#E8521A' }} />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-[#0A3320] text-[#E8521A] flex items-center justify-center font-bold text-2xl mb-4">
-                    {advisor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                )}
-                <h3 className="font-semibold mb-2 text-[#1F2937]">{advisor.name}</h3>
-                <p className="text-sm text-gray-500 mb-2">{advisor.role}</p>
-                {advisor.email && (
-                  <a href={`mailto:${advisor.email}`} className="text-xs text-[#1A6B3C] hover:underline mt-auto">
-                    {advisor.email}
-                  </a>
-                )}
-              </div>
+              <UnifiedMemberCard key={i} member={advisor} />
             ))}
           </div>
         </div>
@@ -564,7 +551,7 @@ export function AboutPage() {
               { title: t('General Assembly', 'সাধারণ পরিষদ'), desc: t('The supreme decision-making body comprising all active YCN members. Meets annually to review strategy, elect leadership, and approve plans and budgets.', 'সকল ওয়াইসিএন সদস্যদের নিয়ে গঠিত নীতি নির্ধারণী মূল চালিকাশক্তি। বার্ষিক সাধারণ সভায় কৌশল পর্যালোচনা, নেতৃত্ব নির্বাচন এবং বাজেট অনুমোদন করা হয়।') },
               { title: t('Executive Committee', 'কার্যনির্বাহী কমিটি'), desc: t('Elected body of 7–11 youth leaders responsible for governance oversight, policy, and major institutional decisions.', '৭-১১ জন নির্বাচিত যুব নেতাদের সমন্বয়ে গঠিত কমিটি যা নীতি ও অন্যান্য প্রাতিষ্ঠানিক সিদ্ধান্তের জন্য দায়িত্বশীল।') },
               { title: t('Executive Director', 'নির্বাহী পরিচালক'), desc: t('Chief executive responsible for organizational management, external representation, and strategic leadership.', 'সাংগঠনিক ব্যবস্থাপনা, বাহ্যিক প্রতিনিধিত্ব এবং কৌশলগত নেতৃত্বের জন্য দায়ী প্রধান নির্বাহী কর্মকর্তা।') },
-              { title: t('Program Teams', 'প্রোগ্রাম টিমসমূহ'), desc: t('Dedicated teams for each of YCN\'s 15 strategic pillars, led by Program Coordinators with thematic expertise.', 'ওয়াইসিএন-এর ১৫টি কৌশলগত পিলারের প্রতিটির জন্য নিবেদিত দল, যা নির্দিষ্ট ক্ষেত্রে বিশেষজ্ঞ সমন্বয়কারীদের দ্বারা পরিচালিত।') },
+              { title: t('Program Teams', 'প্রোগ্রাম টিমসমূহ'), desc: t('Dedicated teams for each of YCN\'s 20 strategic pillars, led by Program Coordinators with thematic expertise.', 'ওয়াইসিএন-এর ২০টি কৌশলগত পিলারের প্রতিটির জন্য নিবেদিত দল, যা নির্দিষ্ট ক্ষেত্রে বিশেষজ্ঞ সমন্বয়কারীদের দ্বারা পরিচালিত।') },
               { title: t('Finance & Administration', 'অর্থ ও প্রশাসন'), desc: t('Independent finance function with internal audit, transparent reporting, and donor accountability systems.', 'অভ্যন্তরীণ অডিট, স্বচ্ছ রিপোর্টিং এবং দাতার প্রতি জবাবদিহিতা সম্বলিত একটি স্বাধীন অর্থ বিভাগ।') },
               { title: t('Youth Advisory Council', 'যুব উপদেষ্টা পরিষদ'), desc: t('Representative body of young people from YCN\'s program areas, ensuring grassroots perspectives inform all decisions.', 'ওয়াইসিএন-এর প্রোগ্রাম এলাকাগুলোর যুব প্রতিনিধিদের নিয়ে গঠিত পরিষদ, যা নিশ্চিত করে যে তৃণমূলের মতামত সমস্ত সিদ্ধান্ত গ্রহণে প্রতিফলিত হচ্ছে।') },
             ].map((item) => (

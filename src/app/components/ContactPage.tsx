@@ -137,7 +137,7 @@ export function ContactPage() {
                     { platform: t('Facebook', 'ফেসবুক'), handle: 'Youth Climate Network', color: '#1877F2', bg: '#EBF5FF', link: 'https://www.facebook.com/youthclimatenetwork' },
                     { platform: t('Instagram', 'ইনস্টাগ্রাম'), handle: 'youthclimatenetworkbd', color: '#E1306C', bg: '#FFF0F5', link: 'https://www.instagram.com/youthclimatenetworkbd/' },
                     { platform: t('Twitter / X', 'টুইটার / X'), handle: '@ycnorgbd', color: '#1DA1F2', bg: '#EBF8FF', link: 'https://x.com/ycnorgbd' },
-                    { platform: t('LinkedIn', 'লিঙ্কডইন'), handle: 'Youth Climate Network', color: '#0077B5', bg: '#EBF4FF', link: 'https://x.com/ycnorgbd' },
+                    { platform: t('LinkedIn', 'লিঙ্কডইন'), handle: 'Youth Climate Network', color: '#0077B5', bg: '#EBF4FF', link: 'https://www.linkedin.com/company/ycnbd/' },
                     { platform: t('YouTube', 'ইউটিউব'), handle: 'YouthClimateNetwork', color: '#FF0000', bg: '#FFF0F0', link: 'https://www.youtube.com/@YouthClimateNetwork' },
                   ].map(({ platform, handle, color, bg, link }) => (
                     <a

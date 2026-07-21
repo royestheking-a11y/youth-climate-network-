@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { apiNewsletter } from '../lib/api';
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowRight, MessageCircle, Globe } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, ArrowRight, MessageCircle, Globe } from 'lucide-react';
 // removed unused logo import
 import footerBg from '../../imports/image-4.webp';
 import { useLanguage } from '../lib/LanguageContext';
@@ -28,10 +28,11 @@ const programLinks = [
 ];
 
 const socials = [
-  { Icon: Facebook, href: 'https://www.facebook.com/youthclimatenetworkbd', label: 'Facebook' },
-  { Icon: Twitter, href: '#', label: 'Twitter' },
-  { Icon: Instagram, href: 'https://www.instagram.com/ycnbd/', label: 'Instagram' },
+  { Icon: Facebook, href: 'https://www.facebook.com/youthclimatenetwork', label: 'Facebook' },
+  { Icon: Twitter, href: 'https://x.com/ycnorgbd', label: 'Twitter' },
+  { Icon: Instagram, href: 'https://www.instagram.com/youthclimatenetworkbd/', label: 'Instagram' },
   { Icon: Linkedin, href: 'https://www.linkedin.com/company/ycnbd/', label: 'LinkedIn' },
+  { Icon: Youtube, href: 'https://www.youtube.com/@YouthClimateNetwork', label: 'YouTube' },
 ];
 
 export function Footer() {
@@ -115,7 +116,7 @@ export function Footer() {
             </div>
             {/* WhatsApp */}
             <a
-              href="https://wa.me/880XXXXXXXXX"
+              href="https://whatsapp.com/channel/0029VbDURgAADTOEJvOAEX2z"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"

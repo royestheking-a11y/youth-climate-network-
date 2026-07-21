@@ -438,7 +438,7 @@ export function HomePage() {
               </motion.p>
               <motion.div variants={stagger} className="grid grid-cols-2 gap-3 mb-8">
                 {[
-                  { l: '15 Program Pillars', bnL: '১৫টি প্রোগ্রাম পিলার', d: 'All dimensions of climate vulnerability', bnD: 'জলবায়ু ঝুঁকির সমস্ত মাত্রা' },
+                  { l: '20 Program Pillars', bnL: '২০টি প্রোগ্রাম পিলার', d: 'All dimensions of climate vulnerability', bnD: 'জলবায়ু ঝুঁকির সমস্ত মাত্রা' },
                   { l: 'Asia Pacific Reach', bnL: 'এশিয়া প্যাসিফিক জুড়ে সম্প্রসারণ', d: 'Regional representation at global forums', bnD: 'বিশ্ব দরবারে আঞ্চলিক প্রতিনিধিত্ব' },
                   { l: 'Youth-Led Governance', bnL: 'যুব-নেতৃত্বাধীন পরিচালনা', d: 'Democratic, transparent, accountable', bnD: 'গণতান্ত্রিক, স্বচ্ছ, দায়বদ্ধ' },
                   { l: 'Officially Registered', bnL: 'অফিসিয়ালি নিবন্ধিত', d: 'DYD/Khulna/Reg-104, GoB', bnD: 'ডিওয়াইডি/খুলনা/নিবন্ধন-১০৪, বাংলাদেশ সরকার' },
@@ -520,10 +520,10 @@ export function HomePage() {
           >
             <motion.p variants={fadeUp} className="text-xs uppercase tracking-widest mb-3" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{t('02 — Our Work', '০২ — আমাদের কাজ')}</motion.p>
             <motion.h2 variants={fadeUp} style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem, 3.5vw, 2.6rem)', color: '#111827', letterSpacing: '-0.02em' }}>
-              {t('15 Program Pillars', '১৫টি প্রোগ্রাম পিলার')}
+              {t('20 Program Pillars', '২০টি প্রোগ্রাম পিলার')}
             </motion.h2>
             <motion.p variants={fadeUp} className="mt-4 max-w-xl mx-auto" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif', fontSize: '1rem', lineHeight: 1.7 }}>
-              {t('Six featured focus areas addressing key dimensions of climate vulnerability and sustainable development from our 15 strategic program pillars.', 'আমাদের ১৫টি কৌশলগত প্রোগ্রাম পিলারের মধ্য থেকে জলবায়ু ঝুঁকি এবং টেকসই উন্নয়নের প্রধান মাত্রাগুলো মোকাবেলায় ছয়টি বিশেষ ফোকাস ক্ষেত্র।')}
+              {t('Six featured focus areas addressing key dimensions of climate vulnerability and sustainable development from our 20 strategic program pillars.', 'আমাদের ২০টি কৌশলগত প্রোগ্রাম পিলারের মধ্য থেকে জলবায়ু ঝুঁকি এবং টেকসই উন্নয়নের প্রধান মাত্রাগুলো মোকাবেলায় ছয়টি বিশেষ ফোকাস ক্ষেত্র।')}
             </motion.p>
           </motion.div>
 
@@ -547,7 +547,7 @@ export function HomePage() {
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 hover:shadow-xl"
               style={{ background: 'linear-gradient(135deg, #0A3320, #1A6B3C)', color: '#F0ECD8', fontFamily: 'Inter, sans-serif', boxShadow: '0 4px 16px rgba(10,51,32,0.2)' }}
             >
-              {t('View All 15 Programs', 'সকল ১৫টি প্রোগ্রাম দেখুন')} <ArrowRight size={15} />
+              {t('View All 20 Programs', 'সকল ২০টি প্রোগ্রাম দেখুন')} <ArrowRight size={15} />
             </Link>
           </motion.div>
         </div>
