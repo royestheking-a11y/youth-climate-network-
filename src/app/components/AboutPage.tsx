@@ -7,12 +7,19 @@ import { useLanguage } from '../lib/LanguageContext';
 
 function UnifiedMemberCard({ member }: { member: { id?: string; name: string; role: string; bio?: string; email?: string; image?: string } }) {
   const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="relative rounded-2xl overflow-hidden group aspect-[3/4] bg-gray-100 flex items-center justify-center hover:shadow-xl transition-all duration-300">
-      {member.image ? (
-        <img src={member.image} alt={member.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      {member.image && !imgError ? (
+        <img
+          src={member.image}
+          alt={member.name}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={() => setImgError(true)}
+        />
       ) : (
-        <div className="text-4xl font-bold text-gray-300">{initials}</div>
+        <div className="text-4xl font-bold flex items-center justify-center w-full h-full bg-slate-800 text-slate-200">{initials}</div>
       )}
       
       {/* Gradient overlay at the bottom */}
@@ -40,40 +47,41 @@ function UnifiedMemberCard({ member }: { member: { id?: string; name: string; ro
 export function AboutPage() {
   const { t } = useLanguage();
   const advisors = [
-    { name: 'Dr. Sue Maxam', role: 'Assistant Provost for Wellness at Pace University, USA and Inaugural Co Chair of the MCN Civic Learning Council', image: '/members/Dr. Sue Maxam ,  Assistant Provost for Wellness at  Pace University , USA  and  Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council  - Advisor .webp' },
-    { name: 'Dr. Dave Dowland', role: 'Registrar, BRAC University and Inaugural Co Chair of the MCN Civic Learning Council', image: '/members/Dr. Dave Dowland , Registrar, BRAC University  and Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council - Advisor .jpg' },
-    { name: 'Dr. Navid Saleh', role: 'Professor, Department of Civil, Architectural and Environmental Engineering at the University of Texas at Austin, USA', image: '/members/Dr. Navid Saleh ,  Professor , Department of Civil , Architectural and Environmental Engineering at the University of Texas at Austin , USA..jpg' },
-    { name: 'Abel Atares', role: 'Humanitarian', image: '/members/Abel Atares - Humanitarian .jpg' },
-    { name: 'Pablo Bescos', role: 'Humanitarian', image: '/members/Pablo Bescos - Humanitarian .jpg' },
-    { name: 'Dr. Tuhin Roy', role: 'Sociology Discipline, University of Khulna', email: 'tuhinroy@soc.ku.ac.bd', image: '/members/Dr. Tuhin Roy , Sociology Discipline , University of Khulna .jpeg' },
-    { name: 'Dr Hanif Miah', role: 'Associate Professor, Department of Sociology at University of Chittagong', email: 'miah.hanif@cu.ac.bd', image: '/members/Dr Hanif Miah , Associate Professor , Department of Sociology at University of Chittagong   - Advisor .jpg' },
-    { name: 'Dr. Md. Wasiul Islam', role: 'Professor, Forestry and Wood Technology Discipline, University of Khulna', email: 'wislam@fwt.ku.ac.bd', image: '/members/Dr. Md. Wasiul Islam , Professor ,  Forestry and Wood Technology Discipline , University of Khulna  .jpg' },
-    { name: 'Dr. Md Hafizur Rahman', role: 'Founder & Executive Director - Education for Development and Sustainability - EDS', image: '/members/Dr. Md Hafizur Rahman , Founder & Executive Director - Education for Development  and Sustainability - EDS - Advisor .jpg' },
-    { name: 'Dr. Md. Hasan Howlader', role: 'Associate Professor, Development Studies Discipline, University of Khulna', email: 'hasan@ds.ku.ac.bd', image: '/members/Dr. Md.  Hasan  Howlader , Associate Professor , Development Studies Discipline , University of Khulna .jpg' },
-    { name: 'Dr. Shapla Singha', role: 'Assistant Professor, Drawing and Painting Discipline, University of Khulna', email: 'shaplasingha@ku.ac.bd', image: '/members/Dr. Shapla Singha, Assistant Professor , Drawing and Painting Discipline , University of Khulna  .jpg' },
-    { name: 'M RIAD AKTER (Aadib)', role: 'Founder & CEO at EDAXIS Global', email: 'mail.me@riyadaadib.com', image: '/members/M RIAD AKTER (Aadib).jpeg' },
-    { name: 'MUTLUBA NACHRIN (Meete)', role: 'Founder & CEO @ Tourng Travelers', email: 'director@tourng.com', image: '/members/MUTLUBA NACHRIN (Meete).jpeg' },
-    { name: 'MD. Matiur Rahman Talukder', role: 'Retired Deputy Director - Department of Youth Development', image: '/members/MD. Matiur Rahman Talukder  Retired Deputy Director - Department of Youth Development,  Ministry of Youth and Sports_.jpg' },
-    { name: 'Mohammed Mofizur Rahman', role: 'Scientist, Potsdam Institute for Climate Impact Research', image: '/members/Mohammed Mofizur Rahman - Scientist , Potsdam Institute for Climate Impact Research ..jpg' },
+    { name: 'Dr. Sue Maxam', role: 'Assistant Provost for Wellness at Pace University, USA and Inaugural Co Chair of the MCN Civic Learning Council', image: '/Formal Image -  Meet our team /Dr. Sue Maxam ,  Assistant Provost for Wellness at  Pace University , USA  and  Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council  - Advisor .webp' },
+    { name: 'Dr. Dave Dowland', role: 'Registrar, BRAC University and Inaugural Co Chair of the MCN Civic Learning Council', image: '/Formal Image -  Meet our team /Dr. Dave Dowland , Registrar, BRAC University  and Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council - Advisor .jpg' },
+    { name: 'Dr. Navid Saleh', role: 'Professor, Department of Civil, Architectural and Environmental Engineering at the University of Texas at Austin, USA', image: '/Formal Image -  Meet our team /Dr. Navid Saleh ,  Professor , Department of Civil , Architectural and Environmental Engineering at the University of Texas at Austin , USA..jpg' },
+    { name: 'Abel Atares', role: 'Humanitarian', image: '/Formal Image -  Meet our team /Abel Atares - Humanitarian .jpg' },
+    { name: 'Pablo Bescos', role: 'Humanitarian', image: '/Formal Image -  Meet our team /Pablo Bescos - Humanitarian .jpg' },
+    { name: 'Dr. Tuhin Roy', role: 'Sociology Discipline, University of Khulna', email: 'tuhinroy@soc.ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Tuhin Roy , Sociology Discipline , University of Khulna .jpeg' },
+    { name: 'Dr Hanif Miah', role: 'Associate Professor, Department of Sociology at University of Chittagong', email: 'miah.hanif@cu.ac.bd', image: '/Formal Image -  Meet our team /Dr Hanif Miah , Associate Professor , Department of Sociology at University of Chittagong   - Advisor .jpg' },
+    { name: 'Dr. Md. Wasiul Islam', role: 'Professor, Forestry and Wood Technology Discipline, University of Khulna', email: 'wislam@fwt.ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Md. Wasiul Islam , Professor ,  Forestry and Wood Technology Discipline , University of Khulna  .jpg' },
+    { name: 'Dr. Md Hafizur Rahman', role: 'Founder & Executive Director - Education for Development and Sustainability - EDS', image: '/Formal Image -  Meet our team /Dr. Md Hafizur Rahman , Founder & Executive Director - Education for Development  and Sustainability - EDS - Advisor .jpg' },
+    { name: 'Dr. Md. Hasan Howlader', role: 'Associate Professor, Development Studies Discipline, University of Khulna', email: 'hasan@ds.ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Md.  Hasan  Howlader , Associate Professor , Development Studies Discipline , University of Khulna .jpg' },
+    { name: 'Dr. Shapla Singha', role: 'Assistant Professor, Drawing and Painting Discipline, University of Khulna', email: 'shaplasingha@ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Shapla Singha, Assistant Professor , Drawing and Painting Discipline , University of Khulna  .jpg' },
+    { name: 'M RIAD AKTER (Aadib)', role: 'Founder & CEO at EDAXIS Global', email: 'mail.me@riyadaadib.com', image: '/Formal Image -  Meet our team /M RIAD AKTER (Aadib).jpeg' },
+    { name: 'MUTLUBA NACHRIN (Meete)', role: 'Founder & CEO @ Tourng Travelers', email: 'director@tourng.com', image: '/Formal Image -  Meet our team /MUTLUBA NACHRIN (Meete).jpeg' },
+    { name: 'MD. Matiur Rahman Talukder', role: 'Retired Deputy Director - Department of Youth Development', image: '/Formal Image -  Meet our team /MD. Matiur Rahman Talukder  Retired Deputy Director - Department of Youth Development,  Ministry of Youth and Sports_.jpg' },
+    { name: 'Mohammed Mofizur Rahman', role: 'Scientist, Potsdam Institute for Climate Impact Research', image: '/Formal Image -  Meet our team /Mohammed Mofizur Rahman - Scientist , Potsdam Institute for Climate Impact Research ..jpg' },
   ];
 
   const teamList = [
-    { name: 'Arafat Hossain Akash', role: 'Founder & Executive Director', image: '/members/Arafat Hossain Akash - Founder & Executive Director .png' },
-    { name: 'Madhusudan Mondal', role: 'Head of Programs & Climate Action', image: '/members/Madhusudan Mondal - Head of Programs & Climate Action .jpeg' },
-    { name: 'Sadique Haseen Ratul', role: 'Head of Digital Engagement & Advocacy', image: '/members/Sadique Haseen Ratul - Head of Digital Engagement & Advocacy .jpeg' },
-    { name: 'Ashikur Rahman', role: 'Head of Operations', image: '/members/Ashikur Rahman - Head of Operations .jpeg' },
-    { name: 'Hasibul Alam Hridoy', role: 'Head of Research, Policy & Innovation', image: '/members/Hasibul Alam Hridoy - Head of Research, Policy & Innovation .jpg.jpeg' },
-    { name: 'Anupurba sarkar', role: 'Head of People & Culture (HR)', image: '/members/Anupurba sarkar  -  Head of People & Culture .jpeg' },
-    { name: 'Antora Akter Nodee', role: 'Head of Safeguarding & Ethics', image: '/members/Antora  Akter Nodee - Head of Safeguarding & Ethics .jpeg' },
-    { name: 'Puja Gain', role: 'Head of Volunteer Operations', image: '/members/Head of Volunteer Operations -   Puja Gain (1).jpg' },
-    { name: 'Imran Hosen', role: 'Head of Events & Campaigns', image: '/members/Head of Events & Campaigns —  Imran Hosen .jpg' },
-    { name: 'Ariful Islam', role: 'Head of Inclusion', image: '/members/Ariful Islam -  Head of Inclusion .jpeg' },
-    { name: 'Azibar Hossain', role: 'Head of Partnerships & Resource Mobilization', image: '/members/Azibar Hossain - Head of Partnerships & Resource Mobilization .jpeg' },
-    { name: 'Md. Arif Morol', role: 'Head of Finance & Administration', image: '/members/Md. Arif Morol   -  Head of Finance & Administration .jpeg' },
-    { name: 'Usha Bin Farid', role: 'Head of Communications & Content', image: '/members/Head of Communications & Content -    Usha Bin Farid .jpeg' },
-    { name: 'Jobaer Hossain', role: 'Head of Monitoring, Evaluation & Learning (MEL)', image: '/members/Jobaer Hossain -   Head of Monitoring, Evaluation & Learning (MEL)  .jpeg' },
-    { name: 'Riaz Afrin', role: 'Head of Legal & Governance', image: '/members/Head of Legal & Governance   — Riaz Afrin .jpg' },
-    { name: 'Rifat Sana', role: 'Head of Management Information Systems (MIS)', image: '/members/Rifat Sana   -   Head of Management Information Systems (MIS).jpeg' },
+    { name: 'Arafat Hossain Akash', role: 'Founder & Executive Director', image: '/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png' },
+    { name: 'Madhusudan Mondal', role: 'Head of Programme & Climate Action', image: '/Formal Image -  Meet our team /2. Madhusudan Mondal - Head of Programme & Climate Action.png' },
+    { name: 'Ariful Islam', role: 'Community Engagement Officer', image: '/Formal Image -  Meet our team /3. Ariful Islam -  Community Engagement Officer.png' },
+    { name: 'Jobaer Hossain', role: 'Monitoring, Evaluation & Learning ( MEAL)  officer', image: '/Formal Image -  Meet our team /4.  Jobaer Hossain - Monitoring, Evaluation & Learning ( MEAL)  officer.png' },
+    { name: 'Puja Gain', role: 'Volunteer Coordinator', image: '/Formal Image -  Meet our team /5.  Puja Gain -  Volunteer Coordinator.png' },
+    { name: 'Sadique Haseen Ratul', role: 'Head of Digital Engagement & Advocacy', image: '/Formal Image -  Meet our team /6.  Sadique Haseen Ratul  - Head of Digital Engagement & Advocacy.png' },
+    { name: 'Usha Bin Farid', role: 'Communications & Content Officer', image: '/Formal Image -  Meet our team /7. Usha Bin Farid - Communications & Content Officer.jpg' },
+    { name: 'Md Nahid Hosen', role: 'Head of Partnerships & Resource Mobilization', image: '/Formal Image -  Meet our team /8. Md Nahid Hosen - Head of Partnerships & Resource Mobilization.png' },
+    { name: 'Azibar Hossain', role: 'Partnerships officer', image: '/Formal Image -  Meet our team /9. Azibar Hossain - Partnerships officer. .png' },
+    { name: 'Antora Akter Nodee', role: 'Fundraising Coordinator', image: '/Formal Image -  Meet our team /10.  Antora Akter Nodee - Fundraising Coordinator.png' },
+    { name: 'Hasibul Alam Hridoy', role: 'Head of Research,  Policy & Innovation', image: '/Formal Image -  Meet our team /11. Hasibul Alam Hridoy  - Head of Research,  Policy & Innovation.jpg' },
+    { name: 'Rifat Sana', role: 'Knowledge Management Officer', image: '/Formal Image -  Meet our team /12. Rifat Sana -Knowledge Management Officer. .png' },
+    { name: 'Md. Arif Morol', role: 'Finance & Adminstration Manager', image: '/Formal Image -  Meet our team /13. Md. Arif Morol - Finance & Adminstration Manager_.png' },
+    { name: 'Ashikur Rahman', role: 'Head of  Operations', image: '/Formal Image -  Meet our team /14. Ashikur Rahman - Head of  Operations.png' },
+    { name: 'Imran Hosen', role: 'Head of Logistics officer', image: '/Formal Image -  Meet our team /14.Imran Hosen - Head of Logistics officer.png' },
+    { name: 'Anupurba Sarkar', role: 'People & Culture Manager', image: '/Formal Image -  Meet our team /16. Anupurba Sarkar -  People & Culture Manager. .png' },
+    { name: 'Riaz Afrin', role: 'Learning & Development Officer', image: '/Formal Image -  Meet our team /17.  Riaz Afrin  - Learning & Development Officer.png' },
   ];
 
   const [expandedStatement, setExpandedStatement] = useState(false);
@@ -436,8 +444,12 @@ export function AboutPage() {
           <div className="bg-white rounded-3xl p-8 lg:p-12 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-12 items-start">
             <div className="lg:w-1/3 flex-shrink-0">
               <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-200 mb-6">
-                <img src="/members/Arafat Hossain Akash - Founder & Executive Director .png" alt="Arafat Hossain Akash" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                <div className="w-full h-full flex items-center justify-center text-gray-400" style={{ display: 'none' }}>Photo Placeholder</div>
+                <img
+                  src="/Arafat Hossain Akash - Founder & Executive Director.jpg"
+                  alt="Arafat Hossain Akash"
+                  className="w-full h-full object-cover"
+                  onError={(e) => (e.currentTarget.src = '/Formal Image -  Meet our team /Arafat Hossain Akash - Founder & Executive Director - statement e ai sobita bosbe.jpg')}
+                />
               </div>
               <h3 className="font-bold text-xl mb-1" style={{ color: '#1F2937' }}>Arafat Hossain Akash</h3>
               <p className="text-sm font-medium" style={{ color: '#E8521A' }}>Founder & Executive Director, Youth Climate Network</p>
@@ -505,7 +517,7 @@ export function AboutPage() {
               {t('Leadership', 'নেতৃত্ব')}
             </div>
             <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              {t('Meet the Team', 'দলের সাথে পরিচিত হোন')}
+              {t('Meet our Team', 'আমাদের দলের সাথে পরিচিত হোন')}
             </h2>
             <p className="mt-3 max-w-xl mx-auto" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
               {t('Dedicated young professionals driving YCN\'s mission across programs, advocacy, and operations.', 'প্রোগ্রাম, অ্যাডভোকেসি এবং অপারেশন জুড়ে ওয়াইসিএন-এর মিশন পরিচালনাকারী নিবেদিত তরুণ দল।')}

@@ -14,6 +14,7 @@ import { ContactPage } from './components/ContactPage';
 import { AdminPage } from './components/AdminPage';
 import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
+import { RizqaraTechPage } from './components/RizqaraTechPage';
 import { NotFoundPage } from './components/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -34,6 +35,8 @@ export const router = createBrowserRouter([
       { path: 'contact', Component: ContactPage },
       { path: 'privacy', Component: PrivacyPage },
       { path: 'terms', Component: TermsPage },
+      { path: 'tech-partner', Component: RizqaraTechPage },
+      { path: 'rizqara-tech', Component: RizqaraTechPage },
       { path: 'admin', Component: AdminPage },
       { path: 'admin/:tab', Component: AdminPage },
       { path: '*', Component: NotFoundPage },

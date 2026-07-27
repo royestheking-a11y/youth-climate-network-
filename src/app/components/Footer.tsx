@@ -308,15 +308,27 @@ export function Footer() {
         <div className="mt-12 mb-6" style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
 
         {/* Bottom bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-center sm:text-left" style={{ color: '#7FAF8A' }}>
+            <p className="text-xs text-center md:text-left" style={{ color: '#7FAF8A' }}>
               © {new Date().getFullYear()} Youth Climate Network (YCN). {t('All rights reserved.')}
             </p>
-            <p className="text-xs text-center sm:text-left mt-0.5" style={{ color: '#5A8C6E' }}>
+            <p className="text-xs text-center md:text-left mt-0.5" style={{ color: '#5A8C6E' }}>
               {t('Est. 2022 · Bangladesh · South Asia · Asia Pacific', 'প্রতিষ্ঠিত ২০২২ · বাংলাদেশ · দক্ষিণ এশিয়া · এশিয়া প্যাসিফিক')}
             </p>
           </div>
+
+          <div className="text-xs text-center md:text-center" style={{ color: '#7FAF8A' }}>
+            <span>{t('Design and Development by', 'ডিজাইন এবং ডেভেলপমেন্টে')} </span>
+            <Link
+              to="/tech-partner"
+              className="font-semibold hover:underline transition-colors"
+              style={{ color: '#E8521A' }}
+            >
+              Rizqara Tech
+            </Link>
+          </div>
+
           <div className="flex items-center gap-1">
             <Link
               to="/privacy"
