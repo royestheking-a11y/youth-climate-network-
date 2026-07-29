@@ -4,6 +4,7 @@ import { ArrowRight, Shield, Lightbulb, Heart, Users, Eye, Target, Waves, Wind, 
 import { useState } from 'react';
 import logo2 from '../../imports/image-2.webp';
 import { useLanguage } from '../lib/LanguageContext';
+import { useTeam } from '../lib/api';
 
 function UnifiedMemberCard({ member }: { member: { id?: string; name: string; role: string; bio?: string; email?: string; image?: string } }) {
   const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
@@ -45,44 +46,11 @@ function UnifiedMemberCard({ member }: { member: { id?: string; name: string; ro
 }
 
 export function AboutPage() {
-  const { t } = useLanguage();
-  const advisors = [
-    { name: 'Dr. Sue Maxam', role: 'Assistant Provost for Wellness at Pace University, USA and Inaugural Co Chair of the MCN Civic Learning Council', image: '/Formal Image -  Meet our team /Dr. Sue Maxam ,  Assistant Provost for Wellness at  Pace University , USA  and  Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council  - Advisor .webp' },
-    { name: 'Dr. Dave Dowland', role: 'Registrar, BRAC University and Inaugural Co Chair of the MCN Civic Learning Council', image: '/Formal Image -  Meet our team /Dr. Dave Dowland , Registrar, BRAC University  and Inaugural Co Chair of the MCN ( Millennium Campus Network ) Civic Learning Council - Advisor .jpg' },
-    { name: 'Dr. Navid Saleh', role: 'Professor, Department of Civil, Architectural and Environmental Engineering at the University of Texas at Austin, USA', image: '/Formal Image -  Meet our team /Dr. Navid Saleh ,  Professor , Department of Civil , Architectural and Environmental Engineering at the University of Texas at Austin , USA..jpg' },
-    { name: 'Abel Atares', role: 'Humanitarian', image: '/Formal Image -  Meet our team /Abel Atares - Humanitarian .jpg' },
-    { name: 'Pablo Bescos', role: 'Humanitarian', image: '/Formal Image -  Meet our team /Pablo Bescos - Humanitarian .jpg' },
-    { name: 'Dr. Tuhin Roy', role: 'Sociology Discipline, University of Khulna', email: 'tuhinroy@soc.ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Tuhin Roy , Sociology Discipline , University of Khulna .jpeg' },
-    { name: 'Dr Hanif Miah', role: 'Associate Professor, Department of Sociology at University of Chittagong', email: 'miah.hanif@cu.ac.bd', image: '/Formal Image -  Meet our team /Dr Hanif Miah , Associate Professor , Department of Sociology at University of Chittagong   - Advisor .jpg' },
-    { name: 'Dr. Md. Wasiul Islam', role: 'Professor, Forestry and Wood Technology Discipline, University of Khulna', email: 'wislam@fwt.ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Md. Wasiul Islam , Professor ,  Forestry and Wood Technology Discipline , University of Khulna  .jpg' },
-    { name: 'Dr. Md Hafizur Rahman', role: 'Founder & Executive Director - Education for Development and Sustainability - EDS', image: '/Formal Image -  Meet our team /Dr. Md Hafizur Rahman , Founder & Executive Director - Education for Development  and Sustainability - EDS - Advisor .jpg' },
-    { name: 'Dr. Md. Hasan Howlader', role: 'Associate Professor, Development Studies Discipline, University of Khulna', email: 'hasan@ds.ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Md.  Hasan  Howlader , Associate Professor , Development Studies Discipline , University of Khulna .jpg' },
-    { name: 'Dr. Shapla Singha', role: 'Assistant Professor, Drawing and Painting Discipline, University of Khulna', email: 'shaplasingha@ku.ac.bd', image: '/Formal Image -  Meet our team /Dr. Shapla Singha, Assistant Professor , Drawing and Painting Discipline , University of Khulna  .jpg' },
-    { name: 'M RIAD AKTER (Aadib)', role: 'Founder & CEO at EDAXIS Global', email: 'mail.me@riyadaadib.com', image: '/Formal Image -  Meet our team /M RIAD AKTER (Aadib).jpeg' },
-    { name: 'MUTLUBA NACHRIN (Meete)', role: 'Founder & CEO @ Tourng Travelers', email: 'director@tourng.com', image: '/Formal Image -  Meet our team /MUTLUBA NACHRIN (Meete).jpeg' },
-    { name: 'MD. Matiur Rahman Talukder', role: 'Retired Deputy Director - Department of Youth Development', image: '/Formal Image -  Meet our team /MD. Matiur Rahman Talukder  Retired Deputy Director - Department of Youth Development,  Ministry of Youth and Sports_.jpg' },
-    { name: 'Mohammed Mofizur Rahman', role: 'Scientist, Potsdam Institute for Climate Impact Research', image: '/Formal Image -  Meet our team /Mohammed Mofizur Rahman - Scientist , Potsdam Institute for Climate Impact Research ..jpg' },
-  ];
-
-  const teamList = [
-    { name: 'Arafat Hossain Akash', role: 'Founder & Executive Director', image: '/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png' },
-    { name: 'Madhusudan Mondal', role: 'Head of Programme & Climate Action', image: '/Formal Image -  Meet our team /2. Madhusudan Mondal - Head of Programme & Climate Action.png' },
-    { name: 'Ariful Islam', role: 'Community Engagement Officer', image: '/Formal Image -  Meet our team /3. Ariful Islam -  Community Engagement Officer.png' },
-    { name: 'Jobaer Hossain', role: 'Monitoring, Evaluation & Learning ( MEAL)  officer', image: '/Formal Image -  Meet our team /4.  Jobaer Hossain - Monitoring, Evaluation & Learning ( MEAL)  officer.png' },
-    { name: 'Puja Gain', role: 'Volunteer Coordinator', image: '/Formal Image -  Meet our team /5.  Puja Gain -  Volunteer Coordinator.png' },
-    { name: 'Sadique Haseen Ratul', role: 'Head of Digital Engagement & Advocacy', image: '/Formal Image -  Meet our team /6.  Sadique Haseen Ratul  - Head of Digital Engagement & Advocacy.png' },
-    { name: 'Usha Bin Farid', role: 'Communications & Content Officer', image: '/Formal Image -  Meet our team /7. Usha Bin Farid - Communications & Content Officer.jpg' },
-    { name: 'Md Nahid Hosen', role: 'Head of Partnerships & Resource Mobilization', image: '/Formal Image -  Meet our team /8. Md Nahid Hosen - Head of Partnerships & Resource Mobilization.png' },
-    { name: 'Azibar Hossain', role: 'Partnerships officer', image: '/Formal Image -  Meet our team /9. Azibar Hossain - Partnerships officer. .png' },
-    { name: 'Antora Akter Nodee', role: 'Fundraising Coordinator', image: '/Formal Image -  Meet our team /10.  Antora Akter Nodee - Fundraising Coordinator.png' },
-    { name: 'Hasibul Alam Hridoy', role: 'Head of Research,  Policy & Innovation', image: '/Formal Image -  Meet our team /11. Hasibul Alam Hridoy  - Head of Research,  Policy & Innovation.jpg' },
-    { name: 'Rifat Sana', role: 'Knowledge Management Officer', image: '/Formal Image -  Meet our team /12. Rifat Sana -Knowledge Management Officer. .png' },
-    { name: 'Md. Arif Morol', role: 'Finance & Adminstration Manager', image: '/Formal Image -  Meet our team /13. Md. Arif Morol - Finance & Adminstration Manager_.png' },
-    { name: 'Ashikur Rahman', role: 'Head of  Operations', image: '/Formal Image -  Meet our team /14. Ashikur Rahman - Head of  Operations.png' },
-    { name: 'Imran Hosen', role: 'Head of Logistics officer', image: '/Formal Image -  Meet our team /14.Imran Hosen - Head of Logistics officer.png' },
-    { name: 'Anupurba Sarkar', role: 'People & Culture Manager', image: '/Formal Image -  Meet our team /16. Anupurba Sarkar -  People & Culture Manager. .png' },
-    { name: 'Riaz Afrin', role: 'Learning & Development Officer', image: '/Formal Image -  Meet our team /17.  Riaz Afrin  - Learning & Development Officer.png' },
-  ];
+  const { t, lang } = useLanguage();
+  const { data: dynamicTeamList = [] } = useTeam();
+  
+  const teamMembersList = dynamicTeamList.filter(m => m.type !== 'advisor');
+  const advisorMembersList = dynamicTeamList.filter(m => m.type === 'advisor');
 
   const [expandedStatement, setExpandedStatement] = useState(false);
 
@@ -524,8 +492,8 @@ export function AboutPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamList.map((member, i) => (
-              <UnifiedMemberCard key={i} member={{ id: `${i}`, name: member.name, role: member.role, bio: '', email: '', image: member.image }} />
+            {teamMembersList.map((member, i) => (
+              <UnifiedMemberCard key={member.id || i} member={{ id: member.id, name: lang === 'bn' && member.name_bn ? member.name_bn : member.name, role: lang === 'bn' && member.role_bn ? member.role_bn : member.role, bio: '', email: '', image: member.image }} />
             ))}
           </div>
         </div>
@@ -543,8 +511,8 @@ export function AboutPage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {advisors.map((advisor, i) => (
-              <UnifiedMemberCard key={i} member={advisor} />
+            {advisorMembersList.map((advisor, i) => (
+              <UnifiedMemberCard key={advisor.id || i} member={{ id: advisor.id, name: lang === 'bn' && advisor.name_bn ? advisor.name_bn : advisor.name, role: lang === 'bn' && advisor.role_bn ? advisor.role_bn : advisor.role, bio: '', email: '', image: advisor.image }} />
             ))}
           </div>
         </div>

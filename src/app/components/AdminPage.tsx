@@ -8,20 +8,78 @@ import {
 } from 'lucide-react';
 import {
   checkAdminAuth, adminLogin, adminLogout,
-  getVolunteerApps, updateVolunteerStatus,
-  getContactMessages, markMessageRead, getDonations,
-  getDonationRequests, updateDonationRequestStatus,
-  getPartnershipInquiries, updatePartnershipInquiryStatus, getInternshipApps, updateInternshipAppStatus
+  getDonationRequests, updateDonationRequestStatus, deleteDonationRequest,
+  getAdminUser
 } from '../lib/storage';
 import type {
-  ImpactStats, NewsItem, TeamMember, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, HeroCarouselItem, MediaItem
+  ImpactStats, NewsItem, TeamMember, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, InternshipPost, HeroCarouselItem, MediaItem, AdminUser
 } from '../lib/storage';
+import { Shield } from 'lucide-react';
 
 import heroBg from '../../imports/image-4.webp';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { Link } from 'react-router';
 
-type AdminTab = 'dashboard' | 'stats' | 'carousel' | 'media' | 'news' | 'events' | 'team' | 'partners' | 'volunteers' | 'internships' | 'partnershipInquiries' | 'newsletter' | 'messages' | 'donations';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { AlertCircle } from 'lucide-react';
+
+function ConfirmDeleteModal({
+  isOpen,
+  title = "Are you sure?",
+  description = "This action cannot be undone. This will permanently delete this item.",
+  onConfirm,
+  onCancel
+}: {
+  isOpen: boolean;
+  title?: string;
+  description?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+      <AlertDialogContent className="rounded-3xl border-0 overflow-hidden" style={{ background: 'linear-gradient(to bottom, #ffffff, #F0F4F1)' }}>
+        <AlertDialogHeader className="relative pb-6">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-full blur-3xl opacity-50 -mr-16 -mt-16 pointer-events-none" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 mb-4 shadow-sm border border-red-200">
+            <AlertCircle className="h-7 w-7 text-red-600" aria-hidden="true" />
+          </div>
+          <AlertDialogTitle className="text-center text-xl font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-center text-gray-500 mt-2 font-medium">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-row items-center justify-center gap-3 sm:gap-4 sm:justify-center border-t border-gray-100 pt-5 mt-2 bg-white/50 backdrop-blur-sm -mx-6 px-6 -mb-6 pb-6">
+          <AlertDialogCancel
+            onClick={onCancel}
+            className="mt-0 w-full rounded-xl border-gray-200 bg-white hover:bg-gray-50 font-semibold text-gray-700 shadow-sm transition-all sm:w-auto sm:flex-1"
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="mt-0 w-full rounded-xl bg-red-600 hover:bg-red-700 font-semibold text-white shadow-sm transition-all sm:w-auto sm:flex-1"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+type AdminTab = 'dashboard' | 'stats' | 'carousel' | 'media' | 'news' | 'events' | 'team' | 'partners' | 'volunteers' | 'internships' | 'partnershipInquiries' | 'newsletter' | 'messages' | 'donations' | 'roles';
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState(() => localStorage.getItem('ycn_admin_email') || '');
@@ -31,19 +89,17 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      if (adminLogin(password)) {
-        if (remember) localStorage.setItem('ycn_admin_email', email);
-        else localStorage.removeItem('ycn_admin_email');
-        onLogin();
-      } else {
-        setError('Incorrect credentials. Please try again.');
-        setLoading(false);
-      }
-    }, 600);
+    if (await adminLogin(email, password)) {
+      if (remember) localStorage.setItem('ycn_admin_email', email);
+      else localStorage.removeItem('ycn_admin_email');
+      onLogin();
+    } else {
+      setError('Incorrect credentials. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -220,17 +276,199 @@ const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; styl
   { key: 'newsletter', label: 'Newsletter', icon: Mail },
   { key: 'messages', label: 'Messages', icon: MessageSquare },
   { key: 'donations', label: 'Donations', icon: TrendingUp },
+  { key: 'roles', label: 'Roles & Access', icon: Shield },
 ];
 
 import {
-  useStats, useVolunteerApps, useInternshipApps,
+  useStats, useVolunteerApps, useInternshipApps, useInternshipPosts,
   usePartnershipInquiries, useContactMessages, useNewsletter,
   useDonations, useNews, useMedia, apiMedia, uploadFile, useCarousel,
-  useEvents, useTeam, usePartners
+  useEvents, useTeam, usePartners, useAdminUsers, apiAdminUsers
 } from '../lib/api';
+
+const TableSkeleton = ({ rows = 5, cols = 4 }) => (
+  <div className="w-full bg-white rounded-2xl shadow-sm border p-4 space-y-4">
+    <div className="flex gap-4 border-b pb-4">
+      {Array.from({ length: cols }).map((_, i) => (
+        <div key={i} className="h-6 bg-gray-200 rounded animate-pulse flex-1" />
+      ))}
+    </div>
+    {Array.from({ length: rows }).map((_, i) => (
+      <div key={i} className="flex gap-4">
+        {Array.from({ length: cols }).map((_, j) => (
+          <div key={j} className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+        ))}
+      </div>
+    ))}
+  </div>
+);
+
+const CardSkeleton = ({ count = 4 }) => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="bg-white rounded-2xl shadow-sm border p-6 space-y-4 h-32 animate-pulse">
+        <div className="w-10 h-10 bg-gray-200 rounded-xl" />
+        <div className="h-4 bg-gray-200 rounded w-1/2" />
+        <div className="h-6 bg-gray-200 rounded w-3/4" />
+      </div>
+    ))}
+  </div>
+);
+
+function RolesTab() {
+  const { data: users, mutate, isLoading } = useAdminUsers();
+  const [isEditing, setIsEditing] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<AdminUser> & { password?: string }>({ name: '', email: '', permissions: [] });
+
+  const allPermissions = tabs.filter(t => t.key !== 'dashboard' && t.key !== 'roles');
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.id) {
+      await apiAdminUsers.update(form.id, form);
+    } else {
+      await apiAdminUsers.create(form as AdminUser);
+    }
+    mutate();
+    setIsEditing(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await apiAdminUsers.delete(id);
+    mutate();
+    setDeleteId(null);
+  };
+
+  const togglePermission = (key: string) => {
+    const current = form.permissions || [];
+    if (current.includes(key)) {
+      setForm({ ...form, permissions: current.filter(p => p !== key) });
+    } else {
+      setForm({ ...form, permissions: [...current, key] });
+    }
+  };
+
+  if (isLoading) return <TableSkeleton />;
+
+  if (isEditing) return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">{form.id ? 'Edit User' : 'Add New Admin User'}</h2>
+        <button onClick={() => setIsEditing(false)} className="text-gray-500 hover:text-gray-700">
+          <X size={20} />
+        </button>
+      </div>
+      <form onSubmit={handleSave} className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input required value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input required type="email" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div className="col-span-2">
+            <label className="block text-sm font-medium mb-1">{form.id ? 'New Password (leave blank to keep current)' : 'Password'}</label>
+            <input type="password" required={!form.id} onChange={e => setForm({...form, password: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-3">Permissions (Select sections this user can access)</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {allPermissions.map(tab => (
+              <label key={tab.key} className="flex items-center gap-2 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={(form.permissions || []).includes(tab.key)}
+                  onChange={() => togglePermission(tab.key)}
+                  className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
+                />
+                <span className="text-sm font-medium text-gray-700">{tab.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex justify-end pt-4">
+          <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium">Save User</button>
+        </div>
+      </form>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold" style={{ color: '#0A3320' }}>Roles & Access Control</h2>
+        <button
+          onClick={() => { setForm({ name: '', email: '', permissions: [] }); setIsEditing(true); }}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
+        >
+          <Plus size={18} /> Add User
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50/50">
+            <tr>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Name</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Email</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Role</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Permissions</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {users?.map(user => (
+              <tr key={user.id} className="hover:bg-gray-50/50 transition">
+                <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
+                <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${user.isSuperAdmin ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
+                    {user.isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {user.isSuperAdmin ? 'All Access' : user.permissions.length > 0 ? `${user.permissions.length} sections` : 'No access'}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  {!user.isSuperAdmin && (
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => { setForm(user); setIsEditing(true); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <Edit3 size={18} />
+                      </button>
+                      <button onClick={() => setDeleteId(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Admin User?"
+        description="Are you sure you want to delete this admin user? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) handleDelete(deleteId);
+        }}
+      />
+    </div>
+  );
+}
 
 export function AdminPage() {
   const [authed, setAuthed] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const { tab } = useParams();
   const navigate = useNavigate();
   
@@ -240,10 +478,16 @@ export function AdminPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setAuthed(checkAdminAuth());
+    if (checkAdminAuth()) {
+      setAuthed(true);
+      setCurrentUser(getAdminUser());
+    }
   }, []);
 
-  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />;
+  if (!authed) return <LoginScreen onLogin={() => {
+    setAuthed(true);
+    setCurrentUser(getAdminUser());
+  }} />;
 
   const handleLogout = () => {
     adminLogout();
@@ -278,15 +522,26 @@ export function AdminPage() {
           )}
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 py-4 overflow-y-auto">
-          {tabs.map(({ key, label, icon: Icon }) => {
-            const isActive = activeTab === key;
+        {/* Main Nav */}
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+          {tabs.map((t) => {
+            // Hide roles tab from non-super admins
+            if (t.key === 'roles' && !currentUser?.isSuperAdmin) return null;
+            // Restrict other tabs based on permissions if not super admin
+            if (
+              !currentUser?.isSuperAdmin &&
+              t.key !== 'dashboard' &&
+              !currentUser?.permissions.includes(t.key)
+            ) {
+              return null;
+            }
+
+            const isActive = activeTab === t.key;
             return (
               <button
-                key={key}
+                key={t.key}
                 onClick={() => {
-                  navigate(`/admin/${key}`);
+                  navigate(`/admin/${t.key}`);
                   setMobileMenuOpen(false);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 transition-all duration-150"
@@ -294,10 +549,11 @@ export function AdminPage() {
                   backgroundColor: isActive ? 'rgba(232,82,26,0.15)' : 'transparent',
                   color: isActive ? '#E8521A' : '#A8C4B0',
                   borderLeft: isActive ? '3px solid #E8521A' : '3px solid transparent',
+                  borderRadius: '8px'
                 }}
               >
-                <Icon size={17} style={{ flexShrink: 0 }} />
-                {sidebarOpen && <span className="text-sm truncate">{label}</span>}
+                <t.icon size={17} style={{ flexShrink: 0 }} />
+                {sidebarOpen && <span className="text-sm truncate">{t.label}</span>}
               </button>
             );
           })}
@@ -343,20 +599,23 @@ export function AdminPage() {
         </div>
 
         <div className="p-6">
-          {activeTab === 'dashboard' && <DashboardTab setActiveTab={(t) => navigate(`/admin/${t}`)} />}
-          {activeTab === 'stats' && <StatsTab />}
-          {activeTab === 'carousel' && <CarouselTab />}
-          {activeTab === 'media' && <MediaTab />}
-          {activeTab === 'news' && <NewsTab />}
-          {activeTab === 'events' && <EventsTab />}
-          {activeTab === 'team' && <TeamTab />}
-          {activeTab === 'partners' && <PartnersTab />}
-          {activeTab === 'volunteers' && <VolunteersTab />}
-          {activeTab === 'internships' && <InternshipsTab />}
-          {activeTab === 'partnershipInquiries' && <PartnershipInquiriesTab />}
-          {activeTab === 'newsletter' && <NewsletterTab />}
-          {activeTab === 'messages' && <MessagesTab />}
-          {activeTab === 'donations' && <DonationsTab />}
+          <div className="flex-1 relative pb-12">
+            {activeTab === 'dashboard' && <DashboardTab setActiveTab={(t) => navigate(`/admin/${t}`)} />}
+            {activeTab === 'stats' && <StatsTab />}
+            {activeTab === 'carousel' && <CarouselTab />}
+            {activeTab === 'media' && <MediaTab />}
+            {activeTab === 'news' && <NewsTab />}
+            {activeTab === 'events' && <EventsTab />}
+            {activeTab === 'team' && <TeamTab />}
+            {activeTab === 'partners' && <PartnersTab />}
+            {activeTab === 'volunteers' && <VolunteersTab />}
+            {activeTab === 'internships' && <InternshipsTab />}
+            {activeTab === 'partnershipInquiries' && <PartnershipInquiriesTab />}
+            {activeTab === 'newsletter' && <NewsletterTab />}
+            {activeTab === 'messages' && <MessagesTab />}
+            {activeTab === 'donations' && <DonationsTab />}
+            {activeTab === 'roles' && currentUser?.isSuperAdmin && <RolesTab />}
+          </div>
         </div>
       </main>
     </div>
@@ -365,16 +624,18 @@ export function AdminPage() {
 
 /* ── DASHBOARD ── */
 function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void }) {
-  const { data: statsData } = useStats();
-  const { data: volunteersData } = useVolunteerApps();
-  const { data: internshipsData } = useInternshipApps();
-  const { data: partnershipsData } = usePartnershipInquiries();
-  const { data: messagesData } = useContactMessages();
-  const { data: newsletterData } = useNewsletter();
-  const { data: donationsData } = useDonations();
-  const { data: newsData } = useNews();
-  const { data: teamData } = useTeam();
-  const { data: partnersData } = usePartners();
+  const { data: statsData, isLoading: l1 } = useStats();
+  const { data: volunteersData, isLoading: l2 } = useVolunteerApps();
+  const { data: internshipsData, isLoading: l3 } = useInternshipApps();
+  const { data: partnershipsData, isLoading: l4 } = usePartnershipInquiries();
+  const { data: messagesData, isLoading: l5 } = useContactMessages();
+  const { data: newsletterData, isLoading: l6 } = useNewsletter();
+  const { data: donationsData, isLoading: l7 } = useDonations();
+  const { data: newsData, isLoading: l8 } = useNews();
+  const { data: teamData, isLoading: l9 } = useTeam();
+  const { data: partnersData, isLoading: l10 } = usePartners();
+  const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10;
+
 
   const stats = statsData || { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any;
   const volunteers = volunteersData || [];
@@ -392,6 +653,14 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
   const pendingInterns = internships.filter(v => v.status === 'pending').length;
   const pendingPartners = partnerships.filter(v => v.status === 'pending').length;
   const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
+
+  if (isLoading) return (
+    <div className="space-y-6">
+      <CardSkeleton count={4} />
+      <TableSkeleton rows={4} cols={3} />
+    </div>
+  );
+
 
   const analyticsData = [
     { name: 'Jan', visits: 4000, engagement: 2400 },
@@ -606,15 +875,16 @@ function DashboardTab({ setActiveTab }: { setActiveTab: (t: AdminTab) => void })
 
 /* ── STATS ── */
 function StatsTab() {
-  const { data: initialStats, mutate } = useStats();
-  const [stats, setStats] = useState<ImpactStats | null>(null);
+  const { data: initialStats, mutate, isLoading } = useStats();
+  const [stats, setStats] = useState<ImpactStats>({ peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (initialStats && !stats) {
-      setStats(initialStats);
-    }
+    if (initialStats) setStats(initialStats);
   }, [initialStats]);
+
+  if (isLoading) return <CardSkeleton count={6} />;
+
 
   const handleSave = async () => {
     if (!stats) return;
@@ -629,8 +899,6 @@ function StatsTab() {
       alert('Failed to save stats to server.');
     }
   };
-
-  if (!stats) return <div className="p-8">Loading stats...</div>;
 
   const statConfig: Record<keyof ImpactStats, { label: string; icon: any; color: string; bg: string }> = {
     peopleReached: { label: 'People Reached', icon: Users, color: '#1A6B3C', bg: '#E8F5EE' },
@@ -681,7 +949,7 @@ function StatsTab() {
                     className="w-full px-5 py-3 rounded-xl text-lg font-bold outline-none transition-all focus:ring-2"
                     style={{ backgroundColor: '#fff', border: '1px solid #E5E7EB', color: config.color, fontFamily: 'Poppins, sans-serif' }}
                     value={stats[key]}
-                    onChange={e => setStats(s => s ? { ...s, [key]: parseInt(e.target.value) || 0 } : null)}
+                    onChange={e => setStats(s => ({ ...s, [key]: parseInt(e.target.value) || 0 }))}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none">
                     <Activity size={18} style={{ color: config.color }} />
@@ -698,13 +966,17 @@ function StatsTab() {
 
 /* ── NEWS ── */
 function NewsTab() {
-  const { data: apiItems = [], mutate } = useNews();
+  const { data: apiItems = [], mutate, isLoading } = useNews();
   const [editing, setEditing] = useState<NewsItem | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const items = apiItems;
 
   const blank: NewsItem = { id: '', title: '', title_bn: '', excerpt: '', excerpt_bn: '', content: '', content_bn: '', date: new Date().toISOString().split('T')[0], category: 'Advocacy', category_bn: 'অ্যাডভোকেসি', image: '', featured: false };
+
+  if (isLoading) return <TableSkeleton rows={4} cols={1} />;
+
 
   const save = async () => {
     if (!editing) return;
@@ -720,11 +992,10 @@ function NewsTab() {
   };
 
   const del = async (id: string) => {
-    if (confirm('Are you sure you want to delete this article?')) {
-      const { deleteNews } = await import('../lib/api');
-      await deleteNews(id);
-      mutate();
-    }
+    const { deleteNews } = await import('../lib/api');
+    await deleteNews(id);
+    mutate();
+    setDeleteId(null);
   };
 
   if (editing) {
@@ -774,24 +1045,39 @@ function NewsTab() {
             </div>
             <div className="flex gap-2 flex-shrink-0">
               <button onClick={() => setEditing(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"><Edit3 size={14} style={{ color: '#6B7280' }} /></button>
-              <button onClick={() => del(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
+              <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Story of Change?"
+        description="Are you sure you want to delete this article? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) del(deleteId);
+        }}
+      />
     </div>
   );
 }
 
+
 /* ── EVENTS ── */
 function EventsTab() {
-  const { data: apiItems = [], mutate } = useEvents();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { data: apiItems = [], mutate, isLoading } = useEvents();
   const [editing, setEditing] = useState<EventItem | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const items = apiItems;
 
   const blank: EventItem = { id: '', title: '', title_bn: '', date: new Date().toISOString().split('T')[0], location: '', location_bn: '', description: '', description_bn: '', type: 'Workshop', type_bn: 'কর্মশালা' };
+
+  if (isLoading) return <TableSkeleton rows={4} cols={1} />;
+
 
   const save = async () => {
     if (!editing) return;
@@ -807,11 +1093,10 @@ function EventsTab() {
   };
 
   const del = async (id: string) => {
-    if (confirm('Are you sure you want to delete this event?')) {
-      const { apiEvents } = await import('../lib/api');
-      await apiEvents.delete(id);
-      mutate();
-    }
+    const { apiEvents } = await import('../lib/api');
+    await apiEvents.delete(id);
+    mutate();
+    setDeleteId(null);
   };
 
   if (editing) {
@@ -859,24 +1144,39 @@ function EventsTab() {
             </div>
             <div className="flex gap-2 flex-shrink-0">
               <button onClick={() => setEditing(item)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={14} style={{ color: '#6B7280' }} /></button>
-              <button onClick={() => del(item.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
+              <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Event?"
+        description="Are you sure you want to delete this event? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) del(deleteId);
+        }}
+      />
     </div>
   );
 }
 
+
 /* ── TEAM ── */
 function TeamTab() {
-  const { data: apiMembers = [], mutate } = useTeam();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { data: apiMembers = [], mutate, isLoading } = useTeam();
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const members = apiMembers;
 
-  const blank: TeamMember = { id: '', name: '', name_bn: '', role: '', role_bn: '', bio: '', bio_bn: '', email: '', image: '' };
+  const blank: TeamMember = { id: '', name: '', name_bn: '', role: '', role_bn: '', bio: '', bio_bn: '', email: '', image: '', type: 'member' };
+
+  if (isLoading) return <CardSkeleton count={6} />;
+
 
   const save = async () => {
     if (!editing) return;
@@ -892,11 +1192,10 @@ function TeamTab() {
   };
 
   const del = async (id: string) => {
-    if (confirm('Are you sure you want to delete this team member?')) {
-      const { apiTeam } = await import('../lib/api');
-      await apiTeam.delete(id);
-      mutate();
-    }
+    const { apiTeam } = await import('../lib/api');
+    await apiTeam.delete(id);
+    mutate();
+    setDeleteId(null);
   };
 
   if (editing) {
@@ -911,6 +1210,17 @@ function TeamTab() {
           <InputField label="Role / Title" value={editing.role} onChange={v => setEditing(e => e ? { ...e, role: v } : null)} />
           <InputField label="Email" type="email" value={editing.email} onChange={v => setEditing(e => e ? { ...e, email: v } : null)} />
           <InputField label="Bio" value={editing.bio} onChange={v => setEditing(e => e ? { ...e, bio: v } : null)} multiline />
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#0A3320' }}>Type</label>
+            <select
+              className="w-full px-4 py-2.5 rounded-xl text-sm border-0 bg-gray-50 focus:ring-2 focus:ring-[#0A3320] transition-shadow outline-none"
+              value={editing.type || 'member'}
+              onChange={e => setEditing(s => s ? { ...s, type: e.target.value as 'member' | 'advisor' } : null)}
+            >
+              <option value="member">Team Member</option>
+              <option value="advisor">Advisor</option>
+            </select>
+          </div>
           <ImageUploader label="Profile Picture" value={editing.image} onChange={v => setEditing(e => e ? { ...e, image: v } : null)} />
           <button onClick={save} className="w-full py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>Save Member</button>
         </div>
@@ -937,31 +1247,51 @@ function TeamTab() {
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm" style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}>{initials}</div>
               )}
               <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase" style={{ backgroundColor: m.type === 'advisor' ? '#FEF3C7' : '#E8F5EE', color: m.type === 'advisor' ? '#D97706' : '#1A6B3C' }}>
+                    {m.type || 'member'}
+                  </span>
+                </div>
                 <p className="text-sm font-semibold" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{m.name}</p>
                 <p className="text-xs" style={{ color: '#E8521A' }}>{m.role}</p>
                 <p className="text-xs mt-1 truncate" style={{ color: '#9CA3AF' }}>{m.email}</p>
               </div>
               <div className="flex gap-1.5 flex-shrink-0">
                 <button onClick={() => setEditing(m)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={13} style={{ color: '#6B7280' }} /></button>
-                <button onClick={() => del(m.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
+                <button onClick={() => setDeleteId(m.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
               </div>
             </div>
           );
         })}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Team Member?"
+        description="Are you sure you want to delete this team member? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) del(deleteId);
+        }}
+      />
     </div>
   );
 }
 
+
 /* ── PARTNERS ── */
 function PartnersTab() {
-  const { data: apiItems = [], mutate } = usePartners();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { data: apiItems = [], mutate, isLoading } = usePartners();
   const [editing, setEditing] = useState<Partner | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const items = apiItems;
 
   const blank: Partner = { id: '', name: '', category: 'NGO', url: '', logo: '' };
+
+  if (isLoading) return <CardSkeleton count={4} />;
+
 
   const save = async () => {
     if (!editing) return;
@@ -977,11 +1307,10 @@ function PartnersTab() {
   };
 
   const del = async (id: string) => {
-    if (confirm('Are you sure you want to delete this partner?')) {
-      const { apiPartners } = await import('../lib/api');
-      await apiPartners.delete(id);
-      mutate();
-    }
+    const { apiPartners } = await import('../lib/api');
+    await apiPartners.delete(id);
+    mutate();
+    setDeleteId(null);
   };
 
   if (editing) {
@@ -1026,22 +1355,34 @@ function PartnersTab() {
             </div>
             <div className="flex gap-1.5 flex-shrink-0">
               <button onClick={() => setEditing(item)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={13} style={{ color: '#6B7280' }} /></button>
-              <button onClick={() => del(item.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
+              <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Partner?"
+        description="Are you sure you want to delete this partner? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) del(deleteId);
+        }}
+      />
     </div>
   );
 }
 
+
 /* ── VOLUNTEERS ── */
 function VolunteersTab() {
-  const [apps, setApps] = useState<VolunteerApp[]>(getVolunteerApps());
+  const { data: apps = [], isLoading, mutate } = useVolunteerApps();
 
-  const updateStatus = (id: string, status: VolunteerApp['status']) => {
-    updateVolunteerStatus(id, status);
-    setApps(getVolunteerApps());
+  const updateStatus = async (id: string, status: VolunteerApp['status']) => {
+    const { apiVolunteerApps } = await import('../lib/api');
+    await apiVolunteerApps.update(id, { status });
+    mutate();
   };
 
   const statusColors: Record<VolunteerApp['status'], { bg: string; color: string }> = {
@@ -1050,6 +1391,9 @@ function VolunteersTab() {
     accepted: { bg: '#E8F5EE', color: '#1A6B3C' },
     rejected: { bg: '#FFEBEE', color: '#C62828' },
   };
+
+  if (isLoading) return <CardSkeleton count={4} />;
+
 
   if (apps.length === 0) {
     return <EmptyState icon={Heart} message="No volunteer applications yet. Applications submitted via the Get Involved page will appear here." />;
@@ -1095,12 +1439,15 @@ function VolunteersTab() {
 
 /* ── NEWSLETTER ── */
 function NewsletterTab() {
-  const { data: subs = [] } = useNewsletter();
+  const { data: subs = [], isLoading } = useNewsletter();
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
   const [sending, setSending] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  if (isLoading) return <TableSkeleton rows={4} cols={2} />;
+
   
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1203,28 +1550,33 @@ function NewsletterTab() {
 
 /* ── MESSAGES ── */
 function MessagesTab() {
-  const [messages, setMessages] = useState(getContactMessages());
+  const { data: messages = [], isLoading, mutate } = useContactMessages();
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [selected, setSelected] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const refresh = () => setMessages(getContactMessages());
-
-  const markRead = (id: string) => {
-    markMessageRead(id);
-    refresh();
+  const markRead = async (id: string) => {
+    const { apiContactMessages } = await import('../lib/api');
+    await apiContactMessages.update(id, { read: true });
+    mutate();
   };
 
-  const deleteMsg = (id: string) => {
-    const updated = messages.filter(m => m.id !== id);
-    localStorage.setItem('ycn_contact_messages', JSON.stringify(updated));
-    setMessages(updated);
+  const deleteMsg = async (id: string) => {
+    const { apiContactMessages } = await import('../lib/api');
+    await apiContactMessages.delete(id);
+    mutate();
     if (selected === id) setSelected(null);
+    setDeleteId(null);
   };
 
-  const markAllRead = () => {
-    messages.filter(m => !m.read).forEach(m => markMessageRead(m.id));
-    refresh();
+  const markAllRead = async () => {
+    const { apiContactMessages } = await import('../lib/api');
+    await Promise.all(messages.filter(m => !m.read).map(m => apiContactMessages.update(m.id, { read: true })));
+    mutate();
   };
+
+  if (isLoading) return <TableSkeleton rows={4} cols={3} />;
+
 
   const filtered = messages.filter(m =>
     filter === 'all' ? true : filter === 'unread' ? !m.read : m.read
@@ -1370,7 +1722,7 @@ function MessagesTab() {
                   </button>
                 )}
                 <button
-                  onClick={() => deleteMsg(selectedMsg.id)}
+                  onClick={() => setDeleteId(selectedMsg.id)}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105"
                   style={{ backgroundColor: '#FEF2F2', color: '#DC2626' }}
                 >
@@ -1381,22 +1733,44 @@ function MessagesTab() {
           )}
         </div>
       </div>
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Message?"
+        description="Are you sure you want to delete this message? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) deleteMsg(deleteId);
+        }}
+      />
     </div>
   );
 }
 
 /* ── DONATIONS ── */
 function DonationsTab() {
+  const { data: donations = [], isLoading, mutate } = useDonations();
   const [requests, setRequests] = useState(getDonationRequests());
-  const [donations, setDonations] = useState(getDonations());
   const [activeView, setActiveView] = useState<'pending' | 'all'>('pending');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const refresh = () => { setRequests(getDonationRequests()); setDonations(getDonations()); };
+  const refresh = () => {
+    setRequests(getDonationRequests());
+    mutate();
+  };
 
   const handleStatus = (id: string, status: 'approved' | 'rejected') => {
     updateDonationRequestStatus(id, status);
     refresh();
   };
+
+  const handleDelete = (id: string) => {
+    deleteDonationRequest(id);
+    refresh();
+    setDeleteId(null);
+  };
+
+  if (isLoading) return <TableSkeleton rows={4} cols={4} />;
+
 
   const pending = requests.filter(r => r.status === 'pending');
   const approved = requests.filter(r => r.status === 'approved');
@@ -1507,12 +1881,15 @@ function DonationsTab() {
                       <span className="text-xs font-semibold px-2 py-1 rounded-full capitalize" style={{ backgroundColor: statusStyle[r.status]?.bg, color: statusStyle[r.status]?.color }}>{r.status}</span>
                     </td>
                     <td className="px-4 py-3">
-                      {r.status === 'pending' && (
-                        <div className="flex gap-1">
-                          <button onClick={() => handleStatus(r.id, 'approved')} className="p-1.5 rounded-lg" style={{ backgroundColor: '#E8F5EE' }} title="Approve"><CheckCircle size={13} style={{ color: '#1A6B3C' }} /></button>
-                          <button onClick={() => handleStatus(r.id, 'rejected')} className="p-1.5 rounded-lg" style={{ backgroundColor: '#FEF2F2' }} title="Reject"><X size={13} style={{ color: '#DC2626' }} /></button>
-                        </div>
-                      )}
+                      <div className="flex gap-1">
+                        {r.status === 'pending' && (
+                          <>
+                            <button onClick={() => handleStatus(r.id, 'approved')} className="p-1.5 rounded-lg" style={{ backgroundColor: '#E8F5EE' }} title="Approve"><CheckCircle size={13} style={{ color: '#1A6B3C' }} /></button>
+                            <button onClick={() => handleStatus(r.id, 'rejected')} className="p-1.5 rounded-lg" style={{ backgroundColor: '#FEF2F2' }} title="Reject"><X size={13} style={{ color: '#DC2626' }} /></button>
+                          </>
+                        )}
+                        <button onClick={() => setDeleteId(r.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Delete"><Trash2 size={13} style={{ color: '#DC2626' }} /></button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1521,6 +1898,15 @@ function DonationsTab() {
           )}
         </div>
       )}
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Donation Request?"
+        description="Are you sure you want to delete this donation request? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) handleDelete(deleteId);
+        }}
+      />
     </div>
   );
 }
@@ -1664,13 +2050,44 @@ function ImageUploader({
 
 /* ── INTERNSHIPS ── */
 function InternshipsTab() {
-  const [apps, setApps] = useState<InternshipApp[]>(getInternshipApps());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { data: apps = [], isLoading, mutate } = useInternshipApps();
+  const { data: posts = [], isLoading: postsLoading, mutate: mutatePosts } = useInternshipPosts();
   const [viewing, setViewing] = useState<InternshipApp | null>(null);
+  const [activeSubTab, setActiveSubTab] = useState<'applications' | 'posts'>('applications');
+  const [editingPost, setEditingPost] = useState<InternshipPost | null>(null);
+  const [isNewPost, setIsNewPost] = useState(false);
 
-  const updateStatus = (id: string, st: InternshipApp['status']) => {
-    updateInternshipAppStatus(id, st);
-    setApps(getInternshipApps());
+  const blankPost: InternshipPost = { id: '', title: '', title_bn: '', duration: '', duration_bn: '', desc: '', desc_bn: '', requirements: [], requirements_bn: [], active: true, badgeColor: '#1A6B3C' };
+
+  const updateStatus = async (id: string, st: InternshipApp['status']) => {
+    const { apiInternshipApps } = await import('../lib/api');
+    await apiInternshipApps.update(id, { status: st });
+    mutate();
   };
+
+  const savePost = async () => {
+    if (!editingPost) return;
+    const { apiInternshipPosts } = await import('../lib/api');
+    if (isNewPost) {
+      await apiInternshipPosts.create(editingPost);
+    } else {
+      await apiInternshipPosts.update(editingPost.id, editingPost);
+    }
+    mutatePosts();
+    setEditingPost(null);
+    setIsNewPost(false);
+  };
+
+  const deletePost = async (id: string) => {
+    const { apiInternshipPosts } = await import('../lib/api');
+    await apiInternshipPosts.delete(id);
+    mutatePosts();
+    setDeleteId(null);
+  };
+
+  if (isLoading || postsLoading) return <TableSkeleton rows={4} cols={4} />;
+
 
   if (viewing) {
     return (
@@ -1713,50 +2130,133 @@ function InternshipsTab() {
     );
   }
 
+  if (editingPost) {
+    return (
+      <div className="max-w-2xl bg-white rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{isNewPost ? 'Add Internship Post' : 'Edit Internship Post'}</h3>
+          <button onClick={() => { setEditingPost(null); setIsNewPost(false); }}><X size={18} style={{ color: '#9CA3AF' }} /></button>
+        </div>
+        <div className="space-y-4">
+          <InputField label="Title (English)" value={editingPost.title} onChange={v => setEditingPost(e => e ? { ...e, title: v } : null)} />
+          <InputField label="Title (Bangla)" value={editingPost.title_bn} onChange={v => setEditingPost(e => e ? { ...e, title_bn: v } : null)} />
+          <div className="grid grid-cols-2 gap-4">
+            <InputField label="Duration (English)" value={editingPost.duration} onChange={v => setEditingPost(e => e ? { ...e, duration: v } : null)} />
+            <InputField label="Duration (Bangla)" value={editingPost.duration_bn} onChange={v => setEditingPost(e => e ? { ...e, duration_bn: v } : null)} />
+          </div>
+          <InputField label="Description (English)" value={editingPost.desc} onChange={v => setEditingPost(e => e ? { ...e, desc: v } : null)} multiline />
+          <InputField label="Description (Bangla)" value={editingPost.desc_bn} onChange={v => setEditingPost(e => e ? { ...e, desc_bn: v } : null)} multiline />
+          <InputField label="Requirements (English, comma separated)" value={editingPost.requirements.join(', ')} onChange={v => setEditingPost(e => e ? { ...e, requirements: v.split(',').map(s => s.trim()).filter(Boolean) } : null)} multiline />
+          <InputField label="Requirements (Bangla, comma separated)" value={editingPost.requirements_bn.join(', ')} onChange={v => setEditingPost(e => e ? { ...e, requirements_bn: v.split(',').map(s => s.trim()).filter(Boolean) } : null)} multiline />
+          
+          <label className="flex items-center gap-2 cursor-pointer mt-2">
+            <input type="checkbox" checked={editingPost.active} onChange={e => setEditingPost(ed => ed ? { ...ed, active: e.target.checked } : null)} className="w-4 h-4 rounded" />
+            <span className="text-sm" style={{ color: '#374151' }}>Active (Show on website)</span>
+          </label>
+          <button onClick={savePost} className="w-full py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>Save Post</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h3 className="font-semibold mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>Internship Applications</h3>
-      <div className="space-y-3">
-        {apps.length === 0 && <EmptyState icon={Briefcase} message="No internship applications found. Submissions from the website will appear here." />}
-        {apps.slice().reverse().map(app => (
-          <div key={app.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-50 text-green-700">
-                <Briefcase size={16} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-800">{app.name}</p>
-                <p className="text-xs text-gray-500">{app.program} · {new Date(app.date).toLocaleDateString()}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${app.status === 'pending' ? 'bg-orange-50 text-orange-600' :
-                  app.status === 'accepted' ? 'bg-green-50 text-green-600' :
-                    app.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                      'bg-blue-50 text-blue-600'
-                }`}>
-                {app.status}
-              </span>
-              <button onClick={() => setViewing(app)} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600">
-                <Eye size={16} />
-              </button>
-            </div>
-          </div>
+      <div className="flex gap-2 mb-6 border-b pb-4">
+        {(['applications', 'posts'] as const).map(v => (
+          <button key={v} onClick={() => setActiveSubTab(v)}
+            className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all"
+            style={{ backgroundColor: activeSubTab === v ? '#0A3320' : '#F3F4F6', color: activeSubTab === v ? '#F0ECD8' : '#6B7280' }}>
+            {v === 'applications' ? `Applications (${apps.length})` : `Posts (${posts.length})`}
+          </button>
         ))}
       </div>
+
+      {activeSubTab === 'posts' && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <button onClick={() => { setEditingPost(blankPost); setIsNewPost(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
+              <Plus size={15} /> Add Post
+            </button>
+          </div>
+          <div className="space-y-3">
+            {posts.length === 0 && <EmptyState icon={Briefcase} message="No internship posts available." />}
+            {posts.map(post => (
+              <div key={post.id} className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>{post.duration}</span>
+                    {!post.active && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inactive</span>}
+                  </div>
+                  <p className="text-sm font-medium" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{post.title}</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => setEditingPost(post)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={14} style={{ color: '#6B7280' }} /></button>
+                  <button onClick={() => setDeleteId(post.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === 'applications' && (
+        <div className="space-y-3">
+          {apps.length === 0 && <EmptyState icon={Briefcase} message="No internship applications found. Submissions from the website will appear here." />}
+          {apps.slice().reverse().map(app => (
+            <div key={app.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-50 text-green-700">
+                  <Briefcase size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{app.name}</p>
+                  <p className="text-xs text-gray-500">{app.program} · {new Date(app.date).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${app.status === 'pending' ? 'bg-orange-50 text-orange-600' :
+                    app.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                      app.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                        'bg-blue-50 text-blue-600'
+                  }`}>
+                  {app.status}
+                </span>
+                <button onClick={() => setViewing(app)} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600">
+                  <Eye size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Internship Post?"
+        description="Are you sure you want to delete this internship post? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) deletePost(deleteId);
+        }}
+      />
     </div>
   );
 }
 
+
 /* ── PARTNERSHIPS ── */
 function PartnershipInquiriesTab() {
-  const [inqs, setInqs] = useState<PartnershipInquiry[]>(getPartnershipInquiries());
+  const { data: inqs = [], isLoading, mutate } = usePartnershipInquiries();
   const [viewing, setViewing] = useState<PartnershipInquiry | null>(null);
 
-  const updateStatus = (id: string, st: PartnershipInquiry['status']) => {
-    updatePartnershipInquiryStatus(id, st);
-    setInqs(getPartnershipInquiries());
+  const updateStatus = async (id: string, st: PartnershipInquiry['status']) => {
+    const { apiPartnershipInquiries } = await import('../lib/api');
+    await apiPartnershipInquiries.update(id, { status: st });
+    mutate();
   };
+
+  if (isLoading) return <TableSkeleton rows={4} cols={4} />;
+
 
   if (viewing) {
     return (
@@ -1836,9 +2336,13 @@ function PartnershipInquiriesTab() {
 
 /* ── CAROUSEL ── */
 function CarouselTab() {
-  const { data: apiItems = [], mutate } = useCarousel();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { data: apiItems = [], mutate, isLoading } = useCarousel();
   const [editing, setEditing] = useState<HeroCarouselItem | null>(null);
   const [isNew, setIsNew] = useState(false);
+
+  if (isLoading) return <CardSkeleton count={2} />;
+
 
   const items = apiItems;
 
@@ -1858,11 +2362,11 @@ function CarouselTab() {
   };
 
   const del = async (id: string) => {
-    if (confirm('Are you sure you want to delete this item?')) {
+    
       const { apiCarousel } = await import('../lib/api');
       await apiCarousel.delete(id);
       mutate();
-    }
+    setDeleteId(null);
   };
 
   if (editing) {
@@ -1908,11 +2412,20 @@ function CarouselTab() {
             </div>
             <div className="flex justify-end gap-2 mt-2">
               <button onClick={() => setEditing(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"><Edit3 size={14} style={{ color: '#6B7280' }} /></button>
-              <button onClick={() => del(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
+              <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} style={{ color: '#EF4444' }} /></button>
             </div>
           </div>
         ))}
       </div>
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Carousel Item?"
+        description="Are you sure you want to delete this item? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) del(deleteId);
+        }}
+      />
     </div>
   );
 }
@@ -1955,6 +2468,7 @@ const optimizeImage = (file: File, maxWidth = 1200): Promise<File> => {
 };
 
 function MediaTab() {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const { data: items = [], mutate } = useMedia();
   const [editing, setEditing] = useState<Partial<MediaItem> | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -1979,10 +2493,10 @@ function MediaTab() {
   };
 
   const del = async (id: string) => {
-    if (confirm('Are you sure you want to delete this media item?')) {
+    
       await apiMedia.delete(id);
       mutate();
-    }
+    setDeleteId(null);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2206,11 +2720,22 @@ function MediaTab() {
             </div>
             <div className="flex justify-end gap-2 mt-2 border-t border-gray-50 pt-3">
               <button onClick={() => setEditing(item)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"><Edit3 size={16} style={{ color: '#6B7280' }} /></button>
-              <button onClick={() => del(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={16} style={{ color: '#EF4444' }} /></button>
+              <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={16} style={{ color: '#EF4444' }} /></button>
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Media Item?"
+        description="Are you sure you want to delete this media item? This action cannot be undone."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) del(deleteId);
+        }}
+      />
     </div>
   );
 }
+

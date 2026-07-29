@@ -1,10 +1,11 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import { upload } from '../config/cloudinary';
 import {
   News, Event, Team, Partner, VolunteerApp, NewsletterSub,
   ContactMessage, Donation, DonationRequest, HeroCarousel,
-  Advocacy, PartnershipInquiry, InternshipApp, ImpactStats,
-  Media
+  Advocacy, PartnershipInquiry, InternshipApp, InternshipPost, ImpactStats,
+  Media, AdminUser
 } from '../models';
 
 const router = express.Router();
@@ -76,6 +77,89 @@ createCrudRoutes(Event, 'events');
 createCrudRoutes(Team, 'team');
 createCrudRoutes(Partner, 'partners');
 createCrudRoutes(VolunteerApp, 'volunteer-apps');
+
+// Admin Auth and Users
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await AdminUser.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password as string);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    const obj = user.toObject() as any;
+    obj.id = obj._id;
+    delete obj.password; // Don't send password hash back
+    res.json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Users CRUD (custom for password hashing)
+router.get('/admin-users', async (req, res) => {
+  try {
+    const users = await AdminUser.find().select('-password');
+    const mapped = users.map((u: any) => {
+      const obj = u.toObject();
+      obj.id = obj._id;
+      return obj;
+    });
+    res.json(mapped);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/admin-users', async (req, res) => {
+  try {
+    const data = req.body;
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+    const newUser = new AdminUser(data);
+    await newUser.save();
+    const obj = newUser.toObject() as any;
+    obj.id = obj._id;
+    delete obj.password;
+    res.status(201).json(obj);
+  } catch (err: any) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Email already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/admin-users/:id', async (req, res) => {
+  try {
+    const data = { ...req.body };
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    } else {
+      delete data.password; // Don't overwrite with blank
+    }
+    const updated = await AdminUser.findByIdAndUpdate(req.params.id, data, { new: true }).select('-password');
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    const obj = updated.toObject() as any;
+    obj.id = obj._id;
+    res.json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/admin-users/:id', async (req, res) => {
+  try {
+    const deleted = await AdminUser.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Custom Newsletter Routes
 router.post('/newsletter', async (req, res) => {
   try {
@@ -171,6 +255,7 @@ createCrudRoutes(HeroCarousel, 'carousel');
 createCrudRoutes(Advocacy, 'advocacy');
 createCrudRoutes(PartnershipInquiry, 'partnership-inquiries');
 createCrudRoutes(InternshipApp, 'internship-apps');
+createCrudRoutes(InternshipPost, 'internship-posts');
 createCrudRoutes(Media, 'media');
 
 // Special route for stats (singleton)
@@ -238,6 +323,7 @@ router.post('/migrate-all', async (req, res) => {
       Advocacy.deleteMany({}),
       PartnershipInquiry.deleteMany({}),
       InternshipApp.deleteMany({}),
+      InternshipPost.deleteMany({}),
       ImpactStats.deleteMany({}),
       Media.deleteMany({})
     ]);
@@ -256,6 +342,7 @@ router.post('/migrate-all', async (req, res) => {
     if (data.advocacy?.length) await Advocacy.insertMany(data.advocacy);
     if (data.partnershipInquiries?.length) await PartnershipInquiry.insertMany(data.partnershipInquiries);
     if (data.internshipApps?.length) await InternshipApp.insertMany(data.internshipApps);
+    if (data.internshipPosts?.length) await InternshipPost.insertMany(data.internshipPosts);
     if (data.stats) await new ImpactStats(data.stats).save();
 
     res.json({ success: true, message: 'Migration completed successfully' });

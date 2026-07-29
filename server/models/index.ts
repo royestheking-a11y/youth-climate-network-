@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+const adminUserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  permissions: { type: [String], default: [] },
+  isSuperAdmin: { type: Boolean, default: false },
+});
+
 const newsSchema = new mongoose.Schema({
   title: String,
   title_bn: String,
@@ -35,6 +43,7 @@ const teamSchema = new mongoose.Schema({
   bio_bn: String,
   email: String,
   image: String,
+  type: { type: String, default: 'member' },
 });
 
 const partnerSchema = new mongoose.Schema({
@@ -133,6 +142,19 @@ const internshipAppSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'reviewed', 'accepted', 'rejected'], default: 'pending' },
 });
 
+const internshipPostSchema = new mongoose.Schema({
+  title: String,
+  title_bn: String,
+  duration: String,
+  duration_bn: String,
+  desc: String,
+  desc_bn: String,
+  requirements: [String],
+  requirements_bn: [String],
+  active: { type: Boolean, default: true },
+  badgeColor: { type: String, default: '#1A6B3C' },
+});
+
 const impactStatsSchema = new mongoose.Schema({
   peopleReached: Number,
   treesPlanted: Number,
@@ -159,6 +181,7 @@ const mediaSchema = new mongoose.Schema({
   size: String, // For pressKit
 });
 
+export const AdminUser = mongoose.model('AdminUser', adminUserSchema);
 export const News = mongoose.model('News', newsSchema);
 export const Event = mongoose.model('Event', eventSchema);
 export const Team = mongoose.model('Team', teamSchema);
@@ -172,5 +195,6 @@ export const HeroCarousel = mongoose.model('HeroCarousel', heroCarouselSchema);
 export const Advocacy = mongoose.model('Advocacy', advocacySchema);
 export const PartnershipInquiry = mongoose.model('PartnershipInquiry', partnershipInquirySchema);
 export const InternshipApp = mongoose.model('InternshipApp', internshipAppSchema);
+export const InternshipPost = mongoose.model('InternshipPost', internshipPostSchema);
 export const ImpactStats = mongoose.model('ImpactStats', impactStatsSchema);
 export const Media = mongoose.model('Media', mediaSchema);

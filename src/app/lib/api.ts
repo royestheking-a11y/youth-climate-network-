@@ -3,13 +3,14 @@ import type {
   ImpactStats, NewsItem, EventItem, TeamMember, Partner,
   VolunteerApp, NewsletterSub, ContactMessage, DonationRecord,
   DonationRequest, HeroCarouselItem, AdvocacyItem,
-  PartnershipInquiry, InternshipApp, MediaItem
+  PartnershipInquiry, InternshipApp, InternshipPost, MediaItem, AdminUser
 } from './storage';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
+export const useAdminUsers = () => useSWR<AdminUser[]>(`${API_URL}/admin-users`, fetcher);
 export const useStats = () => useSWR<ImpactStats>(`${API_URL}/stats`, fetcher);
 export const useNews = () => useSWR<NewsItem[]>(`${API_URL}/news`, fetcher);
 export const useEvents = () => useSWR<EventItem[]>(`${API_URL}/events`, fetcher);
@@ -24,6 +25,7 @@ export const useCarousel = () => useSWR<HeroCarouselItem[]>(`${API_URL}/carousel
 export const useAdvocacy = () => useSWR<AdvocacyItem[]>(`${API_URL}/advocacy`, fetcher);
 export const usePartnershipInquiries = () => useSWR<PartnershipInquiry[]>(`${API_URL}/partnership-inquiries`, fetcher);
 export const useInternshipApps = () => useSWR<InternshipApp[]>(`${API_URL}/internship-apps`, fetcher);
+export const useInternshipPosts = () => useSWR<InternshipPost[]>(`${API_URL}/internship-posts`, fetcher);
 export const useMedia = () => useSWR<MediaItem[]>(`${API_URL}/media`, fetcher);
 
 export const fetchStats = async (): Promise<ImpactStats> => {
@@ -116,7 +118,9 @@ export const apiCarousel = createApiClient<HeroCarouselItem>('carousel');
 export const apiAdvocacy = createApiClient<AdvocacyItem>('advocacy');
 export const apiPartnershipInquiries = createApiClient<PartnershipInquiry>('partnership-inquiries');
 export const apiInternshipApps = createApiClient<InternshipApp>('internship-apps');
+export const apiInternshipPosts = createApiClient<InternshipPost>('internship-posts');
 export const apiMedia = createApiClient<MediaItem>('media');
+export const apiAdminUsers = createApiClient<AdminUser>('admin-users');
 
 export const uploadFile = async (file: File): Promise<string> => {
   const formData = new FormData();

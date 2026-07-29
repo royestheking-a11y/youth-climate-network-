@@ -45,6 +45,7 @@ export interface TeamMember {
   bio_bn: string;
   email: string;
   image: string;
+  type?: 'member' | 'advisor';
 }
 
 export interface Partner {
@@ -151,6 +152,20 @@ export interface InternshipApp {
   message: string;
   date: string;
   status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+}
+
+export interface InternshipPost {
+  id: string;
+  title: string;
+  title_bn: string;
+  duration: string;
+  duration_bn: string;
+  desc: string;
+  desc_bn: string;
+  requirements: string[];
+  requirements_bn: string[];
+  active: boolean;
+  badgeColor: string;
 }
 
 const DEFAULT_STATS: ImpactStats = {
@@ -332,94 +347,23 @@ const DEFAULT_EVENTS: EventItem[] = [
 ];
 
 const DEFAULT_TEAM: TeamMember[] = [
-  {
-    id: '1',
-    name: 'Mohammad Rafiqul Islam',
-    name_bn: 'মোহাম্মদ রফিকুল ইসলাম',
-    role: 'Executive Director',
-    role_bn: 'নির্বাহী পরিচালক',
-    bio: 'Climate justice advocate with 8+ years of experience in community organizing, international advocacy, and youth leadership development across South Asia.',
-    bio_bn: 'জলবায়ু ন্যায়বিচার কর্মী, যার দক্ষিণ এশিয়া জুড়ে সামাজিক সংগঠন ও আন্তর্জাতিক অ্যাডভোকেসিতে ৮ বছরেরও বেশি অভিজ্ঞতা রয়েছে।',
-    email: 'rafiqul@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '2',
-    name: 'Fatema Begum',
-    name_bn: 'ফাতেমা বেগম',
-    role: 'Program Director — Climate Justice',
-    role_bn: 'প্রোগ্রাম ডিরেক্টর — জলবায়ু ন্যায়বিচার',
-    bio: 'Environmental lawyer and activist specializing in climate litigation, policy advocacy, and environmental rights education. Led YCN\'s UNFCCC delegations since 2022.',
-    bio_bn: 'পরিবেশ আইনজীবী ও অ্যাক্টিভিস্ট, জলবায়ু মামলা ও নীতিনির্ধারণী অ্যাডভোকেসি বিশেষজ্ঞ। ২০২২ সাল থেকে ওয়াইসিএন প্রতিনিধি দলের নেতৃত্ব দিচ্ছেন।',
-    email: 'fatema@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '3',
-    name: 'Arif Hossain',
-    name_bn: 'আরিফ হোসেন',
-    role: 'Director — Youth Development',
-    role_bn: 'পরিচালক — যুব উন্নয়ন',
-    bio: 'Former YOUNGO delegate and training specialist with expertise in leadership development, vocational education, and peer-to-peer learning methodologies.',
-    bio_bn: 'সাবেক ইয়াঙ্গো (YOUNGO) প্রতিনিধি এবং নেতৃত্ব বিকাশ ও কারিগরি শিক্ষা বিশেষজ্ঞ। পিয়ার-লার্নিং পদ্ধতিতে পারদর্শী।',
-    email: 'arif@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '4',
-    name: 'Shahnaz Parvin',
-    name_bn: 'শাহনাজ পারভিন',
-    role: 'Director — Women Empowerment & Gender',
-    role_bn: 'পরিচালক — নারী ক্ষমতায়ন ও জেন্ডার সমতা',
-    bio: 'Gender equality specialist with 10 years of experience in women\'s rights, economic empowerment, and disaster risk management in climate-affected communities.',
-    bio_bn: 'জেন্ডার সমতা বিশেষজ্ঞ, জলবায়ু-আক্রান্ত এলাকায় ১০ বছরের অভিজ্ঞতা সম্পন্ন সামাজিক উন্নয়ন কর্মী।',
-    email: 'shahnaz@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '5',
-    name: 'Mizanur Rahman',
-    name_bn: 'মিজানুর রহমান',
-    role: 'Finance & Administration Director',
-    role_bn: 'অর্থ ও প্রশাসন পরিচালক',
-    bio: 'Certified accountant and nonprofit management expert ensuring YCN\'s financial integrity, donor accountability, and institutional compliance.',
-    bio_bn: 'সনদপ্রাপ্ত হিসাবরক্ষক এবং অলাভজনক প্রতিষ্ঠান পরিচালন বিশেষজ্ঞ, ওয়াইসিএন-এর স্বচ্ছতা ও হিসাব নিশ্চিত করছেন।',
-    email: 'mizan@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '6',
-    name: 'Priya Saha',
-    name_bn: 'প্রিয়া সাহা',
-    role: 'Communications & Media Manager',
-    role_bn: 'যোগাযোগ ও মিডিয়া ব্যবস্থাপক',
-    bio: 'Digital communications specialist and environmental journalist managing YCN\'s public presence, media relations, and storytelling campaigns.',
-    bio_bn: 'ডিজিটাল যোগাযোগ বিশেষজ্ঞ ও পরিবেশ সাংবাদিক, ওয়াইসিএন-এর মিডিয়া সম্পর্ক ও প্রচারের দায়িত্ব পালন করছেন।',
-    email: 'priya@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '7',
-    name: 'Abdullah Khan',
-    name_bn: 'আবদুল্লাহ খান',
-    role: 'WASH Program Coordinator',
-    role_bn: 'ওয়াশ (WASH) প্রোগ্রাম সমন্বয়কারী',
-    bio: 'Water and sanitation engineer with field experience in rural WASH interventions, community-managed water systems, and hygiene behavior change programs.',
-    bio_bn: 'পানি ও স্যানিটেশন প্রকৌশলী, গ্রামীণ নিরাপদ পানি ব্যবস্থা এবং স্বাস্থ্যবিধি নিশ্চিতের কাজ পরিচালনা করেন।',
-    email: 'abdullah@ycnbd.org',
-    image: '',
-  },
-  {
-    id: '8',
-    name: 'Nazmul Haque',
-    name_bn: 'নাজমুল হক',
-    role: 'Research & Knowledge Manager',
-    role_bn: 'গবেষণা ও জ্ঞান ব্যবস্থাপক',
-    bio: 'Climate scientist and researcher managing YCN\'s knowledge production, impact evaluation, and evidence-based programming across all thematic areas.',
-    bio_bn: 'জলবায়ু বিজ্ঞানী ও গবেষক, ওয়াইসিএন-এর সমস্ত জ্ঞান সৃষ্টি, প্রভাব মূল্যায়ন এবং প্রমাণ-ভিত্তিক কার্যক্রম পরিচালনা করেন।',
-    email: 'nazmul@ycnbd.org',
-    image: '',
-  },
+  { id: '1', name: 'Arafat Hossain Akash', name_bn: '', role: 'Founder & Executive Director', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png', type: 'member' },
+  { id: '2', name: 'Madhusudan Mondal', name_bn: '', role: 'Head of Programme & Climate Action', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /2. Madhusudan Mondal - Head of Programme & Climate Action.png', type: 'member' },
+  { id: '3', name: 'Ariful Islam', name_bn: '', role: 'Community Engagement Officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /3. Ariful Islam -  Community Engagement Officer.png', type: 'member' },
+  { id: '4', name: 'Jobaer Hossain', name_bn: '', role: 'Monitoring, Evaluation & Learning ( MEAL)  officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /4.  Jobaer Hossain - Monitoring, Evaluation & Learning ( MEAL)  officer.png', type: 'member' },
+  { id: '5', name: 'Puja Gain', name_bn: '', role: 'Volunteer Coordinator', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /5.  Puja Gain -  Volunteer Coordinator.png', type: 'member' },
+  { id: '6', name: 'Sadique Haseen Ratul', name_bn: '', role: 'Head of Digital Engagement & Advocacy', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /6.  Sadique Haseen Ratul  - Head of Digital Engagement & Advocacy.png', type: 'member' },
+  { id: '7', name: 'Usha Bin Farid', name_bn: '', role: 'Communications & Content Officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /7. Usha Bin Farid - Communications & Content Officer.jpg', type: 'member' },
+  { id: '8', name: 'Md Nahid Hosen', name_bn: '', role: 'Head of Partnerships & Resource Mobilization', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /8. Md Nahid Hosen - Head of Partnerships & Resource Mobilization.png', type: 'member' },
+  { id: '9', name: 'Azibar Hossain', name_bn: '', role: 'Partnerships officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /9. Azibar Hossain - Partnerships officer. .png', type: 'member' },
+  { id: '10', name: 'Antora Akter Nodee', name_bn: '', role: 'Fundraising Coordinator', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /10.  Antora Akter Nodee - Fundraising Coordinator.png', type: 'member' },
+  { id: '11', name: 'Hasibul Alam Hridoy', name_bn: '', role: 'Head of Research,  Policy & Innovation', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /11. Hasibul Alam Hridoy  - Head of Research,  Policy & Innovation.jpg', type: 'member' },
+  { id: '12', name: 'Rifat Sana', name_bn: '', role: 'Knowledge Management Officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /12. Rifat Sana -Knowledge Management Officer. .png', type: 'member' },
+  { id: '13', name: 'Md. Arif Morol', name_bn: '', role: 'Finance & Adminstration Manager', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /13. Md. Arif Morol - Finance & Adminstration Manager_.png', type: 'member' },
+  { id: '14', name: 'Ashikur Rahman', name_bn: '', role: 'Head of  Operations', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /14. Ashikur Rahman - Head of  Operations.png', type: 'member' },
+  { id: '15', name: 'Imran Hosen', name_bn: '', role: 'Head of Logistics officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /14.Imran Hosen - Head of Logistics officer.png', type: 'member' },
+  { id: '16', name: 'Anupurba Sarkar', name_bn: '', role: 'People & Culture Manager', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /16. Anupurba Sarkar -  People & Culture Manager. .png', type: 'member' },
+  { id: '17', name: 'Riaz Afrin', name_bn: '', role: 'Learning & Development Officer', role_bn: '', bio: '', bio_bn: '', email: '', image: '/Formal Image -  Meet our team /17.  Riaz Afrin  - Learning & Development Officer.png', type: 'member' },
 ];
 
 const DEFAULT_PARTNERS: Partner[] = [
@@ -515,8 +459,9 @@ export function initializeStorage(): void {
   if (!localStorage.getItem('ycn_initialized_v2')) {
     setItem('ycn_stats', DEFAULT_STATS);
     setItem('ycn_news', DEFAULT_NEWS);
-    setItem('ycn_events', DEFAULT_EVENTS);
-    setItem('ycn_team', DEFAULT_TEAM);
+    if (!getItem('ycn_team_v2', null)) {
+      setItem('ycn_team_v2', DEFAULT_TEAM);
+    }
     setItem('ycn_partners', DEFAULT_PARTNERS);
     setItem('ycn_advocacy', DEFAULT_ADVOCACY);
 
@@ -558,6 +503,14 @@ export interface MediaItem {
   size?: string;
 }
 
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  permissions: string[];
+  isSuperAdmin: boolean;
+}
+
 // Stats
 export const getStats = (): ImpactStats => getItem('ycn_stats', DEFAULT_STATS);
 export const saveStats = (stats: ImpactStats): void => setItem('ycn_stats', stats);
@@ -571,8 +524,8 @@ export const getEvents = (): EventItem[] => getItem('ycn_events', DEFAULT_EVENTS
 export const saveEvents = (events: EventItem[]): void => setItem('ycn_events', events);
 
 // Team
-export const getTeam = (): TeamMember[] => getItem('ycn_team', DEFAULT_TEAM);
-export const saveTeam = (team: TeamMember[]): void => setItem('ycn_team', team);
+export const getTeam = (): TeamMember[] => getItem('ycn_team_v2', DEFAULT_TEAM);
+export const saveTeam = (team: TeamMember[]): void => setItem('ycn_team_v2', team);
 
 // Partners
 export const getPartners = (): Partner[] => getItem('ycn_partners', DEFAULT_PARTNERS);
@@ -647,6 +600,12 @@ export const updateDonationRequestStatus = (id: string, status: DonationRequest[
   }
 };
 
+export const deleteDonationRequest = (id: string): void => {
+  const requests = getDonationRequests();
+  const updated = requests.filter(r => r.id !== id);
+  setItem('ycn_donation_requests', updated);
+};
+
 // Partnership Inquiries
 export const getPartnershipInquiries = (): PartnershipInquiry[] => getItem('ycn_partnership_inquiries', []);
 export const addPartnershipInquiry = (inquiry: Omit<PartnershipInquiry, 'id' | 'date' | 'status'>): void => {
@@ -673,17 +632,66 @@ export const updateInternshipAppStatus = (id: string, status: InternshipApp['sta
   if (idx >= 0) { apps[idx].status = status; setItem('ycn_internship_apps', apps); }
 };
 
+// Internship Posts
+export const getInternshipPosts = (): InternshipPost[] => getItem('ycn_internship_posts', [
+  {
+    id: '1',
+    title: 'Youth Leadership Academy',
+    title_bn: 'যুব নেতৃত্ব একাডেমি',
+    duration: '6 months · Intensive training',
+    duration_bn: '৬ মাস · নিবিড় বহুমুখী প্রশিক্ষণ',
+    desc: 'Our flagship leadership development program covering climate science, community organizing, policy advocacy, digital communications, and social entrepreneurship. 60 places annually for youth aged 18–30.',
+    desc_bn: 'আমাদের প্রধান নেতৃত্ব বিকাশ কর্মসূচী যা জলবায়ু বিজ্ঞান, সামাজিক সংগঠন, নীতি অ্যাডভোকেসি, ডিজিটাল যোগাযোগ এবং সামাজিক উদ্যোক্তা কভার করে। প্রতি বছর ১৮-৩০ বছর বয়সীদের জন্য ৬০টি আসন।',
+    requirements: ['Aged 18–30', 'Commit to 3 days/week minimum', 'Basic English or Bangla literacy', 'Passion for climate justice'],
+    requirements_bn: ['বয়স ১৮-৩০ বছর', 'সপ্তাহে কমপক্ষে ৩ দিন সময় দিতে হবে', 'প্রাথমিক ইংরেজি বা বাংলা সাক্ষরতা', 'জলবায়ু ন্যায়বিচারের প্রতি আগ্রহ'],
+    active: true,
+    badgeColor: '#E8521A'
+  },
+  {
+    id: '2',
+    title: 'Program Internships',
+    title_bn: 'প্রোগ্রাম ইন্টার্নশিপ',
+    duration: 'Flexible · 3–5 days per week',
+    duration_bn: 'নমনীয় সময় · সপ্তাহে ৩–৫ দিন',
+    desc: 'Hands-on internships across all 15 program pillars — from field coordination and research to communications and advocacy. Ideal for university students and recent graduates.',
+    desc_bn: 'ফিল্ড কোঅর্ডিনেশন ও গবেষণা থেকে শুরু করে মিডিয়া এবং অ্যাডভোকেসি — আমাদের সকল কার্যক্রমে সরাসরি ইন্টার্নশিপ করার সুযোগ। বিশ্ববিদ্যালয় শিক্ষার্থী এবং সদ্য স্নাতকদের জন্য আদর্শ।',
+    requirements: ['University student or graduate', 'Available 3–5 days/week', 'Relevant academic background', 'Ability to work independently'],
+    requirements_bn: ['বিশ্ববিদ্যালয় শিক্ষার্থী বা স্নাতক সম্পন্ন', 'সপ্তাহে ৩-৫ দিন উপলব্ধ থাকতে হবে', 'প্রাসঙ্গিক প্রাতিষ্ঠানিক ব্যাকগ্রাউন্ড', 'স্বাধীনভাবে কাজ করার ক্ষমতা'],
+    active: true,
+    badgeColor: '#1A6B3C'
+  }
+]);
+export const saveInternshipPosts = (posts: InternshipPost[]): void => setItem('ycn_internship_posts', posts);
+
 // Hero Carousel
 export const getCarouselItems = (): HeroCarouselItem[] => getItem('ycn_carousel_items', DEFAULT_CAROUSEL);
 export const saveCarouselItems = (items: HeroCarouselItem[]): void => setItem('ycn_carousel_items', items);
 
 // Admin auth
-export const checkAdminAuth = (): boolean => localStorage.getItem('ycn_admin_session') === 'authenticated';
-export const adminLogin = (password: string): boolean => {
-  if (password === 'ycn@admin2024') {
-    localStorage.setItem('ycn_admin_session', 'authenticated');
-    return true;
+export const checkAdminAuth = (): boolean => !!localStorage.getItem('ycn_admin_user');
+
+export const getAdminUser = (): AdminUser | null => {
+  const user = localStorage.getItem('ycn_admin_user');
+  return user ? JSON.parse(user) : null;
+};
+
+export const adminLogin = async (email: string, password: string): Promise<boolean> => {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (res.ok) {
+      const user = await res.json();
+      localStorage.setItem('ycn_admin_user', JSON.stringify(user));
+      return true;
+    }
+  } catch (err) {
+    console.error('Login failed', err);
   }
   return false;
 };
-export const adminLogout = (): void => localStorage.removeItem('ycn_admin_session');
+
+export const adminLogout = (): void => localStorage.removeItem('ycn_admin_user');

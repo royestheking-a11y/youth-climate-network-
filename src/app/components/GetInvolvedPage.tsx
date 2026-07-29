@@ -4,15 +4,18 @@ import { SEO } from './ui/SEO';
 import { HandCoins, Users, Briefcase, Handshake, CheckCircle, ArrowRight } from 'lucide-react';
 import { addVolunteerApp, addPartnershipInquiry, addInternshipApp } from '../lib/storage';
 import { useLanguage } from '../lib/LanguageContext';
+import { useInternshipPosts } from '../lib/api';
 
 type Tab = 'volunteer' | 'internship' | 'partner';
 
 export function GetInvolvedPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<Tab>('volunteer');
   const [volSuccess, setVolSuccess] = useState(false);
   const [partSuccess, setPartSuccess] = useState(false);
   const [internSuccess, setInternSuccess] = useState(false);
+  const { data: internshipPosts = [] } = useInternshipPosts();
+
 
 
   const [volForm, setVolForm] = useState({ name: '', email: '', phone: '', interest: '', skills: '', message: '' });
@@ -356,52 +359,19 @@ export function GetInvolvedPage() {
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    {[
-                      {
-                        title: t('Youth Leadership Academy', 'যুব নেতৃত্ব একাডেমি'),
-                        badge: t('Flagship Program', 'ফ্ল্যাগশিপ প্রোগ্রাম'),
-                        badgeColor: '#E8521A',
-                        duration: t('6 months · Intensive training', '৬ মাস · নিবিড় বহুমুখী প্রশিক্ষণ'),
-                        desc: t(
-                          'Our flagship leadership development program covering climate science, community organizing, policy advocacy, digital communications, and social entrepreneurship. 60 places annually for youth aged 18–30.',
-                          'আমাদের প্রধান নেতৃত্ব বিকাশ কর্মসূচী যা জলবায়ু বিজ্ঞান, সামাজিক সংগঠন, নীতি অ্যাডভোকেসি, ডিজিটাল যোগাযোগ এবং সামাজিক উদ্যোক্তা কভার করে। প্রতি বছর ১৮-৩০ বছর বয়সীদের জন্য ৬০টি আসন।'
-                        ),
-                        requirements: [
-                          t('Aged 18–30', 'বয়স ১৮-৩০ বছর'),
-                          t('Commit to 3 days/week minimum', 'সপ্তাহে কমপক্ষে ৩ দিন সময় দিতে হবে'),
-                          t('Basic English or Bangla literacy', 'প্রাথমিক ইংরেজি বা বাংলা সাক্ষরতা'),
-                          t('Passion for climate justice', 'জলবায়ু ন্যায়বিচারের প্রতি আগ্রহ'),
-                        ],
-                      },
-                      {
-                        title: t('Program Internships', 'প্রোগ্রাম ইন্টার্নশিপ'),
-                        badge: t('3–6 months', '৩–৬ মাস'),
-                        badgeColor: '#1A6B3C',
-                        duration: t('Flexible · 3–5 days per week', 'নমনীয় সময় · সপ্তাহে ৩–৫ দিন'),
-                        desc: t(
-                          'Hands-on internships across all 15 program pillars — from field coordination and research to communications and advocacy. Ideal for university students and recent graduates.',
-                          'ফিল্ড কোঅর্ডিনেশন ও গবেষণা থেকে শুরু করে মিডিয়া এবং অ্যাডভোকেসি — আমাদের সকল কার্যক্রমে সরাসরি ইন্টার্নশিপ করার সুযোগ। বিশ্ববিদ্যালয় শিক্ষার্থী এবং সদ্য স্নাতকদের জন্য আদর্শ।'
-                        ),
-                        requirements: [
-                          t('University student or graduate', 'বিশ্ববিদ্যালয় শিক্ষার্থী বা স্নাতক সম্পন্ন'),
-                          t('Available 3–5 days/week', 'সপ্তাহে ৩-৫ দিন উপলব্ধ থাকতে হবে'),
-                          t('Relevant academic background', 'প্রাসঙ্গিক প্রাতিষ্ঠানিক ব্যাকগ্রাউন্ড'),
-                          t('Ability to work independently', 'স্বাধীনভাবে কাজ করার ক্ষমতা'),
-                        ],
-                      },
-                    ].map((program) => (
+                    {internshipPosts.filter(p => p.active).map((program) => (
                       <div key={program.title} className="p-6 rounded-2xl border shadow-sm hover:shadow-lg transition-all flex flex-col h-full" style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }}>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{program.title}</h3>
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full text-white" style={{ backgroundColor: program.badgeColor }}>{program.badge}</span>
+                            <h3 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{lang === 'bn' && program.title_bn ? program.title_bn : program.title}</h3>
+                            {program.badgeColor && <span className="text-xs font-semibold px-2 py-1 rounded-full text-white" style={{ backgroundColor: program.badgeColor }}>Open</span>}
                           </div>
-                          <p className="text-xs font-medium mb-3" style={{ color: '#E8521A' }}>{program.duration}</p>
-                          <p className="text-sm leading-relaxed mb-4" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>{program.desc}</p>
+                          <p className="text-xs font-medium mb-3" style={{ color: '#E8521A' }}>{lang === 'bn' && program.duration_bn ? program.duration_bn : program.duration}</p>
+                          <p className="text-sm leading-relaxed mb-4" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>{lang === 'bn' && program.desc_bn ? program.desc_bn : program.desc}</p>
                           <div className="mb-5">
                             <p className="text-xs font-semibold mb-2" style={{ color: '#374151' }}>{t('Requirements:', 'যোগ্যতা/প্রয়োজনীয়তা:')}</p>
                             <ul className="space-y-1">
-                              {program.requirements.map(r => (
+                              {(lang === 'bn' && program.requirements_bn && program.requirements_bn.length > 0 ? program.requirements_bn : program.requirements).map(r => (
                                 <li key={r} className="flex items-center gap-2 text-xs" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
                                   <CheckCircle size={11} style={{ color: '#1A6B3C' }} /> {r}
                                 </li>

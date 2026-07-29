@@ -1,5 +1,5 @@
 import { SEO } from './ui/SEO';
-import { Download, Heart, Brain, Leaf, ArrowRight } from 'lucide-react';
+import { Download, Heart, Brain, Leaf } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 
 export function MindShantaraPage() {
