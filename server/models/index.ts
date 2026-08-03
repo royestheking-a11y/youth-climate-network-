@@ -44,6 +44,7 @@ const teamSchema = new mongoose.Schema({
   email: String,
   image: String,
   type: { type: String, default: 'member' },
+  order: { type: Number, default: 0 },
 });
 
 const partnerSchema = new mongoose.Schema({
@@ -51,6 +52,38 @@ const partnerSchema = new mongoose.Schema({
   category: String,
   url: String,
   logo: String,
+  description: String,
+  description_bn: String,
+  details: String,
+  details_bn: String,
+});
+
+const blogSchema = new mongoose.Schema({
+  title: String,
+  title_bn: String,
+  content: String,
+  content_bn: String,
+  excerpt: String,
+  metaDescription: String,
+  metaKeywords: String,
+  tags: [String],
+  image: String,
+  date: String,
+});
+
+const programSchema = new mongoose.Schema({
+  slug: String,
+  title: String,
+  title_bn: String,
+  iconName: String,
+  theme: String,
+  theme_bn: String,
+  color: String,
+  bg: String,
+  description: String,
+  description_bn: String,
+  keyPrograms: [String],
+  keyPrograms_bn: [String],
 });
 
 const volunteerAppSchema = new mongoose.Schema({
@@ -198,3 +231,5 @@ export const InternshipApp = mongoose.model('InternshipApp', internshipAppSchema
 export const InternshipPost = mongoose.model('InternshipPost', internshipPostSchema);
 export const ImpactStats = mongoose.model('ImpactStats', impactStatsSchema);
 export const Media = mongoose.model('Media', mediaSchema);
+export const Blog = mongoose.model('Blog', blogSchema);
+export const Program = mongoose.model('Program', programSchema);

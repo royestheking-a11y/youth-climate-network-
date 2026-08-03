@@ -17,6 +17,11 @@ import { TermsPage } from './components/TermsPage';
 import { RizqaraTechPage } from './components/RizqaraTechPage';
 import { NotFoundPage } from './components/NotFoundPage';
 
+import { BlogPage } from './components/BlogPage';
+import { BlogDetailsPage } from './components/BlogDetailsPage';
+import { PartnerPage } from './components/PartnerPage';
+import { PartnerDetailsPage } from './components/PartnerDetailsPage';
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -37,6 +42,10 @@ export const router = createBrowserRouter([
       { path: 'terms', Component: TermsPage },
       { path: 'tech-partner', Component: RizqaraTechPage },
       { path: 'rizqara-tech', Component: RizqaraTechPage },
+      { path: 'blog', Component: BlogPage },
+      { path: 'blog/:id', Component: BlogDetailsPage },
+      { path: 'partners', Component: PartnerPage },
+      { path: 'partners/:id', Component: PartnerDetailsPage },
       { path: 'admin', Component: AdminPage },
       { path: 'admin/:tab', Component: AdminPage },
       { path: '*', Component: NotFoundPage },

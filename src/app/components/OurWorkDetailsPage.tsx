@@ -1,19 +1,43 @@
 import { useParams, Link } from 'react-router';
 import { SEO } from './ui/SEO';
-import { allPrograms } from '../lib/data';
+import { apiProgram } from '../lib/api';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { useEffect } from 'react';
+import * as Icons from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { motion as Motion } from 'motion/react';
 import { useLanguage } from '../lib/LanguageContext';
 
 export function OurWorkDetailsPage() {
   const { t, lang } = useLanguage();
   const { id } = useParams();
-  const program = allPrograms.find(p => p.id === id);
+  const [program, setProgram] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchProgram();
   }, [id]);
+
+  const fetchProgram = async () => {
+    try {
+      setLoading(true);
+      const data = await apiProgram.getAll();
+      const found = data.find((p: any) => p.slug === id);
+      setProgram(found);
+    } catch (error) {
+      console.error('Error fetching program details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#F3F4F6' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700"></div>
+      </div>
+    );
+  }
 
   if (!program) {
     return (
@@ -31,11 +55,11 @@ export function OurWorkDetailsPage() {
     );
   }
 
-  const Icon = program.icon;
+  const Icon = (Icons as any)[program.iconName || 'Box'] || Icons.Box;
   const programTitle = t(program.title, program.title_bn);
   const programTheme = t(program.theme, program.theme_bn);
   const programDescription = t(program.description, program.description_bn);
-  const initiatives = lang === 'bn' ? program.keyPrograms_bn : program.keyPrograms;
+  const initiatives = lang === 'bn' && program.keyPrograms_bn?.length ? program.keyPrograms_bn : program.keyPrograms || [];
 
   return (
     <div className="min-h-screen pt-36 pb-20" style={{ backgroundColor: '#F3F4F6', fontFamily: 'Inter, sans-serif' }}>
@@ -73,7 +97,7 @@ export function OurWorkDetailsPage() {
                 {t('Key Initiatives & Interventions', 'মূল উদ্যোগ ও হস্তক্ষেপসমূহ')}
               </h3>
               <ul className="space-y-4">
-                {initiatives.map((item, i) => {
+                {initiatives.map((item: string, i: number) => {
                   const [title, desc] = item.split(' — ');
                   return (
                     <Motion.li 

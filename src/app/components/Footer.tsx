@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { apiNewsletter } from '../lib/api';
+import { apiNewsletter, apiProgram } from '../lib/api';
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, ArrowRight, MessageCircle, Globe } from 'lucide-react';
 // removed unused logo import
 import footerBg from '../../imports/image-4.webp';
@@ -11,21 +11,14 @@ const quickLinks = [
   { label: 'Our Work', path: '/our-work' },
   { label: 'Impact & Stories', path: '/impact' },
   { label: 'Get Involved', path: '/get-involved' },
-  { label: 'Advocacy & Policy', path: '/advocacy' },
+  { label: 'Advocacy & Policy', path: '/our-work/advocacy' },
   { label: 'Media Center', path: '/media' },
+  { label: 'Blog', path: '/blog' },
+  { label: 'Partners', path: '/partners' },
   { label: 'Contact Us', path: '/contact' },
 ];
 
-const programLinks = [
-  { label: 'Climate Justice', path: '/our-work' },
-  { label: 'Education & Research', path: '/our-work' },
-  { label: 'WASH Programs', path: '/our-work' },
-  { label: 'Disaster Risk Mgmt', path: '/our-work' },
-  { label: 'Renewable Energy', path: '/our-work' },
-  { label: 'Youth Development', path: '/our-work' },
-  { label: 'Women Empowerment', path: '/our-work' },
-  { label: 'Financial Inclusion', path: '/our-work' },
-];
+
 
 const socials = [
   { Icon: Facebook, href: 'https://www.facebook.com/youthclimatenetwork', label: 'Facebook' },
@@ -40,6 +33,11 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [programs, setPrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    apiProgram.getAll().then(data => setPrograms(data)).catch(console.error);
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,17 +186,17 @@ export function Footer() {
               {t('Programs')}
             </h4>
             <ul className="space-y-2.5">
-              {programLinks.map((link) => (
-                <li key={link.label}>
+              {programs.slice(0, 5).map((prog) => (
+                <li key={prog.slug}>
                   <Link
-                    to={link.path}
+                    to={`/our-work/${prog.slug}`}
                     className="text-sm flex items-center gap-2 transition-all duration-150"
                     style={{ color: '#F0ECD8' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#7FAF8A'; (e.currentTarget as HTMLElement).style.paddingLeft = '6px'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#F0ECD8'; (e.currentTarget as HTMLElement).style.paddingLeft = '0'; }}
                   >
                     <ArrowRight size={12} style={{ opacity: 0.5 }} />
-                    {t(link.label)}
+                    {lang === 'en' ? prog.title : prog.title_bn}
                   </Link>
                 </li>
               ))}

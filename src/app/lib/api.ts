@@ -103,6 +103,14 @@ const createApiClient = <T extends { id: string }>(path: string) => ({
   delete: async (id: string): Promise<void> => {
     const res = await fetch(`${API_URL}/${path}/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(`Failed to delete ${path}`);
+  },
+  reorder: async (items: { id: string, order: number }[]): Promise<void> => {
+    const res = await fetch(`${API_URL}/${path}/reorder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    if (!res.ok) throw new Error(`Failed to reorder ${path}`);
   }
 });
 
@@ -121,6 +129,8 @@ export const apiInternshipApps = createApiClient<InternshipApp>('internship-apps
 export const apiInternshipPosts = createApiClient<InternshipPost>('internship-posts');
 export const apiMedia = createApiClient<MediaItem>('media');
 export const apiAdminUsers = createApiClient<AdminUser>('admin-users');
+export const apiBlog = createApiClient<any>('blogs');
+export const apiProgram = createApiClient<any>('programs');
 
 export const uploadFile = async (file: File): Promise<string> => {
   const formData = new FormData();

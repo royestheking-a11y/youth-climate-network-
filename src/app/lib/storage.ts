@@ -54,6 +54,10 @@ export interface Partner {
   category: string;
   url: string;
   logo: string;
+  description?: string;
+  description_bn?: string;
+  details?: string;
+  details_bn?: string;
 }
 
 export interface VolunteerApp {

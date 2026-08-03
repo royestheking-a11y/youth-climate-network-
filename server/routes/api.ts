@@ -5,7 +5,7 @@ import {
   News, Event, Team, Partner, VolunteerApp, NewsletterSub,
   ContactMessage, Donation, DonationRequest, HeroCarousel,
   Advocacy, PartnershipInquiry, InternshipApp, InternshipPost, ImpactStats,
-  Media, AdminUser
+  Media, AdminUser, Blog, Program
 } from '../models';
 
 const router = express.Router();
@@ -16,18 +16,27 @@ const EMAILJS_USER_ID = process.env.EMAILJS_PUBLIC_KEY || 'lnfsoU0tZZVZk15EY';  
 const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY || 'U6F85h13cCGXN3D6L6Egn'; // Private Key
 
 
+const cache: Record<string, { data: any, timestamp: number }> = {};
+const CACHE_TTL = 60 * 1000; // 1 minute cache TTL to prevent stale data
+
 // Generic CRUD factory
 const createCrudRoutes = (model: any, path: string) => {
   // Get all
   router.get(`/${path}`, async (req, res) => {
     try {
-      const items = await model.find();
+      const now = Date.now();
+      if (cache[path] && (now - cache[path].timestamp < CACHE_TTL)) {
+        return res.json(cache[path].data);
+      }
+      
+      const items = await model.find().sort(path === 'team' ? { order: 1 } : {}).lean();
       // Map _id to id for frontend compatibility
       const mapped = items.map((i: any) => {
-        const obj = i.toObject();
-        obj.id = obj._id;
-        return obj;
+        i.id = i._id;
+        return i;
       });
+      
+      cache[path] = { data: mapped, timestamp: now };
       res.json(mapped);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -41,6 +50,7 @@ const createCrudRoutes = (model: any, path: string) => {
       await newItem.save();
       const obj = newItem.toObject();
       obj.id = obj._id;
+      delete cache[path]; // invalidate cache
       res.status(201).json(obj);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -54,6 +64,7 @@ const createCrudRoutes = (model: any, path: string) => {
       if (!updated) return res.status(404).json({ error: 'Not found' });
       const obj = updated.toObject();
       obj.id = obj._id;
+      delete cache[path]; // invalidate cache
       res.json(obj);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -65,6 +76,21 @@ const createCrudRoutes = (model: any, path: string) => {
     try {
       const deleted = await model.findByIdAndDelete(req.params.id);
       if (!deleted) return res.status(404).json({ error: 'Not found' });
+      delete cache[path]; // invalidate cache
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Reorder (custom for items with an order field)
+  router.post(`/${path}/reorder`, async (req, res) => {
+    try {
+      const { items } = req.body; // { id, order }[]
+      for (const item of items) {
+        await model.findByIdAndUpdate(item.id, { order: item.order });
+      }
+      delete cache[path];
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -257,6 +283,8 @@ createCrudRoutes(PartnershipInquiry, 'partnership-inquiries');
 createCrudRoutes(InternshipApp, 'internship-apps');
 createCrudRoutes(InternshipPost, 'internship-posts');
 createCrudRoutes(Media, 'media');
+createCrudRoutes(Blog, 'blogs');
+createCrudRoutes(Program, 'programs');
 
 // Special route for stats (singleton)
 router.get('/stats', async (req, res) => {
@@ -325,7 +353,9 @@ router.post('/migrate-all', async (req, res) => {
       InternshipApp.deleteMany({}),
       InternshipPost.deleteMany({}),
       ImpactStats.deleteMany({}),
-      Media.deleteMany({})
+      Media.deleteMany({}),
+      Blog.deleteMany({}),
+      Program.deleteMany({})
     ]);
 
     // Insert new data if present
@@ -344,6 +374,8 @@ router.post('/migrate-all', async (req, res) => {
     if (data.internshipApps?.length) await InternshipApp.insertMany(data.internshipApps);
     if (data.internshipPosts?.length) await InternshipPost.insertMany(data.internshipPosts);
     if (data.stats) await new ImpactStats(data.stats).save();
+    if (data.blogs?.length) await Blog.insertMany(data.blogs);
+    if (data.programs?.length) await Program.insertMany(data.programs);
 
     res.json({ success: true, message: 'Migration completed successfully' });
   } catch (err: any) {

@@ -3,11 +3,10 @@ import { SEO } from './ui/SEO';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import {
-  Scale, BookOpen, Droplets, Shield, Leaf, Zap,
-  ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users,
-  Brain, Waves, Building2, Bird
+  ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users
 } from 'lucide-react';
-import { apiNewsletter } from '../lib/api';
+import * as Icons from 'lucide-react';
+import { apiNewsletter, apiProgram } from '../lib/api';
 import { useStats, useNews, useEvents, useCarousel, usePartners } from '../lib/api';
 import type { NewsItem, EventItem, HeroCarouselItem } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
@@ -43,20 +42,7 @@ function useCountUp(end: number, duration = 2200) {
 const fadeUp = { hidden: { opacity: 0, y: 32 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } } };
 const stagger = { visible: { transition: { staggerChildren: 0.12 } } };
 
-/* ───── DATA ───── */
-const programs = [
-  { icon: Scale, title: 'Climate Justice & Advocacy', desc: 'Representing frontline youth at UNFCCC/COP and driving systemic policy change.', color: '#1A6B3C', light: '#E8F5EE', path: '/our-work/climate-justice' },
-  { icon: BookOpen, title: 'Education & Research', desc: 'Building climate literacy from classrooms to communities, producing policy-shaping research.', color: '#0E7490', light: '#E0F7FA', path: '/our-work/education' },
-  { icon: Droplets, title: 'WASH', desc: 'Safe drinking water, dignified sanitation, and hygiene education for coastal communities.', color: '#1565C0', light: '#E3F2FD', path: '/our-work/wash' },
-  { icon: Shield, title: 'Disaster Risk Management', desc: 'Community preparedness and rapid response for climate-induced floods and cyclones.', color: '#7B1FA2', light: '#F3E5F5', path: '/our-work/disaster-risk' },
-  { icon: Leaf, title: 'Sustainable Livelihoods', desc: 'Climate-smart agriculture, alternative incomes, and resilient food systems.', color: '#2E7D32', light: '#E8F5E9', path: '/our-work/sustainable-livelihoods' },
-  { icon: Zap, title: 'Renewable Energy', desc: 'Solar & biogas access for off-grid households while tackling plastic and e-waste.', color: '#E65100', light: '#FFF3E0', path: '/our-work/renewable-energy' },
-  { icon: TreePine, title: 'Biodiversity in Action', desc: 'Protecting natural habitats, large-scale afforestation, and preserving biodiversity.', color: '#33691E', light: '#F1F8E9', path: '/our-work/biodiversity' },
-  { icon: Bird, title: 'Wildlife & Welfare', desc: 'Protecting endangered species and ensuring welfare for wildlife in climate-vulnerable zones.', color: '#827717', light: '#F9FBE7', path: '/our-work/wildlife' },
-  { icon: Brain, title: 'Mental Health & Psychosocial Support', desc: 'Connecting survivors to psychosocial support and specialized climate-anxiety care.', color: '#00695C', light: '#E0F2F1', path: '/our-work/mental-health' },
-  { icon: Waves, title: 'Coastal & Marine Ecosystem Protection', desc: 'Restoring mangrove forests and protecting fragile coastlines from cyclones and tidal surges.', color: '#0277BD', light: '#E1F5FE', path: '/our-work/coastal-marine' },
-  { icon: Building2, title: 'Urban Climate Resilience', desc: 'Building resilience against urban flooding, heat stress, and infrastructure strain in cities.', color: '#EF6C00', light: '#FFF3E0', path: '/our-work/urban-climate' },
-];
+
 
 
 
@@ -83,16 +69,16 @@ function StatCounter({ value, label, suffix = '+', delay = 0 }: { value: number;
   );
 }
 
-function ProgramCard({ program }: { program: typeof programs[0] }) {
+function ProgramCard({ program }: { program: any }) {
   const { t } = useLanguage();
-  const Icon = program.icon;
+  const Icon = (Icons as any)[program.iconName || 'Box'] || Icons.Box;
   return (
     <motion.div
       variants={fadeUp}
       whileHover={{ y: -6, boxShadow: '0 24px 48px rgba(0,0,0,0.10)' }}
     >
       <Link
-        to={program.path}
+        to={`/our-work/${program.slug}`}
         className="flex flex-col h-full rounded-2xl overflow-hidden group"
         style={{ backgroundColor: '#fff', border: '1px solid #F0F0F0', transition: 'all 0.3s ease' }}
       >
@@ -101,16 +87,16 @@ function ProgramCard({ program }: { program: typeof programs[0] }) {
         <div className="p-6 flex flex-col flex-1">
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-            style={{ backgroundColor: program.light }}
+            style={{ backgroundColor: program.bg }}
           >
             <Icon size={22} style={{ color: program.color }} />
           </div>
           <h3 className="mb-3 leading-snug" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#111827' }}>
-            {t(program.title)}
+            {t(program.title, program.title_bn)}
           </h3>
-          <p className="text-sm leading-relaxed flex-1" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{t(program.desc)}</p>
+          <p className="text-sm leading-relaxed flex-1" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{t(program.description, program.description_bn)?.substring(0, 80)}...</p>
           <div className="flex items-center gap-1.5 mt-5 text-xs font-semibold transition-all group-hover:gap-2.5" style={{ color: program.color }}>
-            {t('Learn more')} <ArrowRight size={13} />
+            {t('Learn more', 'আরও জানুন')} <ArrowRight size={13} />
           </div>
         </div>
       </Link>
@@ -316,12 +302,20 @@ export function HomePage() {
   const { data: allEvents, isLoading: eventsLoading } = useEvents();
   const { data: partnersData = [] } = usePartners();
   
-  const news = allNews ? allNews.slice(0, 3) : [];
+  const news = allNews ? allNews.filter(n => n.category !== 'Blog').slice(0, 3) : [];
+  const blogs = allNews ? allNews.filter(n => n.category === 'Blog').slice(0, 3) : [];
   const events = allEvents ? allEvents.slice(0, 4) : [];
   
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dynamicPrograms, setDynamicPrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    apiProgram.getAll().then(data => {
+      setDynamicPrograms(data.slice(0, 6)); // Display first 6 on homepage
+    }).catch(console.error);
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -532,7 +526,7 @@ export function HomePage() {
             variants={stagger}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
           >
-            {programs.map((p) => <ProgramCard key={p.title} program={p} />)}
+            {dynamicPrograms.map((p) => <ProgramCard key={p.id} program={p} />)}
           </motion.div>
 
           <motion.div
@@ -595,6 +589,31 @@ export function HomePage() {
             ) : news.map((item) => <NewsCard key={item.id} item={item} />)}
           </motion.div>
 
+          {/* Blogs section header */}
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
+            variants={stagger}
+            className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12"
+          >
+            <div>
+              <motion.p variants={fadeUp} className="text-xs uppercase tracking-widest mb-2" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{t('04 — Insights', '০৪ — অন্তর্দৃষ্টি')}</motion.p>
+              <motion.h2 variants={fadeUp} style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', color: '#111827', letterSpacing: '-0.02em' }}>
+                {t('Latest Blogs', 'সাম্প্রতিক ব্লগ')}
+              </motion.h2>
+            </div>
+          </motion.div>
+
+          {/* Blogs grid */}
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
+            variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-16"
+          >
+            {newsLoading ? (
+              Array(3).fill(0).map((_, i) => <CardSkeleton key={i} />)
+            ) : blogs.map((item) => <NewsCard key={item.id} item={item} />)}
+          </motion.div>
+
           {/* Events */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
             <motion.div
@@ -602,7 +621,7 @@ export function HomePage() {
               variants={stagger}
               className="lg:col-span-2"
             >
-              <motion.p variants={fadeUp} className="text-xs uppercase tracking-widest mb-2" style={{ color: '#D97706', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{t('04 — Calendar', '০৪ — ক্যালেন্ডার')}</motion.p>
+              <motion.p variants={fadeUp} className="text-xs uppercase tracking-widest mb-2" style={{ color: '#D97706', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{t('05 — Calendar', '০৫ — ক্যালেন্ডার')}</motion.p>
               <motion.h2 variants={fadeUp} className="mb-4" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.4rem, 3vw, 2,-rem)', color: '#111827', letterSpacing: '-0.02em' }}>
                 {t('Upcoming Events', 'আগামী ইভেন্টসমূহ')}
               </motion.h2>

@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   LayoutDashboard, Newspaper, Users, Handshake, BarChart2,
   Mail, Heart, LogOut, Plus, Trash2, Edit3, Save, X, CheckCircle,
   Eye, EyeOff, TrendingUp, MessageSquare, Bell,
-  Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera, Upload
+  Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera, Upload, FileText, Layers, GripVertical
 } from 'lucide-react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import {
   checkAdminAuth, adminLogin, adminLogout,
   getDonationRequests, updateDonationRequestStatus, deleteDonationRequest,
@@ -79,7 +81,7 @@ function ConfirmDeleteModal({
   );
 }
 
-type AdminTab = 'dashboard' | 'stats' | 'carousel' | 'media' | 'news' | 'events' | 'team' | 'partners' | 'volunteers' | 'internships' | 'partnershipInquiries' | 'newsletter' | 'messages' | 'donations' | 'roles';
+type AdminTab = 'dashboard' | 'stats' | 'carousel' | 'media' | 'news' | 'events' | 'team' | 'partners' | 'volunteers' | 'internships' | 'partnershipInquiries' | 'newsletter' | 'messages' | 'donations' | 'roles' | 'blogs' | 'programs';
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState(() => localStorage.getItem('ycn_admin_email') || '');
@@ -273,9 +275,11 @@ const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; styl
   { key: 'volunteers', label: 'Volunteers', icon: Heart },
   { key: 'internships', label: 'Internships', icon: Briefcase },
   { key: 'partnershipInquiries', label: 'Partner Inqs', icon: Handshake },
+  { key: 'blogs', label: 'Blogs', icon: FileText },
+  { key: 'programs', label: 'Our Work', icon: Layers },
+  { key: 'donations', label: 'Donations', icon: TrendingUp },
   { key: 'newsletter', label: 'Newsletter', icon: Mail },
   { key: 'messages', label: 'Messages', icon: MessageSquare },
-  { key: 'donations', label: 'Donations', icon: TrendingUp },
   { key: 'roles', label: 'Roles & Access', icon: Shield },
 ];
 
@@ -614,6 +618,8 @@ export function AdminPage() {
             {activeTab === 'newsletter' && <NewsletterTab />}
             {activeTab === 'messages' && <MessagesTab />}
             {activeTab === 'donations' && <DonationsTab />}
+            {activeTab === 'blogs' && <BlogsTab />}
+            {activeTab === 'programs' && <ProgramsTab />}
             {activeTab === 'roles' && currentUser?.isSuperAdmin && <RolesTab />}
           </div>
         </div>
@@ -1165,13 +1171,98 @@ function EventsTab() {
 
 
 /* ── TEAM ── */
+
+const ItemTypes = { TEAM_CARD: 'team_card' };
+
+function SortableMemberCard({ m, index, moveCard, setEditing, setDeleteId, onDropEnd }: any) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [{ handlerId }, drop] = useDrop({
+    accept: ItemTypes.TEAM_CARD,
+    collect(monitor) { return { handlerId: monitor.getHandlerId() }; },
+    hover(item: any, monitor) {
+      if (!ref.current) return;
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
+      const hoverBoundingRect = ref.current?.getBoundingClientRect();
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = (clientOffset as any).y - hoverBoundingRect.top;
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
+      moveCard(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+    drop() {
+      onDropEnd();
+    }
+  });
+
+  const [{ isDragging }, drag, preview] = useDrag({
+    type: ItemTypes.TEAM_CARD,
+    item: () => ({ id: m.id, index }),
+    collect: (monitor) => ({ isDragging: monitor.isDragging() })
+  });
+
+  preview(drop(ref));
+  const initials = m.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2);
+
+  return (
+    <div ref={ref} data-handler-id={handlerId} className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3 relative transition-all" style={{ opacity: isDragging ? 0.3 : 1 }}>
+      <div ref={drag as any} className="cursor-grab hover:bg-gray-100 p-2 rounded-lg mt-1" title="Drag to reorder">
+        <GripVertical size={16} style={{ color: '#9CA3AF' }} />
+      </div>
+      {m.image ? (
+        <img src={m.image} alt={m.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm" style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}>{initials}</div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase" style={{ backgroundColor: m.type === 'advisor' ? '#FEF3C7' : '#E8F5EE', color: m.type === 'advisor' ? '#D97706' : '#1A6B3C' }}>
+            {m.type || 'member'}
+          </span>
+        </div>
+        <p className="text-sm font-semibold" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{m.name}</p>
+        <p className="text-xs" style={{ color: '#E8521A' }}>{m.role}</p>
+        <p className="text-xs mt-1 truncate" style={{ color: '#9CA3AF' }}>{m.email}</p>
+      </div>
+      <div className="flex gap-1.5 flex-shrink-0">
+        <button onClick={() => setEditing(m)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={13} style={{ color: '#6B7280' }} /></button>
+        <button onClick={() => setDeleteId(m.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
+      </div>
+    </div>
+  );
+}
+
 function TeamTab() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { data: apiMembers = [], mutate, isLoading } = useTeam();
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const [isNew, setIsNew] = useState(false);
+  
+  const [localMembers, setLocalMembers] = useState<any[]>([]);
+  useEffect(() => {
+    setLocalMembers(apiMembers);
+  }, [apiMembers]);
 
-  const members = apiMembers;
+  const moveCard = (dragIndex: number, hoverIndex: number) => {
+    setLocalMembers((prevCards: any[]) => {
+      const cloned = [...prevCards];
+      const removed = cloned.splice(dragIndex, 1)[0];
+      cloned.splice(hoverIndex, 0, removed);
+      return cloned;
+    });
+  };
+
+  const saveOrder = async () => {
+    const { apiTeam } = await import('../lib/api');
+    const items = localMembers.map((m, i) => ({ id: m.id, order: i }));
+    if (apiTeam.reorder) {
+      await apiTeam.reorder(items);
+      mutate();
+    }
+  };
 
   const blank: TeamMember = { id: '', name: '', name_bn: '', role: '', role_bn: '', bio: '', bio_bn: '', email: '', image: '', type: 'member' };
 
@@ -1231,39 +1322,26 @@ function TeamTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <p className="text-sm" style={{ color: '#6B7280' }}>{members.length} members</p>
+        <p className="text-sm" style={{ color: '#6B7280' }}>{localMembers.length} members</p>
         <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
           <Plus size={15} /> Add Member
         </button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {members.map(m => {
-          const initials = m.name.split(' ').map(n => n[0]).join('').slice(0, 2);
-          return (
-            <div key={m.id} className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3">
-              {m.image ? (
-                <img src={m.image} alt={m.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm" style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}>{initials}</div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase" style={{ backgroundColor: m.type === 'advisor' ? '#FEF3C7' : '#E8F5EE', color: m.type === 'advisor' ? '#D97706' : '#1A6B3C' }}>
-                    {m.type || 'member'}
-                  </span>
-                </div>
-                <p className="text-sm font-semibold" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{m.name}</p>
-                <p className="text-xs" style={{ color: '#E8521A' }}>{m.role}</p>
-                <p className="text-xs mt-1 truncate" style={{ color: '#9CA3AF' }}>{m.email}</p>
-              </div>
-              <div className="flex gap-1.5 flex-shrink-0">
-                <button onClick={() => setEditing(m)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={13} style={{ color: '#6B7280' }} /></button>
-                <button onClick={() => setDeleteId(m.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <DndProvider backend={HTML5Backend}>
+        <div className="flex flex-col gap-4">
+          {localMembers.map((m, index) => (
+            <SortableMemberCard
+              key={m.id}
+              m={m}
+              index={index}
+              moveCard={moveCard}
+              onDropEnd={saveOrder}
+              setEditing={setEditing}
+              setDeleteId={setDeleteId}
+            />
+          ))}
+        </div>
+      </DndProvider>
 
       <ConfirmDeleteModal
         isOpen={!!deleteId}
@@ -1322,9 +1400,13 @@ function PartnersTab() {
         </div>
         <div className="space-y-4">
           <InputField label="Organization Name" value={editing.name} onChange={v => setEditing(e => e ? { ...e, name: v } : null)} />
-          <SelectField label="Category" value={editing.category} options={['Government', 'NGO', 'UN Agency', 'Academic', 'Private Sector', 'Regional Network', 'Other']} onChange={v => setEditing(e => e ? { ...e, category: v } : null)} />
-          <InputField label="Website URL" value={editing.url} onChange={v => setEditing(e => e ? { ...e, url: v } : null)} />
-          <ImageUploader label="Partner Logo" value={editing.logo} onChange={v => setEditing(e => e ? { ...e, logo: v } : null)} />
+          <SelectField label="Category" value={editing.category || 'NGO'} options={['Government', 'NGO', 'UN Agency', 'Academic', 'Private Sector', 'Regional Network', 'Other']} onChange={v => setEditing(e => e ? { ...e, category: v } : null)} />
+          <InputField label="Website URL" value={editing.url || ''} onChange={v => setEditing(e => e ? { ...e, url: v } : null)} />
+          <ImageUploader label="Partner Logo" value={editing.logo || ''} onChange={v => setEditing(e => e ? { ...e, logo: v } : null)} />
+          <TextareaField label="Short Description (English)" value={editing.description || ''} onChange={v => setEditing(e => e ? { ...e, description: v } : null)} />
+          <TextareaField label="Short Description (Bengali)" value={editing.description_bn || ''} onChange={v => setEditing(e => e ? { ...e, description_bn: v } : null)} />
+          <TextareaField label="Details/About Partnership (English)" value={editing.details || ''} onChange={v => setEditing(e => e ? { ...e, details: v } : null)} />
+          <TextareaField label="Details/About Partnership (Bengali)" value={editing.details_bn || ''} onChange={v => setEditing(e => e ? { ...e, details_bn: v } : null)} />
           <button onClick={save} className="w-full py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>Save Partner</button>
         </div>
       </div>
@@ -1939,6 +2021,25 @@ function InputField({
     </div>
   );
 }
+
+function TextareaField({
+  label, value, onChange, rows = 3,
+}: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
+  const style = { backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', color: '#1F2937', fontFamily: 'Inter, sans-serif' };
+  return (
+    <div>
+      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151' }}>{label}</label>
+      <textarea
+        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+        style={{ ...style, resize: 'vertical' }}
+        rows={rows}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 
 function SelectField({
   label, value, options, onChange,
@@ -2734,6 +2835,250 @@ function MediaTab() {
         onConfirm={() => {
           if (deleteId) del(deleteId);
         }}
+      />
+    </div>
+  );
+}
+/* ── BLOGS ── */
+function BlogsTab() {
+  const [items, setItems] = useState<any[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<any>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchItems = async () => {
+    try {
+      setLoading(true);
+      const { apiBlog } = await import('../lib/api');
+      const data = await apiBlog.getAll();
+      setItems(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchItems(); }, []);
+
+  const blank = { id: '', title: '', title_bn: '', excerpt: '', excerpt_bn: '', content: '', content_bn: '', image: '', tags: [], metaDescription: '', metaKeywords: '', date: new Date().toISOString() };
+
+  if (loading) return <CardSkeleton count={4} />;
+
+  const save = async () => {
+    if (!editing) return;
+    const { apiBlog } = await import('../lib/api');
+    if (isNew) {
+      await apiBlog.create(editing);
+    } else {
+      await apiBlog.update(editing.id, editing);
+    }
+    await fetchItems();
+    setEditing(null);
+    setIsNew(false);
+  };
+
+  const del = async (id: string) => {
+    const { apiBlog } = await import('../lib/api');
+    await apiBlog.delete(id);
+    await fetchItems();
+    setDeleteId(null);
+  };
+
+  if (editing) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold" style={{ color: '#1F2937' }}>{isNew ? 'Create Blog Post' : 'Edit Blog Post'}</h3>
+          <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h4 className="font-semibold text-sm border-b pb-2">English Content</h4>
+            <InputField label="Title (English)" value={editing.title} onChange={v => setEditing((e: any) => e ? { ...e, title: v } : null)} />
+            <TextareaField label="Excerpt (English)" value={editing.excerpt} onChange={v => setEditing((e: any) => e ? { ...e, excerpt: v } : null)} />
+            <TextareaField label="Content (English)" value={editing.content} onChange={v => setEditing((e: any) => e ? { ...e, content: v } : null)} />
+          </div>
+          <div className="space-y-4">
+            <h4 className="font-semibold text-sm border-b pb-2">Bengali Content</h4>
+            <InputField label="Title (Bengali)" value={editing.title_bn} onChange={v => setEditing((e: any) => e ? { ...e, title_bn: v } : null)} />
+            <TextareaField label="Excerpt (Bengali)" value={editing.excerpt_bn} onChange={v => setEditing((e: any) => e ? { ...e, excerpt_bn: v } : null)} />
+            <TextareaField label="Content (Bengali)" value={editing.content_bn} onChange={v => setEditing((e: any) => e ? { ...e, content_bn: v } : null)} />
+          </div>
+          <div className="md:col-span-2 space-y-4 pt-4 border-t">
+            <h4 className="font-semibold text-sm">Media & SEO</h4>
+            <ImageUploader label="Featured Image" value={editing.image} onChange={v => setEditing((e: any) => e ? { ...e, image: v } : null)} />
+            <InputField label="Tags (comma separated)" value={editing.tags?.join(', ') || ''} onChange={v => setEditing((e: any) => e ? { ...e, tags: v.split(',').map((s: string)=>s.trim()) } : null)} />
+            <TextareaField label="Meta Description" value={editing.metaDescription || ''} onChange={v => setEditing((e: any) => e ? { ...e, metaDescription: v } : null)} />
+            <InputField label="Meta Keywords (comma separated)" value={editing.metaKeywords || ''} onChange={v => setEditing((e: any) => e ? { ...e, metaKeywords: v } : null)} />
+          </div>
+        </div>
+        <div className="mt-8 flex justify-end gap-3">
+          <button onClick={() => setEditing(null)} className="px-6 py-2 rounded-xl text-sm font-semibold border">Cancel</button>
+          <button onClick={save} className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-green-800">Save Post</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-sm" style={{ color: '#6B7280' }}>{items.length} posts</p>
+        <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
+          <Plus size={15} /> Add Post
+        </button>
+      </div>
+      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="px-6 py-4 font-semibold text-gray-500">Post Title</th>
+              <th className="px-6 py-4 font-semibold text-gray-500">Date</th>
+              <th className="px-6 py-4 font-semibold text-gray-500 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {items.map(item => (
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
+                <td className="px-6 py-4 text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-right">
+                  <button onClick={() => setEditing(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg mr-2"><Edit3 size={16} /></button>
+                  <button onClick={() => setDeleteId(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Post?"
+        description="Are you sure you want to delete this blog post?"
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => { if (deleteId) del(deleteId); }}
+      />
+    </div>
+  );
+}
+
+/* ── PROGRAMS (OUR WORK) ── */
+function ProgramsTab() {
+  const [items, setItems] = useState<any[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<any>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchItems = async () => {
+    try {
+      setLoading(true);
+      const { apiProgram } = await import('../lib/api');
+      const data = await apiProgram.getAll();
+      setItems(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchItems(); }, []);
+
+  const blank = { id: '', slug: '', title: '', title_bn: '', theme: '', theme_bn: '', description: '', description_bn: '', color: '#1A6B3C', bg: '#E8F5EE', iconName: 'Box', keyPrograms: [], keyPrograms_bn: [] };
+
+  if (loading) return <CardSkeleton count={4} />;
+
+  const save = async () => {
+    if (!editing) return;
+    const { apiProgram } = await import('../lib/api');
+    if (isNew) {
+      await apiProgram.create(editing);
+    } else {
+      await apiProgram.update(editing.id, editing);
+    }
+    await fetchItems();
+    setEditing(null);
+    setIsNew(false);
+  };
+
+  const del = async (id: string) => {
+    const { apiProgram } = await import('../lib/api');
+    await apiProgram.delete(id);
+    await fetchItems();
+    setDeleteId(null);
+  };
+
+  if (editing) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold" style={{ color: '#1F2937' }}>{isNew ? 'Create Pillar' : 'Edit Pillar'}</h3>
+          <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h4 className="font-semibold text-sm border-b pb-2">English Content</h4>
+            <InputField label="Title (English)" value={editing.title} onChange={v => setEditing((e: any) => e ? { ...e, title: v } : null)} />
+            <InputField label="Theme (English)" value={editing.theme} onChange={v => setEditing((e: any) => e ? { ...e, theme: v } : null)} />
+            <TextareaField label="Description (English)" value={editing.description} onChange={v => setEditing((e: any) => e ? { ...e, description: v } : null)} />
+            <TextareaField label="Key Initiatives (English, separated by newlines, format: Title — Desc)" value={editing.keyPrograms?.join('\n')} onChange={v => setEditing((e: any) => e ? { ...e, keyPrograms: v.split('\n').filter((x: string) => x.trim()) } : null)} />
+          </div>
+          <div className="space-y-4">
+            <h4 className="font-semibold text-sm border-b pb-2">Bengali Content</h4>
+            <InputField label="Title (Bengali)" value={editing.title_bn} onChange={v => setEditing((e: any) => e ? { ...e, title_bn: v } : null)} />
+            <InputField label="Theme (Bengali)" value={editing.theme_bn} onChange={v => setEditing((e: any) => e ? { ...e, theme_bn: v } : null)} />
+            <TextareaField label="Description (Bengali)" value={editing.description_bn} onChange={v => setEditing((e: any) => e ? { ...e, description_bn: v } : null)} />
+            <TextareaField label="Key Initiatives (Bengali, separated by newlines, format: Title — Desc)" value={editing.keyPrograms_bn?.join('\n')} onChange={v => setEditing((e: any) => e ? { ...e, keyPrograms_bn: v.split('\n').filter((x: string) => x.trim()) } : null)} />
+          </div>
+          <div className="md:col-span-2 space-y-4 pt-4 border-t">
+            <h4 className="font-semibold text-sm">Design & Setup</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <InputField label="URL Slug" value={editing.slug} onChange={v => setEditing((e: any) => e ? { ...e, slug: v } : null)} />
+              <InputField label="Icon Name (Lucide React)" value={editing.iconName} onChange={v => setEditing((e: any) => e ? { ...e, iconName: v } : null)} />
+              <InputField label="Primary Color (Hex)" value={editing.color} onChange={v => setEditing((e: any) => e ? { ...e, color: v } : null)} />
+              <InputField label="Background Color (Hex)" value={editing.bg} onChange={v => setEditing((e: any) => e ? { ...e, bg: v } : null)} />
+            </div>
+          </div>
+        </div>
+        <div className="mt-8 flex justify-end gap-3">
+          <button onClick={() => setEditing(null)} className="px-6 py-2 rounded-xl text-sm font-semibold border">Cancel</button>
+          <button onClick={save} className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-green-800">Save Pillar</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-sm" style={{ color: '#6B7280' }}>{items.length} pillars</p>
+        <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
+          <Plus size={15} /> Add Pillar
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map(item => (
+          <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border-t-4" style={{ borderTopColor: item.color }}>
+            <h3 className="text-lg font-bold mb-2">{item.title}</h3>
+            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{item.description}</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditing(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit3 size={16} /></button>
+              <button onClick={() => setDeleteId(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        title="Delete Pillar?"
+        description="Are you sure you want to delete this program pillar?"
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => { if (deleteId) del(deleteId); }}
       />
     </div>
   );

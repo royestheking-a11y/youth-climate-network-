@@ -33,7 +33,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-  const { t } = useLanguage();
+  const { t, lang, setLanguage } = useLanguage();
   const location = useLocation();
   const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -182,7 +182,26 @@ export function Navbar() {
             </div>
 
             {/* Right actions */}
-            <div className="hidden lg:flex items-center gap-2.5">
+            <div className="hidden lg:flex items-center gap-4">
+              {/* Premium Language Toggle */}
+              <div 
+                className="flex items-center bg-[#0D3D25] rounded-xl p-1 border border-[rgba(232,82,26,0.15)] shadow-inner"
+              >
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${lang === 'en' ? 'bg-[#1A6B3C] text-white shadow-md' : 'text-[#A8C4B0] hover:text-white hover:bg-[rgba(26,107,60,0.5)]'}`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLanguage('bn')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${lang === 'bn' ? 'bg-[#1A6B3C] text-white shadow-md' : 'text-[#A8C4B0] hover:text-white hover:bg-[rgba(26,107,60,0.5)]'}`}
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  বাং
+                </button>
+              </div>
+
               <Link
                 to="/donate"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105"
@@ -198,18 +217,38 @@ export function Navbar() {
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <button
-              className="lg:hidden p-2.5 rounded-xl transition-all duration-200"
-              style={{
-                color: '#F0ECD8',
-                backgroundColor: mobileOpen ? 'rgba(232,82,26,0.15)' : 'transparent',
-              }}
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
+            {/* Mobile Language Toggle & Menu Button */}
+            <div className="flex lg:hidden items-center gap-3">
+              <div 
+                className="flex items-center bg-[#0D3D25] rounded-xl p-0.5 border border-[rgba(232,82,26,0.15)] shadow-inner"
+              >
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-300 ${lang === 'en' ? 'bg-[#1A6B3C] text-white shadow-md' : 'text-[#A8C4B0] hover:text-white hover:bg-[rgba(26,107,60,0.5)]'}`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLanguage('bn')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-300 ${lang === 'bn' ? 'bg-[#1A6B3C] text-white shadow-md' : 'text-[#A8C4B0] hover:text-white hover:bg-[rgba(26,107,60,0.5)]'}`}
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  বাং
+                </button>
+              </div>
+
+              <button
+                className="p-2 rounded-xl transition-all duration-200"
+                style={{
+                  color: '#F0ECD8',
+                  backgroundColor: mobileOpen ? 'rgba(232,82,26,0.15)' : 'transparent',
+                }}
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -293,7 +332,23 @@ export function Navbar() {
           ))}
 
           {/* Mobile bottom actions */}
-          <div className="pt-4 pb-2 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="pt-4 pb-2 space-y-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-center bg-[#0D3D25] rounded-xl p-1 border border-[rgba(232,82,26,0.15)] shadow-inner mx-auto max-w-[200px]">
+              <button
+                onClick={() => { setLanguage('en'); setMobileOpen(false); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${lang === 'en' ? 'bg-[#1A6B3C] text-white shadow-md' : 'text-[#A8C4B0] hover:text-white hover:bg-[rgba(26,107,60,0.5)]'}`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => { setLanguage('bn'); setMobileOpen(false); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${lang === 'bn' ? 'bg-[#1A6B3C] text-white shadow-md' : 'text-[#A8C4B0] hover:text-white hover:bg-[rgba(26,107,60,0.5)]'}`}
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                বাং
+              </button>
+            </div>
+
             <Link
               to="/donate"
               className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold"
