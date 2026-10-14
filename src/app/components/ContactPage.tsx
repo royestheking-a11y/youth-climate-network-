@@ -1,21 +1,36 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
-import { Mail, MapPin, CheckCircle, MessageCircle, Users, Phone } from 'lucide-react';
-import { addContactMessage } from '../lib/storage';
+import { Mail, MapPin, CheckCircle, MessageCircle, Users, Phone, Loader2, AlertCircle } from 'lucide-react';
+import { apiContactMessages, useSiteSettings } from '../lib/api';
 import { useLanguage } from '../lib/LanguageContext';
 
 export function ContactPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { data: siteSettings } = useSiteSettings();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addContactMessage(form);
-    setSuccess(true);
-    setForm({ name: '', email: '', subject: '', message: '' });
-    setTimeout(() => setSuccess(false), 6000);
+    try {
+      setLoading(true);
+      setError('');
+      await apiContactMessages.create({
+        ...form,
+        date: new Date().toISOString(),
+        read: false,
+        status: 'pending'
+      });
+      setSuccess(true);
+      setForm({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setSuccess(false), 8000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send your message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputCls = "w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200";
@@ -65,10 +80,38 @@ export function ContactPage() {
                 </h2>
                 <div className="space-y-4">
                   {[
-                    { icon: MapPin, label: t('Headquarters', 'সদর দপ্তর'), text: t('15/KA, Shyamoli, Mirpur Road\nDhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড\nঢাকা-১২০৭, বাংলাদেশ'), color: '#E8521A', link: 'https://maps.google.com/?q=15/KA,+Shyamoli,+Mirpur+Road,+Dhaka' },
-                    { icon: MapPin, label: t('Regional Office', 'আঞ্চলিক অফিস'), text: t('Village + Post: Nalian 9273\nUnion: Sutrakhali, Dacope, Khulna', 'গ্রাম + ডাক: নলিয়ান ৯২৭৩\nইউনিয়ন: সুতারখালী, দাকোপ, খুলনা'), color: '#D97706', link: 'https://maps.google.com/?q=Nalian+9273,+Sutrakhali,+Dacope,+Khulna' },
-                    { icon: Mail, label: t('Email', 'ইমেইল'), text: 'youthclimatenetworkbd@gmail.com', color: '#1A6B3C', link: 'mailto:youthclimatenetworkbd@gmail.com' },
-                    { icon: Phone, label: t('Phone', 'ফোন'), text: '+88 01911 368538', color: '#0077B5', link: 'tel:+8801911368538' },
+                    {
+                      icon: MapPin,
+                      label: t('Headquarters', 'সদর দপ্তর'),
+                      text: lang === 'bn' && siteSettings?.addressDhaka_bn
+                        ? siteSettings.addressDhaka_bn
+                        : (siteSettings?.addressDhaka || t('15/KA, Shyamoli, Mirpur Road\nDhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড\nঢাকা-১২০৭, বাংলাদেশ')),
+                      color: '#E8521A',
+                      link: 'https://maps.google.com/?q=15/KA,+Shyamoli,+Mirpur+Road,+Dhaka'
+                    },
+                    {
+                      icon: MapPin,
+                      label: t('Regional Office', 'আঞ্চলিক অফিস'),
+                      text: lang === 'bn' && siteSettings?.addressKhulna_bn
+                        ? siteSettings.addressKhulna_bn
+                        : (siteSettings?.addressKhulna || t('Village + Post: Nalian 9273\nUnion: Sutrakhali, Dacope, Khulna', 'গ্রাম + ডাক: নলিয়ান ৯২৭৩\nইউনিয়ন: সুতারখালী, দাকোপ, খুলনা')),
+                      color: '#D97706',
+                      link: 'https://maps.google.com/?q=Nalian+9273,+Sutrakhali,+Dacope,+Khulna'
+                    },
+                    {
+                      icon: Mail,
+                      label: t('Email', 'ইমেইল'),
+                      text: siteSettings?.email || 'youthclimatenetworkbd@gmail.com',
+                      color: '#1A6B3C',
+                      link: `mailto:${siteSettings?.email || 'youthclimatenetworkbd@gmail.com'}`
+                    },
+                    {
+                      icon: Phone,
+                      label: t('Phone', 'ফোন'),
+                      text: siteSettings?.phone || '+88 01911 368538',
+                      color: '#0077B5',
+                      link: `tel:${(siteSettings?.phone || '+88 01911 368538').replace(/\s+/g, '')}`
+                    },
                   ].map(({ icon: Icon, label, text, color, link }) => (
                     <div key={label} className="flex gap-4 p-4 rounded-xl bg-white shadow-sm">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
@@ -111,7 +154,7 @@ export function ContactPage() {
                   )}
                 </p>
                 <a
-                  href="https://whatsapp.com/channel/0029VbDURgAADTOEJvOAEX2z"
+                  href={siteSettings?.whatsappLink || 'https://whatsapp.com/channel/0029VbDURgAADTOEJvOAEX2z'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
@@ -235,12 +278,26 @@ export function ContactPage() {
                           required
                         />
                       </div>
+                      {error && (
+                        <div className="p-3.5 rounded-xl text-xs flex items-center gap-2 bg-red-50 text-red-700 border border-red-200">
+                          <AlertCircle size={16} className="flex-shrink-0" />
+                          <span>{error}</span>
+                        </div>
+                      )}
                       <button
                         type="submit"
-                        className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01]"
+                        disabled={loading}
+                        className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                         style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
                       >
-                        {t('Send Message', 'বার্তা পাঠান')}
+                        {loading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            <span>{t('Sending...', 'পাঠানো হচ্ছে...')}</span>
+                          </>
+                        ) : (
+                          t('Send Message', 'বার্তা পাঠান')
+                        )}
                       </button>
                     </form>
                   )}

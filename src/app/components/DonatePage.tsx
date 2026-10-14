@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
 import { ShieldCheck, CreditCard, Building2, Globe2, CheckCircle, ArrowRight, Copy } from 'lucide-react';
-import { addDonationRequest } from '../lib/storage';
+import { apiDonationRequests, useSiteSettings } from '../lib/api';
 import { useLanguage } from '../lib/LanguageContext';
 
 export function DonatePage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { data: siteSettings } = useSiteSettings();
   const [customAmount, setCustomAmount] = useState('');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(2500);
   const [payStep, setPayStep] = useState<'form'|'gateway'|'confirm'|'success'>('form');
@@ -23,14 +24,19 @@ export function DonatePage() {
     setPayStep('gateway');
   };
 
-  const handleTxnSubmit = (e: React.FormEvent) => {
+  const handleTxnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txnId.trim()) return;
-    addDonationRequest({
-      name: donForm.name, email: donForm.email, phone: donForm.phone,
-      amount: finalAmount, currency: 'BDT', type: donForm.type,
-      method: payMethod, txnId: txnId.trim(), note: donForm.note,
-    });
+    try {
+      await apiDonationRequests.create({
+        name: donForm.name, email: donForm.email, phone: donForm.phone,
+        amount: finalAmount, currency: 'BDT', type: donForm.type,
+        method: payMethod, txnId: txnId.trim(), note: donForm.note,
+        date: new Date().toISOString(), status: 'pending'
+      });
+    } catch (err) {
+      console.warn('Donation request submission error:', err);
+    }
     setPayStep('success');
   };
 
@@ -191,30 +197,34 @@ export function DonatePage() {
                   </div>
                   <div className="p-5 space-y-3 bg-white">
                     {payMethod === 'bkash' && <>
-                      <InfoRow label="Send Money To" value="+880 0000-000000" onCopy={() => copyRef('+880 0000-000000')} copied={copied} />
-                      <InfoRow label="Account Type" value="Personal" />
+                      <InfoRow label="Send Money To" value={siteSettings?.bkashNumber || '+880 1911-368538'} onCopy={() => copyRef(siteSettings?.bkashNumber || '+880 1911-368538')} copied={copied} />
+                      <InfoRow label="Account Type" value={siteSettings?.bkashType || 'Personal'} />
                       <InfoRow label="Reference" value={`YCN-${finalAmount}`} onCopy={() => copyRef(`YCN-${finalAmount}`)} copied={copied} />
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF0F7', color:'#E2136E' }}>Open bKash → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Reference: YCN-{finalAmount} → Confirm</p>
                     </>}
                     {payMethod === 'nagad' && <>
-                      <InfoRow label="Send Money To" value="+880 0000-000000" onCopy={() => copyRef('+880 0000-000000')} copied={copied} />
-                      <InfoRow label="Account Type" value="Personal" />
+                      <InfoRow label="Send Money To" value={siteSettings?.nagadNumber || '+880 1911-368538'} onCopy={() => copyRef(siteSettings?.nagadNumber || '+880 1911-368538')} copied={copied} />
+                      <InfoRow label="Account Type" value={siteSettings?.nagadType || 'Personal'} />
                       <InfoRow label="Reference" value={`YCN-${finalAmount}`} onCopy={() => copyRef(`YCN-${finalAmount}`)} copied={copied} />
                       <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#FFF8F0', color:'#F7941D' }}>Open Nagad → Send Money → Enter number → Amount: ৳{finalAmount.toLocaleString()} → Confirm</p>
                     </>}
                     {payMethod === 'bank' && <>
-                      <InfoRow label="Bank Name" value="Bangladesh Krishi Bank" />
-                      <InfoRow label="Account Name" value="Youth Climate Network" />
-                      <InfoRow label="Account No." value="1322 0311100509" onCopy={() => copyRef('1322 0311100509')} copied={copied} />
-                      <InfoRow label="Routing No." value="035471938" onCopy={() => copyRef('035471938')} copied={copied} />
-                      <InfoRow label="Branch" value="Nalian sub branch, Dacope, Khulna" />
-                      <InfoRow label="Cell No." value="01730 708543" />
+                      <InfoRow label="Bank Name" value={siteSettings?.bankName || 'Bangladesh Krishi Bank'} />
+                      <InfoRow label="Account Name" value={siteSettings?.bankAccountName || 'Youth Climate Network'} />
+                      <InfoRow label="Account No." value={siteSettings?.bankAccountNumber || '1322 0311100509'} onCopy={() => copyRef(siteSettings?.bankAccountNumber || '1322 0311100509')} copied={copied} />
+                      <InfoRow label="Routing No." value={siteSettings?.bankRoutingNumber || '035471938'} onCopy={() => copyRef(siteSettings?.bankRoutingNumber || '035471938')} copied={copied} />
+                      <InfoRow label="Branch" value={siteSettings?.bankBranch || 'Nalian sub branch, Dacope, Khulna'} />
+                      <InfoRow label="Cell No." value={siteSettings?.bankCell || '01730 708543'} />
                       <InfoRow label="Reference" value={`YCN-DON-${finalAmount}`} onCopy={() => copyRef(`YCN-DON-${finalAmount}`)} copied={copied} />
                     </>}
                     {payMethod === 'international' && <>
                       <InfoRow label="Method" value="PayPal / Western Union" />
                       <InfoRow label="Reference" value={`YCN-INTL-${finalAmount}`} onCopy={() => copyRef(`YCN-INTL-${finalAmount}`)} copied={copied} />
-                      <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#E8F5EE', color:'#1A6B3C' }}>Please contact us for PayPal or Western Union payment details.</p>
+                      <p className="text-xs p-3 rounded-lg" style={{ backgroundColor:'#E8F5EE', color:'#1A6B3C' }}>
+                        {lang === 'bn' && siteSettings?.intlPaymentNote_bn
+                          ? siteSettings.intlPaymentNote_bn
+                          : (siteSettings?.intlPaymentNote || 'Please contact us for PayPal or Western Union payment details.')}
+                      </p>
                     </>}
                   </div>
                 </div>

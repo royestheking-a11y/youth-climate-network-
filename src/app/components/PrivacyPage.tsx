@@ -1,10 +1,14 @@
 import { Shield, Eye, Lock, FileText, CheckCircle2, AlertCircle, Heart } from 'lucide-react';
 import { SEO } from './ui/SEO';
 import { useLanguage } from '../lib/LanguageContext';
+import { useSiteSettings } from '../lib/api';
 
 export function PrivacyPage() {
-  const { t } = useLanguage();
-  const lastUpdated = t("May 20, 2026", "২০ মে, ২০২৬");
+  const { t, lang } = useLanguage();
+  const { data: settings } = useSiteSettings();
+  const lastUpdated = lang === 'bn' && settings?.privacyLastUpdated_bn
+    ? settings.privacyLastUpdated_bn
+    : (settings?.privacyLastUpdated || t("May 20, 2026", "২০ মে, ২০২৬"));
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F3F4F6' }}>

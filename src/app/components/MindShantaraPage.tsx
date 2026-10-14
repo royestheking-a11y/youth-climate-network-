@@ -1,9 +1,22 @@
 import { SEO } from './ui/SEO';
 import { Download, Heart, Brain, Leaf } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
+import { useSiteSettings } from '../lib/api';
 
 export function MindShantaraPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { data: settings } = useSiteSettings();
+
+  const title = lang === 'bn' && settings?.mindShantaraTitle_bn ? settings.mindShantaraTitle_bn : (settings?.mindShantaraTitle || 'Mind Shantara');
+  const subtitle = lang === 'bn' && settings?.mindShantaraSubtitle_bn ? settings.mindShantaraSubtitle_bn : (settings?.mindShantaraSubtitle || t(
+    "Bangladesh’s First Climate Anxiety & Mental Health Wellbeing platform.",
+    "বাংলাদেশের প্রথম জলবায়ু উদ্বেগ এবং মানসিক স্বাস্থ্য সুরক্ষা প্ল্যাটফর্ম।"
+  ));
+  const planUrl = settings?.mindShantaraStartupPlanUrl || '/MindShantara_Startup_Plan_2026.pdf';
+  const desc = lang === 'bn' && settings?.mindShantaraDesc_bn ? settings.mindShantaraDesc_bn : (settings?.mindShantaraDesc || t(
+    'Climate change is not just an environmental crisis—it is a deeply emotional and psychological one. Mind Shantara is dedicated to addressing eco-anxiety and providing a safe space for youth and frontline communities to find mental health support.',
+    'জলবায়ু পরিবর্তন শুধুমাত্র একটি পরিবেশগত সংকট নয়—এটি একটি গভীর মানসিক সংকটও। মাইন্ড শান্তারা ইকো-অ্যাংজাইটি (পরিবেশগত উদ্বেগ) মোকাবেলা করতে এবং তরুণদের জন্য মানসিক স্বাস্থ্য সহায়তা প্রদানের জন্য নিবেদিত।'
+  ));
 
   return (
     <div>
@@ -20,16 +33,13 @@ export function MindShantaraPage() {
             {t('Mental Health Wellbeing', 'মানসিক স্বাস্থ্য সুরক্ষা')}
           </div>
           <h1 className="mb-6" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#F0ECD8' }}>
-            Mind Shantara
+            {title}
           </h1>
           <p className="max-w-2xl mx-auto leading-relaxed mb-8" style={{ fontFamily: 'Inter, sans-serif', color: '#A8C4B0', fontSize: '1.25rem' }}>
-            {t(
-              "Bangladesh’s First Climate Anxiety & Mental Health Wellbeing platform.",
-              "বাংলাদেশের প্রথম জলবায়ু উদ্বেগ এবং মানসিক স্বাস্থ্য সুরক্ষা প্ল্যাটফর্ম।"
-            )}
+            {subtitle}
           </p>
           <a
-            href="/MindShantara_Startup_Plan_2026.pdf"
+            href={planUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-semibold transition-all hover:scale-105 shadow-lg"
@@ -56,10 +66,7 @@ export function MindShantaraPage() {
               {t('Healing the Mind, Healing the Earth', 'মন সুস্থ থাকলে, পৃথিবী সুস্থ থাকবে')}
             </h2>
             <p className="text-gray-600 leading-relaxed mb-8 max-w-2xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
-              {t(
-                'Climate change is not just an environmental crisis—it is a deeply emotional and psychological one. Mind Shantara is dedicated to addressing eco-anxiety and providing a safe space for youth and frontline communities to find mental health support.',
-                'জলবায়ু পরিবর্তন শুধুমাত্র একটি পরিবেশগত সংকট নয়—এটি একটি গভীর মানসিক সংকটও। মাইন্ড শান্তারা ইকো-অ্যাংজাইটি (পরিবেশগত উদ্বেগ) মোকাবেলা করতে এবং তরুণদের জন্য মানসিক স্বাস্থ্য সহায়তা প্রদানের জন্য নিবেদিত।'
-              )}
+              {desc}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
               <div className="p-4 rounded-xl" style={{ backgroundColor: '#F9FAFB' }}>

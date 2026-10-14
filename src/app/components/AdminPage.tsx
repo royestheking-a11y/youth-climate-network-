@@ -1,20 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   LayoutDashboard, Newspaper, Users, Handshake, BarChart2,
   Mail, Heart, LogOut, Plus, Trash2, Edit3, Save, X, CheckCircle,
   Eye, EyeOff, TrendingUp, MessageSquare, Bell,
-  Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera, Upload, FileText, Layers, GripVertical
+  Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera, Upload, FileText, Layers,
+  Inbox, Award, Compass, Download, Sparkles, Settings, Scale
 } from 'lucide-react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import {
   checkAdminAuth, adminLogin, adminLogout,
   getDonationRequests, updateDonationRequestStatus, deleteDonationRequest,
   getAdminUser
 } from '../lib/storage';
 import type {
-  ImpactStats, NewsItem, TeamMember, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, InternshipPost, HeroCarouselItem, MediaItem, AdminUser
+  ImpactStats, NewsItem, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, InternshipPost, HeroCarouselItem, MediaItem, AdminUser
 } from '../lib/storage';
 import { Shield } from 'lucide-react';
 
@@ -81,7 +80,34 @@ function ConfirmDeleteModal({
   );
 }
 
-type AdminTab = 'dashboard' | 'stats' | 'carousel' | 'media' | 'news' | 'events' | 'team' | 'partners' | 'volunteers' | 'internships' | 'partnershipInquiries' | 'newsletter' | 'messages' | 'donations' | 'roles' | 'blogs' | 'programs';
+type AdminTab =
+  | 'dashboard'
+  | 'founder'
+  | 'about'
+  | 'programs'
+  | 'ourWork'
+  | 'impactReports'
+  | 'advocacy'
+  | 'navigation'
+  | 'blogs'
+  | 'seo'
+  | 'newsletter'
+  | 'stats'
+  | 'carousel'
+  | 'media'
+  | 'news'
+  | 'events'
+  | 'partners'
+  | 'volunteers'
+  | 'volunteerTracks'
+  | 'internships'
+  | 'partnershipInquiries'
+  | 'messages'
+  | 'inquiries'
+  | 'siteSettings'
+  | 'team'
+  | 'donations'
+  | 'roles';
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState(() => localStorage.getItem('ycn_admin_email') || '');
@@ -263,23 +289,47 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   );
 }
 
+import { InquiriesTab } from './admin/InquiriesTab';
+import { FounderBriefTab } from './admin/FounderBriefTab';
+import { NavigationTab } from './admin/NavigationTab';
+import { SeoTab } from './admin/SeoTab';
+import { EnhancedBlogsTab } from './admin/EnhancedBlogsTab';
+import { EnhancedTeamTab } from './admin/EnhancedTeamTab';
+import { ProgramsTab } from './admin/ProgramsTab';
+import { OurWorkTab } from './admin/OurWorkTab';
+import { AboutContentTab } from './admin/AboutContentTab';
+import { SiteSettingsTab } from './admin/SiteSettingsTab';
+import { ImpactReportsTab } from './admin/ImpactReportsTab';
+import { VolunteerTracksTab } from './admin/VolunteerTracksTab';
+import { AdvocacyTab } from './admin/AdvocacyTab';
+
 const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; style?: React.CSSProperties }> }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'founder', label: "Our Story / Founder", icon: Award },
+  { key: 'about', label: 'About Page & Pillars', icon: Sparkles },
+  { key: 'programs', label: 'Programs (20 Pillars)', icon: Compass },
+  { key: 'ourWork', label: 'Our Work (Focus Areas)', icon: Layers },
+  { key: 'impactReports', label: 'Impact Reports & Stories', icon: FileText },
+  { key: 'advocacy', label: 'Advocacy & Policy', icon: Scale },
+  { key: 'navigation', label: 'Navigation Menu', icon: Compass },
+  { key: 'blogs', label: 'Blogs & SDGs', icon: FileText },
+  { key: 'seo', label: 'SEO, Robots & Schema', icon: Globe },
+  { key: 'newsletter', label: 'Newsletter', icon: Mail },
   { key: 'stats', label: 'Impact Stats', icon: BarChart2 },
   { key: 'carousel', label: 'Hero Carousel', icon: ImageIcon },
   { key: 'media', label: 'Media', icon: Camera },
   { key: 'news', label: 'Stories of Change', icon: Newspaper },
   { key: 'events', label: 'Events', icon: Bell },
-  { key: 'team', label: 'Team', icon: Users },
   { key: 'partners', label: 'Partners', icon: Handshake },
-  { key: 'volunteers', label: 'Volunteers', icon: Heart },
+  { key: 'volunteers', label: 'Volunteers (Apps)', icon: Heart },
+  { key: 'volunteerTracks', label: 'Volunteer Tracks', icon: Heart },
   { key: 'internships', label: 'Internships', icon: Briefcase },
   { key: 'partnershipInquiries', label: 'Partner Inqs', icon: Handshake },
-  { key: 'blogs', label: 'Blogs', icon: FileText },
-  { key: 'programs', label: 'Our Work', icon: Layers },
-  { key: 'donations', label: 'Donations', icon: TrendingUp },
-  { key: 'newsletter', label: 'Newsletter', icon: Mail },
   { key: 'messages', label: 'Messages', icon: MessageSquare },
+  { key: 'inquiries', label: 'Inquiries (All)', icon: Inbox },
+  { key: 'siteSettings', label: 'Site Settings & Contacts', icon: Settings },
+  { key: 'team', label: 'Team & Leadership', icon: Users },
+  { key: 'donations', label: 'Donations', icon: TrendingUp },
   { key: 'roles', label: 'Roles & Access', icon: Shield },
 ];
 
@@ -287,7 +337,7 @@ import {
   useStats, useVolunteerApps, useInternshipApps, useInternshipPosts,
   usePartnershipInquiries, useContactMessages, useNewsletter,
   useDonations, useNews, useMedia, apiMedia, uploadFile, useCarousel,
-  useEvents, useTeam, usePartners, useAdminUsers, apiAdminUsers
+  useEvents, useTeam, usePartners, useAdminUsers, apiAdminUsers, exportNewsletterCSV
 } from '../lib/api';
 
 const TableSkeleton = ({ rows = 5, cols = 4 }) => (
@@ -605,21 +655,31 @@ export function AdminPage() {
         <div className="p-6">
           <div className="flex-1 relative pb-12">
             {activeTab === 'dashboard' && <DashboardTab setActiveTab={(t) => navigate(`/admin/${t}`)} />}
+            {activeTab === 'founder' && <FounderBriefTab />}
+            {activeTab === 'about' && <AboutContentTab />}
+            {activeTab === 'programs' && <ProgramsTab />}
+            {activeTab === 'ourWork' && <OurWorkTab />}
+            {activeTab === 'impactReports' && <ImpactReportsTab />}
+            {activeTab === 'advocacy' && <AdvocacyTab />}
+            {activeTab === 'navigation' && <NavigationTab />}
+            {activeTab === 'blogs' && <EnhancedBlogsTab />}
+            {activeTab === 'seo' && <SeoTab />}
+            {activeTab === 'newsletter' && <NewsletterTab />}
             {activeTab === 'stats' && <StatsTab />}
             {activeTab === 'carousel' && <CarouselTab />}
             {activeTab === 'media' && <MediaTab />}
             {activeTab === 'news' && <NewsTab />}
             {activeTab === 'events' && <EventsTab />}
-            {activeTab === 'team' && <TeamTab />}
             {activeTab === 'partners' && <PartnersTab />}
             {activeTab === 'volunteers' && <VolunteersTab />}
+            {activeTab === 'volunteerTracks' && <VolunteerTracksTab />}
             {activeTab === 'internships' && <InternshipsTab />}
             {activeTab === 'partnershipInquiries' && <PartnershipInquiriesTab />}
-            {activeTab === 'newsletter' && <NewsletterTab />}
             {activeTab === 'messages' && <MessagesTab />}
+            {activeTab === 'inquiries' && <InquiriesTab />}
+            {activeTab === 'siteSettings' && <SiteSettingsTab />}
+            {activeTab === 'team' && <EnhancedTeamTab />}
             {activeTab === 'donations' && <DonationsTab />}
-            {activeTab === 'blogs' && <BlogsTab />}
-            {activeTab === 'programs' && <ProgramsTab />}
             {activeTab === 'roles' && currentUser?.isSuperAdmin && <RolesTab />}
           </div>
         </div>
@@ -1170,192 +1230,6 @@ function EventsTab() {
 }
 
 
-/* ── TEAM ── */
-
-const ItemTypes = { TEAM_CARD: 'team_card' };
-
-function SortableMemberCard({ m, index, moveCard, setEditing, setDeleteId, onDropEnd }: any) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [{ handlerId }, drop] = useDrop({
-    accept: ItemTypes.TEAM_CARD,
-    collect(monitor) { return { handlerId: monitor.getHandlerId() }; },
-    hover(item: any, monitor) {
-      if (!ref.current) return;
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientY = (clientOffset as any).y - hoverBoundingRect.top;
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
-      moveCard(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-    drop() {
-      onDropEnd();
-    }
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: ItemTypes.TEAM_CARD,
-    item: () => ({ id: m.id, index }),
-    collect: (monitor) => ({ isDragging: monitor.isDragging() })
-  });
-
-  preview(drop(ref));
-  const initials = m.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2);
-
-  return (
-    <div ref={ref} data-handler-id={handlerId} className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3 relative transition-all" style={{ opacity: isDragging ? 0.3 : 1 }}>
-      <div ref={drag as any} className="cursor-grab hover:bg-gray-100 p-2 rounded-lg mt-1" title="Drag to reorder">
-        <GripVertical size={16} style={{ color: '#9CA3AF' }} />
-      </div>
-      {m.image ? (
-        <img src={m.image} alt={m.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-      ) : (
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm" style={{ backgroundColor: '#0A3320', color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}>{initials}</div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase" style={{ backgroundColor: m.type === 'advisor' ? '#FEF3C7' : '#E8F5EE', color: m.type === 'advisor' ? '#D97706' : '#1A6B3C' }}>
-            {m.type || 'member'}
-          </span>
-        </div>
-        <p className="text-sm font-semibold" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{m.name}</p>
-        <p className="text-xs" style={{ color: '#E8521A' }}>{m.role}</p>
-        <p className="text-xs mt-1 truncate" style={{ color: '#9CA3AF' }}>{m.email}</p>
-      </div>
-      <div className="flex gap-1.5 flex-shrink-0">
-        <button onClick={() => setEditing(m)} className="p-1.5 rounded-lg hover:bg-gray-100"><Edit3 size={13} style={{ color: '#6B7280' }} /></button>
-        <button onClick={() => setDeleteId(m.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 size={13} style={{ color: '#EF4444' }} /></button>
-      </div>
-    </div>
-  );
-}
-
-function TeamTab() {
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const { data: apiMembers = [], mutate, isLoading } = useTeam();
-  const [editing, setEditing] = useState<TeamMember | null>(null);
-  const [isNew, setIsNew] = useState(false);
-  
-  const [localMembers, setLocalMembers] = useState<any[]>([]);
-  useEffect(() => {
-    setLocalMembers(apiMembers);
-  }, [apiMembers]);
-
-  const moveCard = (dragIndex: number, hoverIndex: number) => {
-    setLocalMembers((prevCards: any[]) => {
-      const cloned = [...prevCards];
-      const removed = cloned.splice(dragIndex, 1)[0];
-      cloned.splice(hoverIndex, 0, removed);
-      return cloned;
-    });
-  };
-
-  const saveOrder = async () => {
-    const { apiTeam } = await import('../lib/api');
-    const items = localMembers.map((m, i) => ({ id: m.id, order: i }));
-    if (apiTeam.reorder) {
-      await apiTeam.reorder(items);
-      mutate();
-    }
-  };
-
-  const blank: TeamMember = { id: '', name: '', name_bn: '', role: '', role_bn: '', bio: '', bio_bn: '', email: '', image: '', type: 'member' };
-
-  if (isLoading) return <CardSkeleton count={6} />;
-
-
-  const save = async () => {
-    if (!editing) return;
-    const { apiTeam } = await import('../lib/api');
-    if (isNew) {
-      await apiTeam.create(editing);
-    } else {
-      await apiTeam.update(editing.id, editing);
-    }
-    mutate();
-    setEditing(null);
-    setIsNew(false);
-  };
-
-  const del = async (id: string) => {
-    const { apiTeam } = await import('../lib/api');
-    await apiTeam.delete(id);
-    mutate();
-    setDeleteId(null);
-  };
-
-  if (editing) {
-    return (
-      <div className="max-w-2xl bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{isNew ? 'Add Team Member' : 'Edit Team Member'}</h3>
-          <button onClick={() => { setEditing(null); setIsNew(false); }}><X size={18} style={{ color: '#9CA3AF' }} /></button>
-        </div>
-        <div className="space-y-4">
-          <InputField label="Name" value={editing.name} onChange={v => setEditing(e => e ? { ...e, name: v } : null)} />
-          <InputField label="Role / Title" value={editing.role} onChange={v => setEditing(e => e ? { ...e, role: v } : null)} />
-          <InputField label="Email" type="email" value={editing.email} onChange={v => setEditing(e => e ? { ...e, email: v } : null)} />
-          <InputField label="Bio" value={editing.bio} onChange={v => setEditing(e => e ? { ...e, bio: v } : null)} multiline />
-          <div className="space-y-1">
-            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#0A3320' }}>Type</label>
-            <select
-              className="w-full px-4 py-2.5 rounded-xl text-sm border-0 bg-gray-50 focus:ring-2 focus:ring-[#0A3320] transition-shadow outline-none"
-              value={editing.type || 'member'}
-              onChange={e => setEditing(s => s ? { ...s, type: e.target.value as 'member' | 'advisor' } : null)}
-            >
-              <option value="member">Team Member</option>
-              <option value="advisor">Advisor</option>
-            </select>
-          </div>
-          <ImageUploader label="Profile Picture" value={editing.image} onChange={v => setEditing(e => e ? { ...e, image: v } : null)} />
-          <button onClick={save} className="w-full py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>Save Member</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm" style={{ color: '#6B7280' }}>{localMembers.length} members</p>
-        <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
-          <Plus size={15} /> Add Member
-        </button>
-      </div>
-      <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col gap-4">
-          {localMembers.map((m, index) => (
-            <SortableMemberCard
-              key={m.id}
-              m={m}
-              index={index}
-              moveCard={moveCard}
-              onDropEnd={saveOrder}
-              setEditing={setEditing}
-              setDeleteId={setDeleteId}
-            />
-          ))}
-        </div>
-      </DndProvider>
-
-      <ConfirmDeleteModal
-        isOpen={!!deleteId}
-        title="Delete Team Member?"
-        description="Are you sure you want to delete this team member? This action cannot be undone."
-        onCancel={() => setDeleteId(null)}
-        onConfirm={() => {
-          if (deleteId) del(deleteId);
-        }}
-      />
-    </div>
-  );
-}
-
 
 /* ── PARTNERS ── */
 function PartnersTab() {
@@ -1460,10 +1334,16 @@ function PartnersTab() {
 /* ── VOLUNTEERS ── */
 function VolunteersTab() {
   const { data: apps = [], isLoading, mutate } = useVolunteerApps();
+  const [selectedApp, setSelectedApp] = useState<VolunteerApp | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | VolunteerApp['status']>('all');
 
   const updateStatus = async (id: string, status: VolunteerApp['status']) => {
     const { apiVolunteerApps } = await import('../lib/api');
     await apiVolunteerApps.update(id, { status });
+    if (selectedApp && selectedApp.id === id) {
+      setSelectedApp({ ...selectedApp, status });
+    }
     mutate();
   };
 
@@ -1476,52 +1356,304 @@ function VolunteersTab() {
 
   if (isLoading) return <CardSkeleton count={4} />;
 
+  const filteredApps = apps.filter(app => {
+    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+    const q = search.toLowerCase();
+    const matchesSearch = !q ||
+      app.name.toLowerCase().includes(q) ||
+      app.email.toLowerCase().includes(q) ||
+      (app.interest && app.interest.toLowerCase().includes(q)) ||
+      (app.phone && app.phone.includes(q)) ||
+      (app.skills && app.skills.toLowerCase().includes(q));
+    return matchesStatus && matchesSearch;
+  });
 
-  if (apps.length === 0) {
-    return <EmptyState icon={Heart} message="No volunteer applications yet. Applications submitted via the Get Involved page will appear here." />;
-  }
+  const counts = {
+    all: apps.length,
+    pending: apps.filter(a => a.status === 'pending').length,
+    reviewed: apps.filter(a => a.status === 'reviewed').length,
+    accepted: apps.filter(a => a.status === 'accepted').length,
+    rejected: apps.filter(a => a.status === 'rejected').length,
+  };
 
   return (
-    <div className="space-y-4">
-      {apps.map(app => {
-        const { bg, color } = statusColors[app.status];
-        return (
-          <div key={app.id} className="bg-white rounded-xl p-5 shadow-sm">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <p className="font-semibold text-sm" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{app.name}</p>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: bg, color }}>{app.status}</span>
-                  <span className="text-xs" style={{ color: '#9CA3AF' }}>{new Date(app.date).toLocaleDateString()}</span>
+    <div className="space-y-6">
+      {/* Header & Filter Controls */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 font-poppins flex items-center gap-2">
+              <Heart size={20} className="text-[#E8521A]" />
+              Volunteer Applications & Requests
+            </h3>
+            <p className="text-xs text-gray-500 font-inter mt-1">
+              Review and manage incoming volunteer requests submitted via the website. Click "View Details" to view complete submissions.
+            </p>
+          </div>
+
+          {/* Search bar */}
+          <div className="relative w-full sm:w-72">
+            <input
+              type="text"
+              placeholder="Search volunteers by name, email, skills..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-gray-50 border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1A6B3C] font-inter"
+            />
+            <span className="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
+          </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-2 border-t border-gray-100">
+          {(['all', 'pending', 'reviewed', 'accepted', 'rejected'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setStatusFilter(tab)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                statusFilter === tab
+                  ? 'bg-[#0A3320] text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span>{tab}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                statusFilter === tab ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>
+                {counts[tab]}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Applications List */}
+      {filteredApps.length === 0 ? (
+        <EmptyState
+          icon={Heart}
+          message={apps.length === 0 ? "No volunteer applications yet. Applications submitted via the Get Involved page will appear here." : "No volunteer applications match your search filters."}
+        />
+      ) : (
+        <div className="space-y-3">
+          {filteredApps.map(app => {
+            const { bg, color } = statusColors[app.status];
+            return (
+              <div
+                key={app.id}
+                className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                {/* Left info */}
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-[#0A3320]/10 text-[#0A3320] font-bold font-poppins flex items-center justify-center flex-shrink-0 text-sm">
+                    {app.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h4 className="font-bold text-sm text-gray-900 font-poppins truncate">{app.name}</h4>
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize" style={{ backgroundColor: bg, color }}>
+                        {app.status}
+                      </span>
+                      <span className="text-[11px] text-gray-400 font-inter">
+                        {new Date(app.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-gray-500 font-inter flex-wrap">
+                      <span className="text-gray-700">{app.email}</span>
+                      {app.phone && <span>· {app.phone}</span>}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-[#E8521A] border border-orange-100">
+                        {app.interest}
+                      </span>
+                      {app.skills && (
+                        <span className="text-[11px] text-gray-500 truncate max-w-xs font-inter">
+                          Skills: {app.skills}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs mb-1" style={{ color: '#6B7280' }}>{app.email} · {app.phone}</p>
-                <p className="text-xs font-medium mb-2" style={{ color: '#E8521A' }}>Interest: {app.interest}</p>
-                {app.skills && <p className="text-xs mb-1" style={{ color: '#6B7280' }}>Skills: {app.skills}</p>}
-                {app.message && <p className="text-xs leading-relaxed" style={{ color: '#4B5563' }}>{app.message}</p>}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {(['pending', 'reviewed', 'accepted', 'rejected'] as VolunteerApp['status'][]).filter(s => s !== app.status).map(s => (
+
+                {/* Right action buttons */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
+                  {/* VIEW DETAILS BUTTON */}
                   <button
-                    key={s}
-                    onClick={() => updateStatus(app.id, s)}
-                    className="px-3 py-1 rounded-lg text-xs font-medium capitalize transition-all hover:scale-105"
-                    style={{ backgroundColor: statusColors[s].bg, color: statusColors[s].color }}
+                    onClick={() => setSelectedApp(app)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-[#1A6B3C] border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-sm"
                   >
-                    {s}
+                    <Eye size={14} />
+                    <span>View Details</span>
                   </button>
-                ))}
+
+                  {/* Status buttons */}
+                  <div className="flex items-center gap-1">
+                    {(['pending', 'reviewed', 'accepted', 'rejected'] as VolunteerApp['status'][])
+                      .filter(s => s !== app.status)
+                      .map(s => (
+                        <button
+                          key={s}
+                          onClick={() => updateStatus(app.id, s)}
+                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium capitalize transition-all hover:scale-105"
+                          style={{ backgroundColor: statusColors[s].bg, color: statusColors[s].color }}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── VOLUNTEER APPLICATION DETAILS MODAL ── */}
+      {selectedApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedApp(null)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Modal Header */}
+            <div className="flex items-start gap-4 border-b border-gray-100 pb-5 mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0A3320] to-[#1A6B3C] text-white flex items-center justify-center text-lg font-bold font-poppins flex-shrink-0 shadow-md">
+                {selectedApp.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0 pr-8">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h3 className="text-xl font-bold text-gray-900 font-poppins truncate">{selectedApp.name}</h3>
+                  <span
+                    className="text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize"
+                    style={{
+                      backgroundColor: statusColors[selectedApp.status].bg,
+                      color: statusColors[selectedApp.status].color,
+                    }}
+                  >
+                    {selectedApp.status}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 font-inter">
+                  Submitted on {new Date(selectedApp.date).toLocaleString('en-US', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                </p>
               </div>
             </div>
+
+            {/* Details Grid */}
+            <div className="space-y-5 text-sm font-inter">
+              {/* Contact info grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <div>
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">Email Address</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800 break-all">{selectedApp.email}</span>
+                    <a
+                      href={`mailto:${selectedApp.email}?subject=YCN Volunteer Application Response`}
+                      className="text-xs font-semibold text-[#1A6B3C] hover:underline flex-shrink-0"
+                    >
+                      ✉️ Reply
+                    </a>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">Phone Number</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">{selectedApp.phone || 'Not provided'}</span>
+                    {selectedApp.phone && (
+                      <a href={`tel:${selectedApp.phone}`} className="text-xs font-semibold text-[#1A6B3C] hover:underline">
+                        📞 Call
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Program Interest */}
+              <div>
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Program / Area of Interest</span>
+                <div className="inline-block px-3.5 py-1.5 rounded-xl bg-orange-50 text-[#E8521A] border border-orange-200 font-semibold text-xs">
+                  {selectedApp.interest}
+                </div>
+              </div>
+
+              {/* Skills */}
+              {selectedApp.skills && (
+                <div>
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Skills & Background</span>
+                  <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 text-xs leading-relaxed">
+                    {selectedApp.skills}
+                  </div>
+                </div>
+              )}
+
+              {/* Motivation message */}
+              <div>
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  Why They Want to Volunteer (Motivation Statement)
+                </span>
+                <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 text-gray-800 text-xs leading-relaxed italic">
+                  "{selectedApp.message || 'No motivation message provided.'}"
+                </div>
+              </div>
+
+              {/* Status Manager */}
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-gray-700">Update Application Status:</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(['pending', 'reviewed', 'accepted', 'rejected'] as VolunteerApp['status'][]).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => updateStatus(selectedApp.id, s)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                        selectedApp.status === s
+                          ? 'ring-2 ring-offset-1 ring-black shadow-sm font-bold'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: statusColors[s].bg, color: statusColors[s].color }}
+                    >
+                      {selectedApp.status === s ? `✓ ${s}` : s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between gap-3 pt-6 border-t border-gray-100 mt-6">
+              <a
+                href={`mailto:${selectedApp.email}?subject=YCN Volunteer Application - Welcome to Youth Climate Network&body=Dear ${encodeURIComponent(selectedApp.name)},%0D%0A%0D%0AThank you for applying to volunteer with Youth Climate Network (YCN) in the ${encodeURIComponent(selectedApp.interest)} program.%0D%0A%0D%0A`}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#0A3320] text-white hover:bg-[#13532e] transition-colors inline-flex items-center gap-1.5"
+              >
+                <span>Compose Email</span>
+              </a>
+
+              <button
+                onClick={() => setSelectedApp(null)}
+                className="px-5 py-2 rounded-xl border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── NEWSLETTER ── */
 function NewsletterTab() {
-  const { data: subs = [], isLoading } = useNewsletter();
+  const { data: subs = [], isLoading, mutate } = useNewsletter();
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
   const [sending, setSending] = useState(false);
@@ -1557,10 +1689,17 @@ function NewsletterTab() {
     }
   };
 
-  if (subs.length === 0) {
-    return <EmptyState icon={Mail} message="No newsletter subscribers yet. Signups from the website will appear here." />;
-  }
-  
+  const handleDeleteSub = async (id: string) => {
+    if (!confirm('Are you sure you want to remove this subscriber?')) return;
+    try {
+      const { apiNewsletter } = await import('../lib/api');
+      await apiNewsletter.delete(id);
+      mutate();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete subscriber');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -1604,26 +1743,63 @@ function NewsletterTab() {
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-800">Subscriber List</h3>
-          <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">{subs.length} Total</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportNewsletterCSV}
+              disabled={subs.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+              title="Download subscriber list as CSV"
+            >
+              <Download size={13} /> Export CSV
+            </button>
+            <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">{subs.length} Total</span>
+          </div>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>#</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Email</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Date Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subs.map((s, i) => (
-              <tr key={s.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                <td className="px-4 py-3 text-xs" style={{ color: '#9CA3AF' }}>{i + 1}</td>
-                <td className="px-4 py-3 text-sm" style={{ color: '#1F2937' }}>{s.email}</td>
-                <td className="px-4 py-3 text-xs" style={{ color: '#9CA3AF' }}>{new Date(s.date).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+        {subs.length === 0 ? (
+          <div className="p-12 text-center">
+            <Mail size={36} className="mx-auto text-gray-300 mb-2" />
+            <p className="text-sm font-medium text-gray-600">No newsletter subscribers yet.</p>
+            <p className="text-xs text-gray-400 mt-1">Signups from the website footer or blog will appear here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>#</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Email</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Date Joined</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold" style={{ color: '#374151' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subs.map((s, i) => (
+                  <tr key={s.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                    <td className="px-4 py-3 text-xs" style={{ color: '#9CA3AF' }}>{i + 1}</td>
+                    <td className="px-4 py-3 text-sm font-medium" style={{ color: '#1F2937' }}>{s.email}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+                        {s.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs" style={{ color: '#9CA3AF' }}>{s.date ? new Date(s.date).toLocaleDateString() : 'N/A'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleDeleteSub(s.id)}
+                        className="text-gray-400 hover:text-red-600 p-1 rounded-lg transition-colors"
+                        title="Remove subscriber"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2839,248 +3015,6 @@ function MediaTab() {
     </div>
   );
 }
-/* ── BLOGS ── */
-function BlogsTab() {
-  const [items, setItems] = useState<any[]>([]);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editing, setEditing] = useState<any>(null);
-  const [isNew, setIsNew] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  const fetchItems = async () => {
-    try {
-      setLoading(true);
-      const { apiBlog } = await import('../lib/api');
-      const data = await apiBlog.getAll();
-      setItems(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => { fetchItems(); }, []);
-
-  const blank = { id: '', title: '', title_bn: '', excerpt: '', excerpt_bn: '', content: '', content_bn: '', image: '', tags: [], metaDescription: '', metaKeywords: '', date: new Date().toISOString() };
-
-  if (loading) return <CardSkeleton count={4} />;
-
-  const save = async () => {
-    if (!editing) return;
-    const { apiBlog } = await import('../lib/api');
-    if (isNew) {
-      await apiBlog.create(editing);
-    } else {
-      await apiBlog.update(editing.id, editing);
-    }
-    await fetchItems();
-    setEditing(null);
-    setIsNew(false);
-  };
-
-  const del = async (id: string) => {
-    const { apiBlog } = await import('../lib/api');
-    await apiBlog.delete(id);
-    await fetchItems();
-    setDeleteId(null);
-  };
-
-  if (editing) {
-    return (
-      <div className="bg-white rounded-2xl p-6 shadow-sm border max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold" style={{ color: '#1F2937' }}>{isNew ? 'Create Blog Post' : 'Edit Blog Post'}</h3>
-          <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h4 className="font-semibold text-sm border-b pb-2">English Content</h4>
-            <InputField label="Title (English)" value={editing.title} onChange={v => setEditing((e: any) => e ? { ...e, title: v } : null)} />
-            <TextareaField label="Excerpt (English)" value={editing.excerpt} onChange={v => setEditing((e: any) => e ? { ...e, excerpt: v } : null)} />
-            <TextareaField label="Content (English)" value={editing.content} onChange={v => setEditing((e: any) => e ? { ...e, content: v } : null)} />
-          </div>
-          <div className="space-y-4">
-            <h4 className="font-semibold text-sm border-b pb-2">Bengali Content</h4>
-            <InputField label="Title (Bengali)" value={editing.title_bn} onChange={v => setEditing((e: any) => e ? { ...e, title_bn: v } : null)} />
-            <TextareaField label="Excerpt (Bengali)" value={editing.excerpt_bn} onChange={v => setEditing((e: any) => e ? { ...e, excerpt_bn: v } : null)} />
-            <TextareaField label="Content (Bengali)" value={editing.content_bn} onChange={v => setEditing((e: any) => e ? { ...e, content_bn: v } : null)} />
-          </div>
-          <div className="md:col-span-2 space-y-4 pt-4 border-t">
-            <h4 className="font-semibold text-sm">Media & SEO</h4>
-            <ImageUploader label="Featured Image" value={editing.image} onChange={v => setEditing((e: any) => e ? { ...e, image: v } : null)} />
-            <InputField label="Tags (comma separated)" value={editing.tags?.join(', ') || ''} onChange={v => setEditing((e: any) => e ? { ...e, tags: v.split(',').map((s: string)=>s.trim()) } : null)} />
-            <TextareaField label="Meta Description" value={editing.metaDescription || ''} onChange={v => setEditing((e: any) => e ? { ...e, metaDescription: v } : null)} />
-            <InputField label="Meta Keywords (comma separated)" value={editing.metaKeywords || ''} onChange={v => setEditing((e: any) => e ? { ...e, metaKeywords: v } : null)} />
-          </div>
-        </div>
-        <div className="mt-8 flex justify-end gap-3">
-          <button onClick={() => setEditing(null)} className="px-6 py-2 rounded-xl text-sm font-semibold border">Cancel</button>
-          <button onClick={save} className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-green-800">Save Post</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm" style={{ color: '#6B7280' }}>{items.length} posts</p>
-        <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
-          <Plus size={15} /> Add Post
-        </button>
-      </div>
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-6 py-4 font-semibold text-gray-500">Post Title</th>
-              <th className="px-6 py-4 font-semibold text-gray-500">Date</th>
-              <th className="px-6 py-4 font-semibold text-gray-500 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {items.map(item => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
-                <td className="px-6 py-4 text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
-                <td className="px-6 py-4 text-right">
-                  <button onClick={() => setEditing(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg mr-2"><Edit3 size={16} /></button>
-                  <button onClick={() => setDeleteId(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <ConfirmDeleteModal
-        isOpen={!!deleteId}
-        title="Delete Post?"
-        description="Are you sure you want to delete this blog post?"
-        onCancel={() => setDeleteId(null)}
-        onConfirm={() => { if (deleteId) del(deleteId); }}
-      />
-    </div>
-  );
-}
-
-/* ── PROGRAMS (OUR WORK) ── */
-function ProgramsTab() {
-  const [items, setItems] = useState<any[]>([]);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editing, setEditing] = useState<any>(null);
-  const [isNew, setIsNew] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const fetchItems = async () => {
-    try {
-      setLoading(true);
-      const { apiProgram } = await import('../lib/api');
-      const data = await apiProgram.getAll();
-      setItems(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchItems(); }, []);
-
-  const blank = { id: '', slug: '', title: '', title_bn: '', theme: '', theme_bn: '', description: '', description_bn: '', color: '#1A6B3C', bg: '#E8F5EE', iconName: 'Box', keyPrograms: [], keyPrograms_bn: [] };
-
-  if (loading) return <CardSkeleton count={4} />;
-
-  const save = async () => {
-    if (!editing) return;
-    const { apiProgram } = await import('../lib/api');
-    if (isNew) {
-      await apiProgram.create(editing);
-    } else {
-      await apiProgram.update(editing.id, editing);
-    }
-    await fetchItems();
-    setEditing(null);
-    setIsNew(false);
-  };
-
-  const del = async (id: string) => {
-    const { apiProgram } = await import('../lib/api');
-    await apiProgram.delete(id);
-    await fetchItems();
-    setDeleteId(null);
-  };
-
-  if (editing) {
-    return (
-      <div className="bg-white rounded-2xl p-6 shadow-sm border max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold" style={{ color: '#1F2937' }}>{isNew ? 'Create Pillar' : 'Edit Pillar'}</h3>
-          <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h4 className="font-semibold text-sm border-b pb-2">English Content</h4>
-            <InputField label="Title (English)" value={editing.title} onChange={v => setEditing((e: any) => e ? { ...e, title: v } : null)} />
-            <InputField label="Theme (English)" value={editing.theme} onChange={v => setEditing((e: any) => e ? { ...e, theme: v } : null)} />
-            <TextareaField label="Description (English)" value={editing.description} onChange={v => setEditing((e: any) => e ? { ...e, description: v } : null)} />
-            <TextareaField label="Key Initiatives (English, separated by newlines, format: Title — Desc)" value={editing.keyPrograms?.join('\n')} onChange={v => setEditing((e: any) => e ? { ...e, keyPrograms: v.split('\n').filter((x: string) => x.trim()) } : null)} />
-          </div>
-          <div className="space-y-4">
-            <h4 className="font-semibold text-sm border-b pb-2">Bengali Content</h4>
-            <InputField label="Title (Bengali)" value={editing.title_bn} onChange={v => setEditing((e: any) => e ? { ...e, title_bn: v } : null)} />
-            <InputField label="Theme (Bengali)" value={editing.theme_bn} onChange={v => setEditing((e: any) => e ? { ...e, theme_bn: v } : null)} />
-            <TextareaField label="Description (Bengali)" value={editing.description_bn} onChange={v => setEditing((e: any) => e ? { ...e, description_bn: v } : null)} />
-            <TextareaField label="Key Initiatives (Bengali, separated by newlines, format: Title — Desc)" value={editing.keyPrograms_bn?.join('\n')} onChange={v => setEditing((e: any) => e ? { ...e, keyPrograms_bn: v.split('\n').filter((x: string) => x.trim()) } : null)} />
-          </div>
-          <div className="md:col-span-2 space-y-4 pt-4 border-t">
-            <h4 className="font-semibold text-sm">Design & Setup</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <InputField label="URL Slug" value={editing.slug} onChange={v => setEditing((e: any) => e ? { ...e, slug: v } : null)} />
-              <InputField label="Icon Name (Lucide React)" value={editing.iconName} onChange={v => setEditing((e: any) => e ? { ...e, iconName: v } : null)} />
-              <InputField label="Primary Color (Hex)" value={editing.color} onChange={v => setEditing((e: any) => e ? { ...e, color: v } : null)} />
-              <InputField label="Background Color (Hex)" value={editing.bg} onChange={v => setEditing((e: any) => e ? { ...e, bg: v } : null)} />
-            </div>
-          </div>
-        </div>
-        <div className="mt-8 flex justify-end gap-3">
-          <button onClick={() => setEditing(null)} className="px-6 py-2 rounded-xl text-sm font-semibold border">Cancel</button>
-          <button onClick={save} className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-green-800">Save Pillar</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm" style={{ color: '#6B7280' }}>{items.length} pillars</p>
-        <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>
-          <Plus size={15} /> Add Pillar
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map(item => (
-          <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border-t-4" style={{ borderTopColor: item.color }}>
-            <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{item.description}</p>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setEditing(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit3 size={16} /></button>
-              <button onClick={() => setDeleteId(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <ConfirmDeleteModal
-        isOpen={!!deleteId}
-        title="Delete Pillar?"
-        description="Are you sure you want to delete this program pillar?"
-        onCancel={() => setDeleteId(null)}
-        onConfirm={() => { if (deleteId) del(deleteId); }}
-      />
-    </div>
-  );
-}
 

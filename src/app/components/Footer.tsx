@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { apiNewsletter, apiProgram } from '../lib/api';
+import { apiNewsletter, apiProgram, useSiteSettings } from '../lib/api';
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, ArrowRight, MessageCircle, Globe } from 'lucide-react';
 // removed unused logo import
 import footerBg from '../../imports/image-4.webp';
@@ -9,6 +9,7 @@ import { useLanguage } from '../lib/LanguageContext';
 const quickLinks = [
   { label: 'About YCN', path: '/about' },
   { label: 'Our Work', path: '/our-work' },
+  { label: 'Programs', path: '/programs' },
   { label: 'Impact & Stories', path: '/impact' },
   { label: 'Get Involved', path: '/get-involved' },
   { label: 'Advocacy & Policy', path: '/our-work/advocacy' },
@@ -18,22 +19,21 @@ const quickLinks = [
   { label: 'Contact Us', path: '/contact' },
 ];
 
-
-
-const socials = [
-  { Icon: Facebook, href: 'https://www.facebook.com/youthclimatenetwork', label: 'Facebook' },
-  { Icon: Twitter, href: 'https://x.com/ycnorgbd', label: 'Twitter' },
-  { Icon: Instagram, href: 'https://www.instagram.com/youthclimatenetworkbd/', label: 'Instagram' },
-  { Icon: Linkedin, href: 'https://www.linkedin.com/company/youth-climate-network', label: 'LinkedIn' },
-  { Icon: Youtube, href: 'https://www.youtube.com/@YouthClimateNetwork', label: 'YouTube' },
-];
-
 export function Footer() {
   const { lang, toggleLanguage, t } = useLanguage();
+  const { data: siteSettings } = useSiteSettings();
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [programs, setPrograms] = useState<any[]>([]);
+
+  const socials = [
+    { Icon: Facebook, href: siteSettings?.facebookUrl || 'https://www.facebook.com/youthclimatenetwork', label: 'Facebook' },
+    { Icon: Twitter, href: siteSettings?.twitterUrl || 'https://x.com/ycnorgbd', label: 'Twitter' },
+    { Icon: Instagram, href: siteSettings?.instagramUrl || 'https://www.instagram.com/youthclimatenetworkbd/', label: 'Instagram' },
+    { Icon: Linkedin, href: siteSettings?.linkedinUrl || 'https://www.linkedin.com/company/youth-climate-network', label: 'LinkedIn' },
+    { Icon: Youtube, href: siteSettings?.youtubeUrl || 'https://www.youtube.com/@YouthClimateNetwork', label: 'YouTube' },
+  ];
 
   useEffect(() => {
     apiProgram.getAll().then(data => setPrograms(data)).catch(console.error);
@@ -213,24 +213,27 @@ export function Footer() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'rgba(232,82,26,0.12)' }}>
                   <MapPin size={14} style={{ color: '#E8521A' }} />
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: '#F0ECD8' }}>
-                  {t('15/KA, Shyamoli, Mirpur Road')}<br />
-                  <span className="text-xs opacity-75">{t('Dhaka-1207, Bangladesh', 'ঢাকা-১২০৭, বাংলাদেশ')}</span>
+                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#F0ECD8' }}>
+                  {lang === 'bn' && siteSettings?.addressDhaka_bn
+                    ? siteSettings.addressDhaka_bn
+                    : (siteSettings?.addressDhaka || t('15/KA, Shyamoli, Mirpur Road\nDhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড\nঢাকা-১২০৭, বাংলাদেশ'))}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(232,82,26,0.12)' }}>
                   <Mail size={14} style={{ color: '#E8521A' }} />
                 </div>
-                <a href="mailto:youthclimatenetworkbd@gmail.com" className="text-sm transition-colors hover:text-[#E8521A]" style={{ color: '#F0ECD8' }}>
-                  youthclimatenetworkbd@gmail.com
+                <a href={`mailto:${siteSettings?.email || 'youthclimatenetworkbd@gmail.com'}`} className="text-sm transition-colors hover:text-[#E8521A]" style={{ color: '#F0ECD8' }}>
+                  {siteSettings?.email || 'youthclimatenetworkbd@gmail.com'}
                 </a>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(232,82,26,0.12)' }}>
                   <Phone size={14} style={{ color: '#E8521A' }} />
                 </div>
-                <span className="text-sm" style={{ color: '#F0ECD8' }}>+88 01911 368538</span>
+                <a href={`tel:${(siteSettings?.phone || '+88 01911 368538').replace(/\s+/g, '')}`} className="text-sm hover:underline" style={{ color: '#F0ECD8' }}>
+                  {siteSettings?.phone || '+88 01911 368538'}
+                </a>
               </div>
             </div>
 
@@ -249,10 +252,10 @@ export function Footer() {
                 </p>
               </div>
               <p className="text-xs leading-relaxed" style={{ color: '#A8C4B0' }}>
-                {t('Reg No: DYD/Khulna/Reg-104')}<br />
-                {t('Department of Youth Development', 'যুব উন্নয়ন অধিদপ্তর')}<br />
-                {t('Ministry of Youth & Sports', 'যুব ও ক্রীড়া মন্ত্রণালয়')}<br />
-                {t("Govt. of the People's Republic of Bangladesh")}
+                {siteSettings?.registrationNumber || 'Reg No: DYD/Khulna/Reg-104'}<br />
+                {lang === 'bn' && siteSettings?.registrationAuthority_bn
+                  ? siteSettings.registrationAuthority_bn
+                  : (siteSettings?.registrationAuthority || t('Department of Youth Development, Ministry of Youth & Sports', 'যুব উন্নয়ন অধিদপ্তর, যুব ও ক্রীড়া মন্ত্রণালয়'))}
               </p>
             </div>
 

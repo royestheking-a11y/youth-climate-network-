@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SEO } from './ui/SEO';
 import { Link } from 'react-router';
 import { Download, ArrowRight, TrendingUp, X } from 'lucide-react';
-import { useStats, useNews } from '../lib/api';
+import { useStats, useNews, useImpactReports, useCaseStudies } from '../lib/api';
 import type { NewsItem } from '../lib/storage';
 import { CardSkeleton } from './ui/Skeletons';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
@@ -38,9 +38,11 @@ function useCountUp(end: number) {
 }
 
 export function ImpactPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { data: stats = { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any } = useStats();
   const { data: news = [], isLoading: newsLoading } = useNews();
+  const { data: apiReports = [] } = useImpactReports();
+  const { data: apiCaseStudies = [] } = useCaseStudies();
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
 
   const programImpact = [
@@ -61,15 +63,23 @@ export function ImpactPage() {
     { year: t('2025*', '২০২৫*'), people: 25000 },
   ];
 
-  const reports = [
-    { title: t('YCN Annual Report 2024', 'ওয়াইসিএন বার্ষিক প্রতিবেদন ২০২৪'), date: t('January 2025', 'জানুয়ারি ২০২৫'), pages: t('48', '৪৮'), type: t('Annual Report', 'বার্ষিক প্রতিবেদন') },
-    { title: t('Climate Impact Assessment 2024', 'জলবায়ু প্রভাব মূল্যায়ন ২০২৪'), date: t('December 2024', 'ডিসেম্বর ২০২৪'), pages: t('32', '৩২'), type: t('Research Report', 'গবেষণা প্রতিবেদন') },
-    { title: t('Youth Leadership Academy Outcomes Report', 'যুব নেতৃত্ব একাডেমি ফলাফল প্রতিবেদন'), date: t('October 2024', 'অক্টোবর ২০২৪'), pages: t('24', '২৪'), type: t('Program Report', 'প্রোগ্রাম প্রতিবেদন') },
-    { title: t('WASH Program Evaluation 2023–24', 'ওয়াশ কার্যক্রম মূল্যায়ন ২০২৩-২৪'), date: t('September 2024', 'সেপ্টেম্বর ২০২৪'), pages: t('36', '৩৬'), type: t('Evaluation', 'মূল্যায়ন') },
-    { title: t('Sundarbans Mangrove Restoration Progress', 'সুন্দরবন ম্যানগ্রোভ পুনরুদ্ধার অগ্রগতি'), date: t('August 2024', 'আগস্ট ২০২৪'), pages: t('20', '২০'), type: t('Field Report', 'মাঠপর্যায়ের প্রতিবেদন') },
+  const fallbackReports = [
+    { title: t('YCN Annual Report 2024', 'ওয়াইসিএন বার্ষিক প্রতিবেদন ২০২৪'), date: t('January 2025', 'জানুয়ারি ২০২৫'), pages: t('48', '৪৮'), type: t('Annual Report', 'বার্ষিক প্রতিবেদন'), fileUrl: '' },
+    { title: t('Climate Impact Assessment 2024', 'জলবায়ু প্রভাব মূল্যায়ন ২০২৪'), date: t('December 2024', 'ডিসেম্বর ২০২৪'), pages: t('32', '৩২'), type: t('Research Report', 'গবেষণা প্রতিবেদন'), fileUrl: '' },
+    { title: t('Youth Leadership Academy Outcomes Report', 'যুব নেতৃত্ব একাডেমি ফলাফল প্রতিবেদন'), date: t('October 2024', 'অক্টোবর ২০২৪'), pages: t('24', '২৪'), type: t('Program Report', 'প্রোগ্রাম প্রতিবেদন'), fileUrl: '' },
+    { title: t('WASH Program Evaluation 2023–24', 'ওয়াশ কার্যক্রম মূল্যায়ন ২০২৩-২৪'), date: t('September 2024', 'সেপ্টেম্বর ২০২৪'), pages: t('36', '৩৬'), type: t('Evaluation', 'মূল্যায়ন'), fileUrl: '' },
+    { title: t('Sundarbans Mangrove Restoration Progress', 'সুন্দরবন ম্যানগ্রোভ পুনরুদ্ধার অগ্রগতি'), date: t('August 2024', 'আগস্ট ২০২৪'), pages: t('20', '২০'), type: t('Field Report', 'মাঠপর্যায়ের প্রতিবেদন'), fileUrl: '' },
   ];
 
-  const caseStudies = [
+  const reports = apiReports.length > 0 ? apiReports.map(r => ({
+    title: lang === 'bn' && r.title_bn ? r.title_bn : r.title,
+    date: r.date,
+    pages: r.pages,
+    type: r.type,
+    fileUrl: r.fileUrl
+  })) : fallbackReports;
+
+  const fallbackCaseStudies = [
     {
       name: t('Azim Kha', 'আজিম খাঁ'),
       location: t('Age 26 · Paikgaca, Khulna', 'বয়স ২৬ · পাইকগাছা, খুলনা'),
@@ -123,6 +133,17 @@ export function ImpactPage() {
       bg: '#F0FDF4',
     },
   ];
+
+  const caseStudies = apiCaseStudies.length > 0 ? apiCaseStudies.map(cs => ({
+    name: lang === 'bn' && cs.name_bn ? cs.name_bn : cs.name,
+    location: lang === 'bn' && cs.location_bn ? cs.location_bn : cs.location,
+    program: lang === 'bn' && cs.program_bn ? cs.program_bn : cs.program,
+    story: lang === 'bn' && cs.story_bn ? cs.story_bn : cs.story,
+    impact: lang === 'bn' && cs.impact_bn ? cs.impact_bn : cs.impact,
+    image: cs.image,
+    color: cs.color || '#0A3320',
+    bg: cs.bg || '#E8F5EE'
+  })) : fallbackCaseStudies;
 
   function StatBig({ value, suffix = '+', label, sublabel }: { value: number; suffix?: string; label: string; sublabel?: string }) {
     const { count, ref } = useCountUp(value);
@@ -370,12 +391,25 @@ export function ImpactPage() {
                     </div>
                   </div>
                 </div>
-                <button
-                  className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:scale-105 flex items-center gap-1.5 flex-shrink-0"
-                  style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
-                >
-                  <Download size={12} /> {t('Download', 'ডাউনলোড')}
-                </button>
+                {report.fileUrl ? (
+                  <a
+                    href={report.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:scale-105 flex items-center gap-1.5 flex-shrink-0"
+                    style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
+                  >
+                    <Download size={12} /> {t('Download', 'ডাউনলোড')}
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => alert(t('This publication is being archived. Please contact us for a digital copy.', 'এই প্রতিবেদনটি আর্কাইভ করা হচ্ছে। ডিজিটাল কপির জন্য আমাদের সাথে যোগাযোগ করুন।'))}
+                    className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:scale-105 flex items-center gap-1.5 flex-shrink-0 opacity-80 hover:opacity-100"
+                    style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
+                  >
+                    <Download size={12} /> {t('Download', 'ডাউনলোড')}
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -1,147 +1,341 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { SEO } from './ui/SEO';
-import { apiProgram } from '../lib/api';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import * as Icons from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { motion as Motion } from 'motion/react';
+import {
+  Sprout, Users, MapPin, Trees,
+  Megaphone, FileText, Play, X, ChevronRight
+} from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
+import { useOurWork, usePrograms } from '../lib/api';
 
 export function OurWorkDetailsPage() {
+  const { id } = useParams<{ id: string }>();
   const { t, lang } = useLanguage();
-  const { id } = useParams();
-  const [program, setProgram] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: ourWorkItems = [] } = useOurWork();
+  const { data: allPrograms = [] } = usePrograms();
+  const [videoOpen, setVideoOpen] = useState(false);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    fetchProgram();
-  }, [id]);
-
-  const fetchProgram = async () => {
-    try {
-      setLoading(true);
-      const data = await apiProgram.getAll();
-      const found = data.find((p: any) => p.slug === id);
-      setProgram(found);
-    } catch (error) {
-      console.error('Error fetching program details:', error);
-    } finally {
-      setLoading(false);
-    }
+  const programsData: Record<string, any> = {
+    'climate-action': {
+      title: 'Climate Action',
+      title_bn: 'জলবায়ু কার্যক্রম',
+      tagline: 'Empowering youth to take local action for a global impact.',
+      heroImage: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80',
+      overviewHeading: 'Youth-Led Solutions for a Resilient Tomorrow',
+      overviewText:
+        'Our Climate Action program empowers young people across Bangladesh to lead local initiatives, raise awareness and advocate for sustainable solutions. Through community engagement, campaigns and on-the-ground activities, we work towards a cleaner, greener and more climate-resilient Bangladesh.',
+      videoThumbnail: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1000&q=80',
+      initiatives: [
+        {
+          title: 'Tree Planting & Ecosystem Restoration',
+          desc: 'Restoring forests, mangroves and urban green spaces.',
+          icon: Trees,
+        },
+        {
+          title: 'Awareness Campaigns',
+          desc: 'Engaging youth and communities on climate issues.',
+          icon: Megaphone,
+        },
+        {
+          title: 'Youth Climate Leadership',
+          desc: 'Building the next generation of climate leaders.',
+          icon: Users,
+        },
+        {
+          title: 'Policy Advocacy',
+          desc: 'Amplifying youth voices in climate policy discussions.',
+          icon: FileText,
+        },
+      ],
+      impactStats: [
+        { value: '10,000+', label: 'Trees planted', icon: Trees },
+        { value: '60+', label: 'Youth volunteers', icon: Users },
+        { value: '20+', label: 'Communities reached', icon: MapPin },
+        { value: '15+', label: 'Campaigns and initiatives', icon: Sprout },
+      ],
+    },
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#F3F4F6' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700"></div>
-      </div>
-    );
-  }
+  const matchedWork = ourWorkItems.find(w => w.slug === id || w.id === id);
+  const matchedProgram = allPrograms.find(p => p.slug === id || p.id === id);
+  const dynamicItem = matchedWork || matchedProgram;
 
-  if (!program) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#F3F4F6' }}>
-      <SEO title="Project Details" />
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>
-            {t('Program Not Found', 'প্রোগ্রাম পাওয়া যায়নি')}
-          </h2>
-          <Link to="/our-work" className="text-sm font-medium hover:underline" style={{ color: '#E8521A' }}>
-            {t('Return to Our Work', 'আমাদের কার্যক্রমে ফিরে যান')}
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const defaultProgram = programsData[id || 'climate-action'] || {
+    title: id?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Climate Action',
+    tagline: 'Empowering youth to take local action for a global impact.',
+    heroImage: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80',
+    overviewHeading: 'Youth-Led Solutions for a Resilient Tomorrow',
+    overviewText:
+      'Empowering young people across Bangladesh to lead local initiatives, raise awareness and advocate for sustainable solutions.',
+    videoThumbnail: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1000&q=80',
+    initiatives: [
+      { title: 'Tree Planting & Ecosystem Restoration', desc: 'Restoring forests and mangroves.', icon: Trees },
+      { title: 'Awareness Campaigns', desc: 'Engaging youth and communities.', icon: Megaphone },
+      { title: 'Youth Climate Leadership', desc: 'Building next generation leaders.', icon: Users },
+      { title: 'Policy Advocacy', desc: 'Amplifying youth voices in climate discussions.', icon: FileText },
+    ],
+    impactStats: [
+      { value: '10,000+', label: 'Trees planted', icon: Trees },
+      { value: '60+', label: 'Youth volunteers', icon: Users },
+      { value: '20+', label: 'Communities reached', icon: MapPin },
+      { value: '15+', label: 'Campaigns and initiatives', icon: Sprout },
+    ],
+  };
 
-  const Icon = (Icons as any)[program.iconName || 'Box'] || Icons.Box;
-  const programTitle = t(program.title, program.title_bn);
-  const programTheme = t(program.theme, program.theme_bn);
-  const programDescription = t(program.description, program.description_bn);
-  const initiatives = lang === 'bn' && program.keyPrograms_bn?.length ? program.keyPrograms_bn : program.keyPrograms || [];
+  const program = dynamicItem ? {
+    title: lang === 'bn' && dynamicItem.title_bn ? dynamicItem.title_bn : dynamicItem.title,
+    tagline: (dynamicItem as any).theme || defaultProgram.tagline,
+    heroImage: dynamicItem.image || defaultProgram.heroImage,
+    overviewHeading: lang === 'bn' ? (dynamicItem.title_bn || dynamicItem.title) : `${dynamicItem.title} Initiatives`,
+    overviewText: lang === 'bn' && (dynamicItem.desc_bn || (dynamicItem as any).description_bn)
+      ? (dynamicItem.desc_bn || (dynamicItem as any).description_bn)
+      : (dynamicItem.desc || (dynamicItem as any).description || defaultProgram.overviewText),
+    videoThumbnail: defaultProgram.videoThumbnail,
+    initiatives: (dynamicItem as any).keyPrograms && (dynamicItem as any).keyPrograms.length > 0
+      ? (dynamicItem as any).keyPrograms.map((kp: string) => ({
+          title: kp.split('—')[0] || kp,
+          desc: kp.split('—')[1] || 'Dedicated initiative advancing climate resilience and youth empowerment.',
+          icon: Sprout
+        }))
+      : defaultProgram.initiatives,
+    impactStats: defaultProgram.impactStats
+  } : defaultProgram;
 
   return (
-    <div className="min-h-screen pt-36 pb-20" style={{ backgroundColor: '#F3F4F6', fontFamily: 'Inter, sans-serif' }}>
-      <div className="max-w-4xl mx-auto px-6">
-        <Motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Link to="/our-work" className="inline-flex items-center gap-2 text-sm font-medium mb-8 hover:opacity-80 transition-all" style={{ color: '#4B5563' }}>
-            <ArrowLeft size={16} /> {t('Back to All Programs', 'সব কার্যক্রমে ফিরে যান')}
-          </Link>
-          
-          <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm mb-8" style={{ borderTop: `6px solid ${program.color}` }}>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: program.bg }}>
-                <Icon size={32} style={{ color: program.color }} />
-              </div>
-              <div>
-                <span className="text-sm font-bold uppercase tracking-wider mb-1 block" style={{ color: program.color }}>{programTheme}</span>
-                <h1 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: 'Poppins, sans-serif', color: '#0A3320' }}>
-                  {programTitle}
-                </h1>
-              </div>
-            </div>
-            
-            <div className="prose max-w-none mb-12">
-              <p className="text-lg leading-relaxed" style={{ color: '#4B5563' }}>
-                {programDescription}
-              </p>
+    <div className="min-h-screen bg-[#FBFBFB] text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <SEO
+        title={`${program.title} | Youth Climate Network`}
+        description={program.overviewText}
+      />
+
+      {/* Hero Section matching Image 1 Right */}
+      <section className="relative min-h-[420px] flex items-center pt-28 pb-16 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img
+            src={program.heroImage}
+            alt={program.title}
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#062416]/95 via-[#0A3320]/80 to-transparent" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-2 text-xs text-emerald-200/80 mb-6">
+            <Link to="/" className="hover:underline text-white">Home</Link>
+            <ChevronRight size={12} />
+            <Link to="/our-work" className="hover:underline text-white">Programs</Link>
+            <ChevronRight size={12} />
+            <span className="text-emerald-300 font-semibold">{program.title}</span>
+          </nav>
+
+          <div className="max-w-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-2">
+              <Sprout size={24} />
             </div>
 
-            <div className="bg-gray-50 rounded-2xl p-6 md:p-8">
-              <h3 className="text-xl font-bold mb-6" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>
-                {t('Key Initiatives & Interventions', 'মূল উদ্যোগ ও হস্তক্ষেপসমূহ')}
-              </h3>
-              <ul className="space-y-4">
-                {initiatives.map((item: string, i: number) => {
-                  const [title, desc] = item.split(' — ');
-                  return (
-                    <Motion.li 
-                      key={i} 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
-                      className="flex gap-4"
-                    >
-                      <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" style={{ color: program.color }} />
-                      <div>
-                        <strong className="block text-base mb-1" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{title}</strong>
-                        {desc && <span className="text-sm leading-relaxed" style={{ color: '#6B7280' }}>{desc}</span>}
-                      </div>
-                    </Motion.li>
-                  );
-                })}
-              </ul>
+            <h1
+              className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              {program.title}
+            </h1>
+
+            <p className="text-base sm:text-lg text-emerald-100/90 leading-relaxed max-w-xl">
+              {program.tagline}
+            </p>
+
+            <div className="pt-2">
+              <Link
+                to="/get-involved"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-white shadow-lg transition-transform hover:scale-105"
+                style={{ backgroundColor: '#E8521A' }}
+              >
+                {t('Get Involved', 'যুক্ত হোন')} &rarr;
+              </Link>
             </div>
           </div>
+        </div>
+      </section>
 
-          <Motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="text-center mt-12 bg-white rounded-3xl p-10 shadow-sm"
-          >
-            <h3 className="text-2xl font-bold mb-4" style={{ fontFamily: 'Poppins, sans-serif', color: '#0A3320' }}>
-              {t('Want to Support this Program?', 'এই কর্মসূচিতে সহায়তা করতে চান?')}
-            </h3>
-            <p className="text-gray-600 mb-8 max-w-lg mx-auto">
-              {t('Join us in making a real impact. Your contribution helps us expand our reach and support more vulnerable communities.', 'প্রকৃত প্রভাব তৈরি করতে আমাদের সাথে যুক্ত হোন। আপনার অবদান আমাদের কার্যক্রমের পরিধি বাড়াতে এবং আরও ঝুঁকিপূর্ণ সম্প্রদায়কে সহায়তা করতে সাহায্য করে।')}
+      {/* Overview Split Section */}
+      <section className="py-20 max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Text */}
+          <div className="lg:col-span-7 space-y-4">
+            <span
+              className="text-xs font-bold tracking-widest uppercase block"
+              style={{ color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}
+            >
+              {t('OVERVIEW', 'সংক্ষিপ্ত বিবরণ')}
+            </span>
+            <h2
+              className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              {program.overviewHeading}
+            </h2>
+            <p className="text-sm leading-relaxed text-gray-600">
+              {program.overviewText}
             </p>
-            <div className="flex justify-center gap-4">
-              <Link to="/get-involved" className="px-6 py-3 rounded-xl font-semibold transition-all hover:shadow-lg" style={{ backgroundColor: program.color, color: '#fff' }}>
-                {t('Volunteer With Us', 'স্বেচ্ছাসেবক হোন')}
-              </Link>
-              <Link to="/contact" className="px-6 py-3 rounded-xl font-semibold transition-all" style={{ backgroundColor: program.bg, color: program.color }}>
-                {t('Partner With Us', 'অংশীদার হোন')}
-              </Link>
+          </div>
+
+          {/* Right Video / Image */}
+          <div className="lg:col-span-5">
+            <div
+              onClick={() => setVideoOpen(true)}
+              className="group relative rounded-3xl overflow-hidden aspect-[16/10] shadow-md cursor-pointer border border-gray-100"
+            >
+              <img
+                src={program.videoThumbnail}
+                alt="Program Overview"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                <div className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/90 backdrop-blur-md text-gray-900 shadow-xl group-hover:scale-110 transition-transform">
+                  <div className="w-7 h-7 rounded-full bg-[#E8521A] flex items-center justify-center text-white">
+                    <Play size={13} fill="white" className="ml-0.5" />
+                  </div>
+                  <span className="text-xs font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Watch Our Work
+                  </span>
+                </div>
+              </div>
             </div>
-          </Motion.div>
-        </Motion.div>
-      </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Key Initiatives Section (4 Cards) */}
+      <section className="py-16 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-10">
+            <span
+              className="text-xs font-bold tracking-widest uppercase block mb-1"
+              style={{ color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}
+            >
+              {t('KEY INITIATIVES', 'মূল উদ্যোগসমূহ')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {program.initiatives.map((item: any, idx: number) => (
+              <div key={idx} className="p-6 rounded-2xl bg-gray-50/70 border border-gray-100 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#1A6B3C] flex items-center justify-center">
+                  <item.icon size={20} />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {item.title}
+                </h3>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Impact So Far Section */}
+      <section className="py-20 max-w-7xl mx-auto px-6">
+        <div className="mb-8">
+          <span
+            className="text-xs font-bold tracking-widest uppercase block mb-1"
+            style={{ color: '#E8521A', fontFamily: 'Poppins, sans-serif' }}
+          >
+            {t('IMPACT SO FAR', 'এখন পর্যন্ত প্রভাব')}
+          </span>
+          <h2
+            className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight"
+            style={{ fontFamily: 'Poppins, sans-serif' }}
+          >
+            {t('Creating Change on the Ground', 'মাঠপর্যায়ে দৃশ্যমান পরিবর্তন সৃষ্টি')}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm">
+          {/* Photo */}
+          <div className="lg:col-span-5 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100">
+            <img
+              src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1000&q=80"
+              alt="Youth researchers"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* 4 Stats Grid */}
+          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {program.impactStats.map((stat: any, idx: number) => (
+              <div key={idx} className="space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#1A6B3C] flex items-center justify-center">
+                  <stat.icon size={16} />
+                </div>
+                <p
+                  className="text-2xl font-black text-gray-900 tracking-tight"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
+                >
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom CTA Banner (Image 1 Right Bottom) */}
+      <section className="bg-[#0A3320] py-14 border-t border-emerald-950">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1">
+            <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase">
+              {t('BE PART OF THE SOLUTION', 'সমাধানের অংশ হোন')}
+            </span>
+            <h3
+              className="text-2xl font-bold text-white tracking-tight"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              {t('Take Action for Our Climate', 'আমাদের জলবায়ুর জন্য কার্যকর পদক্ষেপ নিন')}
+            </h3>
+            <p className="text-xs text-emerald-200/80 max-w-xl">
+              {t(
+                'Join our youth-led initiatives and help build a greener, more resilient Bangladesh.',
+                'আমাদের যুব-নেতৃত্বাধীন উদ্যোগে যোগ দিন এবং একটি পরিচ্ছন্ন ও সবুজ বাংলাদেশ গড়তে সহায়তা করুন।'
+              )}
+            </p>
+          </div>
+
+          <Link
+            to="/get-involved"
+            className="px-6 py-3 rounded-full text-xs font-bold text-white shadow-lg transition-transform hover:scale-105 flex-shrink-0"
+            style={{ backgroundColor: '#E8521A' }}
+          >
+            {t('Get Involved', 'যুক্ত হোন')} &rarr;
+          </Link>
+        </div>
+      </section>
+
+      {/* Video Modal */}
+      {videoOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative max-w-3xl w-full bg-black rounded-2xl overflow-hidden aspect-video shadow-2xl">
+            <button
+              onClick={() => setVideoOpen(false)}
+              className="absolute top-3 right-3 z-10 p-2 bg-black/60 rounded-full text-white hover:bg-black"
+            >
+              <X size={18} />
+            </button>
+            <iframe
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+              title="Program Overview Video"
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,122 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
 
-import { HandCoins, Users, Briefcase, Handshake, CheckCircle, ArrowRight } from 'lucide-react';
-import { addVolunteerApp, addPartnershipInquiry, addInternshipApp } from '../lib/storage';
+import {
+  HandCoins, Users, Briefcase, Handshake, CheckCircle, ArrowRight,
+  Loader2, AlertCircle, Eye, X, Clock, MapPin, Sparkles
+} from 'lucide-react';
+import { apiVolunteerApps, apiPartnershipInquiries, apiInternshipApps, useInternshipPosts, useVolunteerTracks } from '../lib/api';
 import { useLanguage } from '../lib/LanguageContext';
-import { useInternshipPosts } from '../lib/api';
 
 type Tab = 'volunteer' | 'internship' | 'partner';
+
+interface VolunteerTrack {
+  id: string;
+  title: string;
+  title_bn: string;
+  badge: string;
+  commitment: string;
+  location: string;
+  description: string;
+  description_bn: string;
+  responsibilities: string[];
+  responsibilities_bn: string[];
+  skills: string[];
+  benefits: string[];
+}
+
+const VOLUNTEER_TRACKS: VolunteerTrack[] = [
+  {
+    id: 'grassroots-mobilizer',
+    title: 'Grassroots Climate Mobilizer',
+    title_bn: 'তৃণমূল জলবায়ু সমন্বয়কারী',
+    badge: 'Field & Community',
+    commitment: '4–6 hrs / week',
+    location: 'Coastal & Delta Districts / Local Chapters',
+    description: 'Engage frontline youth, organize community dialogues, and lead environmental awareness workshops in vulnerable regions.',
+    description_bn: 'উপকূলীয় ও দুর্যোগপ্রবণ এলাকায় তরুণদের উদ্বুদ্ধকরণ, সচেতনতামূলক কর্মশালা এবং স্থানীয় জলবায়ু কর্মসূচি পরিচালনা।',
+    responsibilities: [
+      'Organize localized climate awareness sessions in schools & communities',
+      'Coordinate tree plantation drives and community clean-up campaigns',
+      'Liaise with local youth groups and community elders',
+      'Document local climate vulnerability case studies'
+    ],
+    responsibilities_bn: [
+      'স্কুল ও সমাজে স্থানীয় জলবায়ু সচেতনতা সেশন আয়োজন',
+      'বৃক্ষরোপণ কর্মসূচি এবং পরিচ্ছন্নতা অভিযান সমন্বয়',
+      'স্থানীয় যুবসমাজ ও গণ্যমান্য ব্যক্তিদের সাথে যোগাযোগ রক্ষা',
+      'স্থানীয় জলবায়ু ঝুঁকিপূর্ণ ঘটনা ও কেস স্টাডি নথিভুক্তকরণ'
+    ],
+    skills: ['Communication', 'Community Engagement', 'Leadership', 'Empathy'],
+    benefits: ['Official Volunteer Certificate', 'Leadership Training Workshops', 'YCN National Alumni Network']
+  },
+  {
+    id: 'wash-advocate',
+    title: 'WASH & Clean Water Campaigner',
+    title_bn: 'পানি ও স্বাস্থ্যবিধি (WASH) প্রচারক',
+    badge: 'Public Health',
+    commitment: '3–5 hrs / week',
+    location: 'Saline-Prone Coastal Belts & Remote Areas',
+    description: 'Promote safe drinking water access, menstrual hygiene equity, and water testing drives across saline-affected communities.',
+    description_bn: 'লবণাক্ততা কবলিত এলাকায় নিরাপদ খাবার পানি, হাইজিন সচেতনতা এবং পানি বিশুদ্ধকরণ কর্মসূচি প্রচার।',
+    responsibilities: [
+      'Assist in household salinity testing and rainwater harvesting awareness',
+      'Distribute hygiene kits and facilitate school WASH sessions',
+      'Advocate for equitable clean water infrastructure in rural areas'
+    ],
+    responsibilities_bn: [
+      'লবণাক্ততা পরীক্ষা এবং বৃষ্টির পানি সংরক্ষণ সচেতনতায় সহায়তা',
+      'হাইজিন কিট বিতরণ এবং বিদ্যালয়ে WASH সেশন পরিচালনা',
+      'গ্রামীণ এলাকায় নিরাপদ পানির অবকাঠামোর জন্য প্রচারণা'
+    ],
+    skills: ['Public Health Interest', 'Organizing', 'Field Mobilization'],
+    benefits: ['Water Security Specialization Certificate', 'Community Health Experience']
+  },
+  {
+    id: 'drr-responder',
+    title: 'Disaster Risk & Emergency First Responder',
+    title_bn: 'দুর্যোগ ঝুঁকি ও জরুরি সাড়াদানকারী',
+    badge: 'Disaster Response',
+    commitment: 'Flexible / On-call during cyclone seasons',
+    location: 'Coastal High-Risk Zones',
+    description: 'Serve as youth first responders trained in cyclone early warnings, shelter management, and emergency flood relief.',
+    description_bn: 'ঘূর্ণিঝড় ও বন্যায় দ্রুত সাড়াদান, জরুরি সতর্কতা প্রচার এবং আশ্রয়কেন্দ্র ব্যবস্থাপনায় নিয়োজিত যুব স্বেচ্ছাসেবী দল।',
+    responsibilities: [
+      'Disseminate early warning signals in vulnerable villages',
+      'Assist vulnerable families with safe evacuation to cyclone shelters',
+      'Coordinate emergency relief distribution and post-storm damage surveys'
+    ],
+    responsibilities_bn: [
+      'ঝুঁকিপূর্ণ গ্রামে আগাম সতর্কবার্তা প্রচার',
+      'ঘূর্ণিঝড় আশ্রয়কেন্দ্রে নিরাপদ স্থানান্তর সহায়তা',
+      'জরুরি ত্রাণ সামগ্রী বিতরণ ও ক্ষয়ক্ষতি জরিপ সমন্বয়'
+    ],
+    skills: ['Physical Stamina', 'Emergency Preparedness', 'Teamwork'],
+    benefits: ['Disaster Management Training Certificate', 'First-Aid Certification Eligibility']
+  },
+  {
+    id: 'media-storyteller',
+    title: 'Digital Media & Climate Storyteller',
+    title_bn: 'ডিজিটাল মিডিয়া ও জলবায়ু গল্পকার',
+    badge: 'Remote & Creative',
+    commitment: '3–5 hrs / week',
+    location: 'Remote / Anywhere',
+    description: 'Amplify frontline voices through photo essays, short-form reels, graphics, and compelling articles that bridge local realities with global audiences.',
+    description_bn: 'ছবি, ভিডিও, তথ্যচিত্র ও লেখার মাধ্যমে ফ্রন্টলাইনের জলবায়ু বাস্তবতা বৈশ্বিক দরবারে তুলে ধরা।',
+    responsibilities: [
+      'Create social media reels and graphics highlighting climate issues',
+      'Interview youth activists and frontline climate survivors',
+      'Draft case stories for YCN blog and international newsletter'
+    ],
+    responsibilities_bn: [
+      'জলবায়ু সংকট নিয়ে সোশ্যাল মিডিয়া রিল ও গ্রাফিক্স তৈরি',
+      'স্থানীয় তরুণ কর্মী এবং ক্ষতিগ্রস্ত মানুষের সাক্ষাৎকার গ্রহণ',
+      'ওয়াইসিএন ব্লগ ও নিউজের জন্য স্টোরি ড্রাফট করা'
+    ],
+    skills: ['Photography/Videography', 'Social Media', 'Content Writing', 'Canva/Design'],
+    benefits: ['Byline on YCN Publication', 'Media Portfolio Building', 'Global Network Exposure']
+  }
+];
 
 export function GetInvolvedPage() {
   const { t, lang } = useLanguage();
@@ -14,19 +124,30 @@ export function GetInvolvedPage() {
   const [volSuccess, setVolSuccess] = useState(false);
   const [partSuccess, setPartSuccess] = useState(false);
   const [internSuccess, setInternSuccess] = useState(false);
+
+  const [selectedVolunteerRole, setSelectedVolunteerRole] = useState<VolunteerTrack | null>(null);
+  const [submittedVolunteerData, setSubmittedVolunteerData] = useState<any>(null);
+  const [showSubmittedDetailsModal, setShowSubmittedDetailsModal] = useState(false);
+
+  const [volLoading, setVolLoading] = useState(false);
+  const [partLoading, setPartLoading] = useState(false);
+  const [internLoading, setInternLoading] = useState(false);
+
+  const [volError, setVolError] = useState('');
+  const [partError, setPartError] = useState('');
+  const [internError, setInternError] = useState('');
+
   const { data: internshipPosts = [] } = useInternshipPosts();
-
-
+  const { data: apiTracks = [] } = useVolunteerTracks();
+  const volunteerTracks = apiTracks.length > 0 ? (apiTracks as any[]) : VOLUNTEER_TRACKS;
 
   const [volForm, setVolForm] = useState({ name: '', email: '', phone: '', interest: '', skills: '', message: '' });
-
   const [partForm, setPartForm] = useState({ name: '', org: '', email: '', phone: '', type: '', message: '' });
   const [internForm, setInternForm] = useState({ name: '', email: '', phone: '', program: '', university: '', skills: '', message: '' });
 
   const tabs: { key: Tab; label: string; icon: React.FC<{ size?: number; style?: React.CSSProperties }> }[] = [
     { key: 'volunteer', label: t('Volunteer', 'স্বেচ্ছাসেবক'), icon: Users },
     { key: 'internship', label: t('Internship / Academy', 'ইন্টার্নশিপ / একাডেমি'), icon: Briefcase },
-
     { key: 'partner', label: t('Partner With Us', 'অংশীদারিত্ব'), icon: Handshake },
   ];
 
@@ -43,32 +164,65 @@ export function GetInvolvedPage() {
     t('Field Coordination', 'মাঠপর্যায়ের সমন্বয়'),
   ];
 
-
-
-  const handleVolunteer = (e: React.FormEvent) => {
+  const handleVolunteer = async (e: React.FormEvent) => {
     e.preventDefault();
-    addVolunteerApp(volForm);
-    setVolSuccess(true);
-    setVolForm({ name: '', email: '', phone: '', interest: '', skills: '', message: '' });
-    setTimeout(() => setVolSuccess(false), 6000);
+    try {
+      setVolLoading(true);
+      setVolError('');
+      const payload = {
+        ...volForm,
+        date: new Date().toISOString(),
+        status: 'pending' as const
+      };
+      await apiVolunteerApps.create(payload);
+      setSubmittedVolunteerData(payload);
+      setVolSuccess(true);
+      setVolForm({ name: '', email: '', phone: '', interest: '', skills: '', message: '' });
+    } catch (err: any) {
+      setVolError(err.message || 'Failed to submit application. Please try again.');
+    } finally {
+      setVolLoading(false);
+    }
   };
 
-
-
-  const handlePartner = (e: React.FormEvent) => {
+  const handlePartner = async (e: React.FormEvent) => {
     e.preventDefault();
-    addPartnershipInquiry(partForm);
-    setPartSuccess(true);
-    setPartForm({ name: '', org: '', email: '', phone: '', type: '', message: '' });
-    setTimeout(() => setPartSuccess(false), 6000);
+    try {
+      setPartLoading(true);
+      setPartError('');
+      await apiPartnershipInquiries.create({
+        ...partForm,
+        date: new Date().toISOString(),
+        status: 'pending'
+      });
+      setPartSuccess(true);
+      setPartForm({ name: '', org: '', email: '', phone: '', type: '', message: '' });
+      setTimeout(() => setPartSuccess(false), 8000);
+    } catch (err: any) {
+      setPartError(err.message || 'Failed to submit partner inquiry. Please try again.');
+    } finally {
+      setPartLoading(false);
+    }
   };
 
-  const handleInternship = (e: React.FormEvent) => {
+  const handleInternship = async (e: React.FormEvent) => {
     e.preventDefault();
-    addInternshipApp(internForm);
-    setInternSuccess(true);
-    setInternForm({ name: '', email: '', phone: '', program: '', university: '', skills: '', message: '' });
-    setTimeout(() => setInternSuccess(false), 6000);
+    try {
+      setInternLoading(true);
+      setInternError('');
+      await apiInternshipApps.create({
+        ...internForm,
+        date: new Date().toISOString(),
+        status: 'pending'
+      });
+      setInternSuccess(true);
+      setInternForm({ name: '', email: '', phone: '', program: '', university: '', skills: '', message: '' });
+      setTimeout(() => setInternSuccess(false), 8000);
+    } catch (err: any) {
+      setInternError(err.message || 'Failed to submit intern application. Please try again.');
+    } finally {
+      setInternLoading(false);
+    }
   };
 
   const inputCls = "w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-200";
@@ -161,124 +315,438 @@ export function GetInvolvedPage() {
 
           {/* VOLUNTEER TAB */}
           {activeTab === 'volunteer' && (
-            <div>
-              <h2 className="mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: '#1F2937' }}>
-                {t('Volunteer With YCN', 'স্বেচ্ছাসেবক হিসেবে যোগ দিন')}
-              </h2>
-              <p className="mb-8 text-sm" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
-                {t(
-                  'Join our volunteer network and contribute your skills to climate justice work across Bangladesh. We welcome volunteers of all backgrounds, from field coordination to digital communications.',
-                  'আমাদের স্বেচ্ছাসেবক নেটওয়ার্কে যোগ দিন এবং বাংলাদেশ জুড়ে জলবায়ু ন্যায়বিচারের কাজে আপনার দক্ষতা অবদান রাখুন। আমরা সকল ব্যাকগ্রাউন্ডের স্বেচ্ছাসেবকদের স্বাগত জানাই।'
-                )}
-              </p>
-              {volSuccess ? (
-                <div className="text-center py-16">
-                  <CheckCircle size={48} className="mx-auto mb-4" style={{ color: '#1A6B3C' }} />
-                  <h3 className="font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>
-                    {t('Application Submitted!', 'আবেদন সফলভাবে জমা হয়েছে!')}
+            <div className="space-y-12">
+              <div>
+                <h2 className="mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: '#1F2937' }}>
+                  {t('Volunteer With YCN', 'স্বেচ্ছাসেবক হিসেবে যোগ দিন')}
+                </h2>
+                <p className="mb-8 text-sm max-w-3xl" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
+                  {t(
+                    'Join our grassroots volunteer network and contribute your skills to climate justice and community resilience across Bangladesh. Explore open volunteer roles below, view their details, or send your volunteer request directly.',
+                    'আমাদের তৃণমূলের স্বেচ্ছাসেবী নেটওয়ার্কে যোগ দিন এবং বাংলাদেশ জুড়ে জলবায়ু ন্যায়বিচার ও স্থিতিস্থাপকতার কাজে আপনার দক্ষতা অবদান রাখুন। উন্মুক্ত সুযোগগুলো দেখুন, বিস্তারিত জানুন অথবা সরাসরি আপনার আবেদন পাঠান।'
+                  )}
+                </p>
+
+                {/* ── 1. OPEN VOLUNTEER OPPORTUNITIES ── */}
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900 font-poppins flex items-center gap-2">
+                        <Sparkles size={16} className="text-[#E8521A]" />
+                        {t('Featured Volunteer Tracks', 'বিশেষ স্বেচ্ছাসেবী ক্ষেত্রসমূহ')}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-inter">
+                        {t('Click "View Details" to see specific responsibilities and volunteer benefits.', 'নির্দিষ্ট দায়িত্ব ও সুবিধা দেখতে "View Details" এ ক্লিক করুন।')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {volunteerTracks.map((track: any) => {
+                      const title = lang === 'bn' ? track.title_bn : track.title;
+                      const desc = lang === 'bn' ? track.description_bn : track.description;
+                      return (
+                        <div
+                          key={track.id}
+                          className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-3">
+                              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#1A6B3C] border border-emerald-200">
+                                {track.badge}
+                              </span>
+                              <span className="text-[11px] text-gray-400 font-inter flex items-center gap-1">
+                                <Clock size={11} /> {track.commitment}
+                              </span>
+                            </div>
+
+                            <h4 className="font-bold text-base text-gray-900 mb-2 group-hover:text-[#1A6B3C] transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              {title}
+                            </h4>
+
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3 font-inter">
+                              <MapPin size={12} className="text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{track.location}</span>
+                            </div>
+
+                            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed mb-4 font-inter">
+                              {desc}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-3 border-t border-gray-100 mt-2">
+                            {/* VIEW DETAILS BUTTON */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedVolunteerRole(track)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-[#1A6B3C] hover:border-emerald-200 border border-transparent transition-all cursor-pointer"
+                            >
+                              <Eye size={13} />
+                              <span>{t('View Details', 'বিস্তারিত দেখুন')}</span>
+                            </button>
+
+                            {/* APPLY NOW BUTTON */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVolForm(f => ({ ...f, interest: title }));
+                                const el = document.getElementById('volunteer-request-form');
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                              }}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-[#0A3320] text-white hover:bg-[#13532e] transition-all shadow-sm cursor-pointer"
+                            >
+                              <span>{t('Apply', 'আবেদন')}</span>
+                              <ArrowRight size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── 2. SEND VOLUNTEER REQUEST FORM ── */}
+              <div id="volunteer-request-form" className="bg-[#F9FAFB] rounded-3xl p-6 sm:p-8 border border-gray-200">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-[#E8521A]" />
+                    <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase font-inter">
+                      {t('VOLUNTEER APPLICATION', 'স্বেচ্ছাসেবক আবেদনপত্র')}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-gray-900 font-poppins">
+                    {t('Send Volunteer Request', 'স্বেচ্ছাসেবক আবেদন জমা দিন')}
                   </h3>
-                  <p className="text-sm" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
-                    {t(
-                      'Thank you for your interest in volunteering with YCN. Our team will review your application and contact you within 5 business days.',
-                      'ওয়াইসিএন-এর সাথে স্বেচ্ছাসেবক হিসেবে আগ্রহ প্রকাশের জন্য আপনাকে ধন্যবাদ। আমাদের টিম আপনার আবেদনটি পর্যালোচনা করবে এবং ৫ কার্যদিবসের মধ্যে যোগাযোগ করবে।'
-                    )}
+                  <p className="text-xs text-gray-500 font-inter mt-1">
+                    {t('Fill in your background and motivations. Our recruitment team reviews submissions weekly.', 'আপনার তথ্য ও আগ্রহের বিবরণ লিখুন। আমাদের টিম প্রতি সপ্তাহে আবেদন পর্যালোচনা করে।')}
                   </p>
                 </div>
-              ) : (
-                <form onSubmit={handleVolunteer} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-                        {t('Full Name *', 'পূর্ণ নাম *')}
-                      </label>
-                      <input
-                        className={inputCls}
-                        style={inputStyle}
-                        value={volForm.name}
-                        onChange={e => setVolForm(f => ({ ...f, name: e.target.value }))}
-                        onFocus={e => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={e => Object.assign(e.target.style, { border: '1px solid #E5E7EB' })}
-                        placeholder={t("Your full name", "আপনার পূর্ণ নাম লিখুন")}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-                        {t('Email Address *', 'ইমেইল ঠিকানা *')}
-                      </label>
-                      <input
-                        type="email"
-                        className={inputCls}
-                        style={inputStyle}
-                        value={volForm.email}
-                        onChange={e => setVolForm(f => ({ ...f, email: e.target.value }))}
-                        placeholder="your@email.com"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-                        {t('Phone Number', 'ফোন নম্বর')}
-                      </label>
-                      <input
-                        className={inputCls}
-                        style={inputStyle}
-                        value={volForm.phone}
-                        onChange={e => setVolForm(f => ({ ...f, phone: e.target.value }))}
-                        placeholder="+880 XXX XXXXXXX"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-                        {t('Area of Interest *', 'আগ্রহের ক্ষেত্র *')}
-                      </label>
-                      <select
-                        className={inputCls}
-                        style={{ ...inputStyle, cursor: 'pointer' }}
-                        value={volForm.interest}
-                        onChange={e => setVolForm(f => ({ ...f, interest: e.target.value }))}
-                        required
+
+                {volSuccess ? (
+                  <div className="text-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <CheckCircle size={44} className="mx-auto mb-3 text-[#1A6B3C]" />
+                    <h3 className="font-bold text-lg mb-2 text-gray-900 font-poppins">
+                      {t('Volunteer Request Submitted!', 'স্বেচ্ছাসেবক আবেদন সফলভাবে জমা হয়েছে!')}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto mb-6 font-inter leading-relaxed">
+                      {t(
+                        'Thank you for stepping up for climate action. Your application is saved under review. You can review your sent request details below.',
+                        'জলবায়ু ন্যায়বিচারের জন্য এগিয়ে আসার জন্য ধন্যবাদ। আপনার আবেদন পর্যালোচনার জন্য সংরক্ষিত হয়েছে। আপনি নিচে আপনার প্রেরিত আবেদনের বিবরণ দেখতে পারেন।'
+                      )}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      {/* VIEW SUBMITTED DETAILS BUTTON */}
+                      <button
+                        type="button"
+                        onClick={() => setShowSubmittedDetailsModal(true)}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-emerald-50 text-[#1A6B3C] border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm"
                       >
-                        <option value="">{t('Select a program area', 'একটি প্রোগ্রাম ক্ষেত্র নির্বাচন করুন')}</option>
-                        {volunteerAreas.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
+                        <Eye size={14} />
+                        <span>{t('View Request Details', 'আবেদনের বিবরণ দেখুন')}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVolSuccess(false);
+                          setSubmittedVolunteerData(null);
+                        }}
+                        className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#0A3320] text-white hover:bg-[#13532e] transition-all shadow-sm"
+                      >
+                        {t('Send Another Request', 'আরেকটি আবেদন পাঠান')}
+                      </button>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-                      {t('Your Skills & Background', 'আপনার দক্ষতা ও ব্যাকগ্রাউন্ড')}
-                    </label>
-                    <input
-                      className={inputCls}
-                      style={inputStyle}
-                      value={volForm.skills}
-                      onChange={e => setVolForm(f => ({ ...f, skills: e.target.value }))}
-                      placeholder={t("E.g. research, data analysis, community outreach, social media...", "যেমন: গবেষণা, সামাজিক কাজ, মিডিয়া, ডিজাইন ইত্যাদি")}
-                    />
+                ) : (
+                  <form onSubmit={handleVolunteer} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5 text-gray-700 font-inter">
+                          {t('Full Name *', 'পূর্ণ নাম *')}
+                        </label>
+                        <input
+                          className={inputCls}
+                          style={inputStyle}
+                          value={volForm.name}
+                          onChange={e => setVolForm(f => ({ ...f, name: e.target.value }))}
+                          onFocus={e => Object.assign(e.target.style, inputFocusStyle)}
+                          onBlur={e => Object.assign(e.target.style, { border: '1px solid #E5E7EB' })}
+                          placeholder={t("Your full name", "আপনার পূর্ণ নাম লিখুন")}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5 text-gray-700 font-inter">
+                          {t('Email Address *', 'ইমেইল ঠিকানা *')}
+                        </label>
+                        <input
+                          type="email"
+                          className={inputCls}
+                          style={inputStyle}
+                          value={volForm.email}
+                          onChange={e => setVolForm(f => ({ ...f, email: e.target.value }))}
+                          placeholder="your@email.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5 text-gray-700 font-inter">
+                          {t('Phone Number', 'ফোন নম্বর')}
+                        </label>
+                        <input
+                          className={inputCls}
+                          style={inputStyle}
+                          value={volForm.phone}
+                          onChange={e => setVolForm(f => ({ ...f, phone: e.target.value }))}
+                          placeholder="+880 XXX XXXXXXX"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5 text-gray-700 font-inter">
+                          {t('Area of Interest / Volunteer Role *', 'আগ্রহের ক্ষেত্র বা পদবী *')}
+                        </label>
+                        <select
+                          className={inputCls}
+                          style={{ ...inputStyle, cursor: 'pointer' }}
+                          value={volForm.interest}
+                          onChange={e => setVolForm(f => ({ ...f, interest: e.target.value }))}
+                          required
+                        >
+                          <option value="">{t('Select a program area or role', 'একটি ক্ষেত্র বা পদবী নির্বাচন করুন')}</option>
+                          {volunteerTracks.map((vt: any) => (
+                            <option key={vt.id || vt.slug} value={lang === 'bn' ? vt.title_bn : vt.title}>
+                              ★ {lang === 'bn' ? vt.title_bn : vt.title} ({vt.badge})
+                            </option>
+                          ))}
+                          {volunteerAreas.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5 text-gray-700 font-inter">
+                        {t('Your Skills & Background', 'আপনার দক্ষতা ও ব্যাকগ্রাউন্ড')}
+                      </label>
+                      <input
+                        className={inputCls}
+                        style={inputStyle}
+                        value={volForm.skills}
+                        onChange={e => setVolForm(f => ({ ...f, skills: e.target.value }))}
+                        placeholder={t("E.g. research, community mobilization, social media, photography, translation...", "যেমন: গবেষণা, সামাজিক কাজ, মিডিয়া, ডিজাইন ইত্যাদি")}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5 text-gray-700 font-inter">
+                        {t('Why do you want to volunteer with YCN?', 'আপনি কেন ওয়াইসিএন-এর সাথে যুক্ত হতে চান?')}
+                      </label>
+                      <textarea
+                        className={inputCls}
+                        style={{ ...inputStyle, resize: 'vertical' }}
+                        rows={4}
+                        value={volForm.message}
+                        onChange={e => setVolForm(f => ({ ...f, message: e.target.value }))}
+                        placeholder={t("Tell us about your motivation...", "আপনার প্রেরণা এবং আপনি কীভাবে ভূমিকা রাখতে পারেন তা জানান...")}
+                      />
+                    </div>
+
+                    {volError && (
+                      <div className="p-3.5 rounded-xl text-xs flex items-center gap-2 bg-red-50 text-red-700 border border-red-200">
+                        <AlertCircle size={16} className="flex-shrink-0" />
+                        <span>{volError}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={volLoading}
+                      className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer shadow-md"
+                      style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
+                    >
+                      {volLoading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>{t('Sending Request...', 'অনুরোধ পাঠানো হচ্ছে...')}</span>
+                        </>
+                      ) : (
+                        t('Send Volunteer Request', 'স্বেচ্ছাসেবক আবেদন জমা দিন')
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              {/* ── MODAL 1: VOLUNTEER ROLE DETAILS MODAL ── */}
+              {selectedVolunteerRole && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+                  <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <button
+                      onClick={() => setSelectedVolunteerRole(null)}
+                      className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+
+                    <div className="mb-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#1A6B3C] border border-emerald-200">
+                          {selectedVolunteerRole.badge}
+                        </span>
+                        <span className="text-xs text-gray-400 font-inter flex items-center gap-1">
+                          <Clock size={12} /> {selectedVolunteerRole.commitment}
+                        </span>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-gray-900 font-poppins">
+                        {lang === 'bn' ? selectedVolunteerRole.title_bn : selectedVolunteerRole.title}
+                      </h3>
+
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 font-inter">
+                        <MapPin size={12} className="text-gray-400" />
+                        <span>{selectedVolunteerRole.location}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 text-xs font-inter text-gray-700 leading-relaxed border-t border-gray-100 pt-4">
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm mb-1">{t('Role Overview', 'কাজের বিবরণ')}</h4>
+                        <p>{lang === 'bn' ? selectedVolunteerRole.description_bn : selectedVolunteerRole.description}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm mb-2">{t('Key Responsibilities', 'মূল দায়িত্বসমূহ')}</h4>
+                        <ul className="space-y-1.5">
+                          {(lang === 'bn' ? selectedVolunteerRole.responsibilities_bn : selectedVolunteerRole.responsibilities).map((resp, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <CheckCircle size={14} className="text-[#1A6B3C] flex-shrink-0 mt-0.5" />
+                              <span>{resp}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm mb-2">{t('Key Skills & Profile', 'প্রয়োজনীয় দক্ষতা')}</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedVolunteerRole.skills.map((sk, i) => (
+                            <span key={i} className="px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-[11px] font-medium">
+                              {sk}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm mb-2">{t('Volunteer Benefits', 'স্বেচ্ছাসেবক সুবিধাসমূহ')}</h4>
+                        <ul className="space-y-1.5">
+                          {selectedVolunteerRole.benefits.map((ben, i) => (
+                            <li key={i} className="flex items-center gap-2 text-emerald-800 font-medium">
+                              <Sparkles size={13} className="text-[#E8521A] flex-shrink-0" />
+                              <span>{ben}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 pt-6 border-t border-gray-100 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedVolunteerRole(null)}
+                        className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                      >
+                        {t('Close', 'বন্ধ করুন')}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const chosenTitle = lang === 'bn' ? selectedVolunteerRole.title_bn : selectedVolunteerRole.title;
+                          setVolForm(f => ({ ...f, interest: chosenTitle }));
+                          setSelectedVolunteerRole(null);
+                          const el = document.getElementById('volunteer-request-form');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-[#0A3320] text-white text-xs font-semibold hover:bg-[#13532e] inline-flex items-center gap-1.5 shadow-md"
+                      >
+                        <span>{t('Apply for this Role', 'এই পদের জন্য আবেদন করুন')}</span>
+                        <ArrowRight size={13} />
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-                      {t('Why do you want to volunteer with YCN?', 'আপনি কেন ওয়াইসিএন-এর সাথে যুক্ত হতে চান?')}
-                    </label>
-                    <textarea
-                      className={inputCls}
-                      style={{ ...inputStyle, resize: 'vertical' }}
-                      rows={4}
-                      value={volForm.message}
-                      onChange={e => setVolForm(f => ({ ...f, message: e.target.value }))}
-                      placeholder={t("Tell us about your motivation...", "আপনার প্রেরণা এবং আপনি কীভাবে ভূমিকা রাখতে পারেন তা জানান...")}
-                    />
+                </div>
+              )}
+
+              {/* ── MODAL 2: SUBMITTED VOLUNTEER REQUEST DETAILS MODAL ── */}
+              {showSubmittedDetailsModal && submittedVolunteerData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+                  <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl">
+                    <button
+                      onClick={() => setShowSubmittedDetailsModal(false)}
+                      className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#1A6B3C] flex items-center justify-center">
+                        <CheckCircle size={22} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg text-gray-900 font-poppins">{t('Your Submitted Request Details', 'আপনার জমা দেওয়া আবেদনের বিবরণ')}</h3>
+                        <p className="text-[11px] text-gray-400 font-inter">Status: Pending Review</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3.5 text-xs font-inter border-y border-gray-100 py-4 my-4">
+                      <div className="flex justify-between py-1 border-b border-gray-50">
+                        <span className="text-gray-400 font-semibold">{t('Full Name:', 'পূর্ণ নাম:')}</span>
+                        <span className="font-bold text-gray-900">{submittedVolunteerData.name}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-gray-50">
+                        <span className="text-gray-400 font-semibold">{t('Email:', 'ইমেইল:')}</span>
+                        <span className="font-medium text-gray-800">{submittedVolunteerData.email}</span>
+                      </div>
+                      {submittedVolunteerData.phone && (
+                        <div className="flex justify-between py-1 border-b border-gray-50">
+                          <span className="text-gray-400 font-semibold">{t('Phone:', 'ফোন:')}</span>
+                          <span className="font-medium text-gray-800">{submittedVolunteerData.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between py-1 border-b border-gray-50">
+                        <span className="text-gray-400 font-semibold">{t('Area of Interest:', 'আগ্রহের ক্ষেত্র:')}</span>
+                        <span className="font-bold text-[#E8521A]">{submittedVolunteerData.interest}</span>
+                      </div>
+                      {submittedVolunteerData.skills && (
+                        <div className="py-1 border-b border-gray-50">
+                          <span className="text-gray-400 font-semibold block mb-1">{t('Skills & Background:', 'দক্ষতা ও ব্যাকগ্রাউন্ড:')}</span>
+                          <span className="text-gray-700 bg-gray-50 p-2 rounded-lg block">{submittedVolunteerData.skills}</span>
+                        </div>
+                      )}
+                      {submittedVolunteerData.message && (
+                        <div className="py-1">
+                          <span className="text-gray-400 font-semibold block mb-1">{t('Motivation Statement:', 'প্রেরণার বিবরণ:')}</span>
+                          <span className="text-gray-700 bg-gray-50 p-2.5 rounded-lg block italic">"{submittedVolunteerData.message}"</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowSubmittedDetailsModal(false)}
+                        className="px-5 py-2 rounded-xl bg-[#0A3320] text-white text-xs font-semibold hover:bg-[#13532e]"
+                      >
+                        {t('Close', 'বন্ধ করুন')}
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01]"
-                    style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
-                  >
-                    {t('Submit Volunteer Application', 'স্বেচ্ছাসেবক আবেদন জমা দিন')}
-                  </button>
-                </form>
+                </div>
               )}
             </div>
           )}
@@ -351,8 +819,26 @@ export function GetInvolvedPage() {
                       <label className="block text-xs font-semibold mb-1.5" style={{ color: '#374151', fontFamily: 'Inter, sans-serif' }}>{t('Why do you want to join? *', 'কেন যুক্ত হতে চান? *')}</label>
                       <textarea className={inputCls} style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} value={internForm.message} onChange={e => setInternForm(f => ({ ...f, message: e.target.value }))} placeholder={t("Tell us about your motivation...", "আপনার আগ্রহের কথা আমাদের জানান...")} required />
                     </div>
-                    <button type="submit" className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01]" style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}>
-                      {t('Submit Application', 'আবেদন জমা দিন')}
+                    {internError && (
+                      <div className="p-3.5 rounded-xl text-xs flex items-center gap-2 bg-red-50 text-red-700 border border-red-200">
+                        <AlertCircle size={16} className="flex-shrink-0" />
+                        <span>{internError}</span>
+                      </div>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={internLoading}
+                      className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                      style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
+                    >
+                      {internLoading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>{t('Submitting...', 'জমা দেওয়া হচ্ছে...')}</span>
+                        </>
+                      ) : (
+                        t('Submit Application', 'আবেদন জমা দিন')
+                      )}
                     </button>
                   </form>
                 </div>
@@ -371,7 +857,7 @@ export function GetInvolvedPage() {
                           <div className="mb-5">
                             <p className="text-xs font-semibold mb-2" style={{ color: '#374151' }}>{t('Requirements:', 'যোগ্যতা/প্রয়োজনীয়তা:')}</p>
                             <ul className="space-y-1">
-                              {(lang === 'bn' && program.requirements_bn && program.requirements_bn.length > 0 ? program.requirements_bn : program.requirements).map(r => (
+                              {(lang === 'bn' && program.requirements_bn && program.requirements_bn.length > 0 ? program.requirements_bn : program.requirements).map((r: string) => (
                                 <li key={r} className="flex items-center gap-2 text-xs" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
                                   <CheckCircle size={11} style={{ color: '#1A6B3C' }} /> {r}
                                 </li>
@@ -503,12 +989,26 @@ export function GetInvolvedPage() {
                       required
                     />
                   </div>
+                  {partError && (
+                    <div className="p-3.5 rounded-xl text-xs flex items-center gap-2 bg-red-50 text-red-700 border border-red-200">
+                      <AlertCircle size={16} className="flex-shrink-0" />
+                      <span>{partError}</span>
+                    </div>
+                  )}
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01]"
+                    disabled={partLoading}
+                    className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                     style={{ backgroundColor: '#0A3320', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}
                   >
-                    {t('Submit Partnership Inquiry', 'অংশীদারিত্ব প্রস্তাব জমা দিন')}
+                    {partLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>{t('Submitting...', 'জমা দেওয়া হচ্ছে...')}</span>
+                      </>
+                    ) : (
+                      t('Submit Partnership Inquiry', 'অংশীদারিত্ব প্রস্তাব জমা দিন')
+                    )}
                   </button>
                 </form>
               )}

@@ -1,45 +1,123 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { SEO } from './ui/SEO';
-import { ArrowRight, Shield, Lightbulb, Heart, Users, Eye, Target, Waves, Wind, Droplets, Scale, Sprout, MapPin } from 'lucide-react';
-import { useState } from 'react';
-import logo2 from '../../imports/image-2.webp';
+import * as LucideIcons from 'lucide-react';
+import {
+  ArrowRight, Heart, Users, Target, Eye, Sparkles,
+  Play, Linkedin
+} from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
-import { useTeam } from '../lib/api';
+import { useTeam, useFounderBrief, useBlogs, useAboutContent } from '../lib/api';
 
-function UnifiedMemberCard({ member }: { member: { id?: string; name: string; role: string; bio?: string; email?: string; image?: string } }) {
-  const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+function resolvePillarIcon(name?: string, fallback = Target) {
+  if (name && (LucideIcons as any)[name]) return (LucideIcons as any)[name];
+  return fallback;
+}
+
+interface MemberCardProps {
+  member: {
+    id?: string;
+    name: string;
+    name_bn?: string;
+    role: string;
+    role_bn?: string;
+    department?: string;
+    department_bn?: string;
+    bio?: string;
+    email?: string;
+    image?: string;
+    linkedin?: string;
+    number?: number;
+    type?: string;
+  };
+  showNumber?: boolean;
+  numberIndex?: number;
+}
+
+function MemberCard({ member, showNumber, numberIndex }: MemberCardProps) {
   const [imgError, setImgError] = useState(false);
+  const { lang } = useLanguage();
+
+  const name = lang === 'bn' && member.name_bn ? member.name_bn : member.name;
+  const role = lang === 'bn' && member.role_bn ? member.role_bn : member.role;
+  const dept = lang === 'bn' && member.department_bn ? member.department_bn : (member.department || 'Climate Action');
+  const initials = member.name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2);
+
+  // Department Badge color palette matching design reference
+  const getDeptColor = (d: string) => {
+    const ld = d.toLowerCase();
+    if (ld.includes('program') || ld.includes('leadership')) return { bg: '#EBF5EE', text: '#1A6B3C', border: '#C6E7D2' };
+    if (ld.includes('research') || ld.includes('policy')) return { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' };
+    if (ld.includes('communication') || ld.includes('media')) return { bg: '#FDF2F8', text: '#BE185D', border: '#FBCFE8' };
+    if (ld.includes('operation') || ld.includes('logistics')) return { bg: '#EFF6FF', text: '#0284C7', border: '#BAE6FD' };
+    if (ld.includes('finance') || ld.includes('fundraising')) return { bg: '#F5F3FF', text: '#6D28D9', border: '#DDD6FE' };
+    if (ld.includes('volunteer')) return { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' };
+    return { bg: '#E8F5EE', text: '#1A6B3C', border: '#C6E7D2' };
+  };
+
+  const deptStyle = getDeptColor(dept);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden group aspect-[3/4] bg-gray-100 flex items-center justify-center hover:shadow-xl transition-all duration-300">
-      {member.image && !imgError ? (
-        <img
-          src={member.image}
-          alt={member.name}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div className="text-4xl font-bold flex items-center justify-center w-full h-full bg-slate-800 text-slate-200">{initials}</div>
+    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full group hover:-translate-y-1 relative">
+      {/* Number Badge */}
+      {showNumber && (
+        <div className="absolute top-6 left-6 z-10 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[10px] font-bold tracking-wider">
+          #{member.number || (numberIndex !== undefined ? numberIndex + 1 : 1)}
+        </div>
       )}
-      
-      {/* Gradient overlay at the bottom */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
-      
-      {/* Name and Role Box */}
-      <div className="absolute bottom-3 left-3 right-3 rounded-xl p-3 text-center transition-transform duration-300 group-hover:-translate-y-1" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95), rgba(30,30,30,0.75))', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <h3 className="font-semibold text-white mb-0.5 text-[15px]" style={{ fontFamily: 'Poppins, sans-serif' }}>{member.name}</h3>
-        <p className="text-[11px] text-gray-300 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>{member.role}</p>
-        {member.email && (
+
+      {/* Image container */}
+      <div className="aspect-[4/4.5] w-full rounded-xl overflow-hidden bg-gray-100 mb-4 relative flex items-center justify-center">
+        {member.image && !imgError ? (
+          <img
+            src={member.image}
+            alt={member.name}
+            className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImgError(true)}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-emerald-950 text-emerald-200 text-2xl font-bold font-poppins">
+            {initials || 'YCN'}
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="font-bold text-gray-900 text-[16px] leading-snug mb-1 group-hover:text-[#1A6B3C] transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {name}
+          </h3>
+          <p className="text-xs text-gray-500 font-medium mb-3 line-clamp-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+            {role}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-auto">
+          <span
+            className="text-[11px] font-medium px-2.5 py-1 rounded-full border max-w-[80%] truncate"
+            style={{
+              backgroundColor: deptStyle.bg,
+              color: deptStyle.text,
+              borderColor: deptStyle.border,
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            {dept}
+          </span>
+
           <a
-            href={`mailto:${member.email}`}
-            className="mt-2 inline-block text-[10px] hover:text-white transition-colors text-gray-400"
-            style={{ fontFamily: 'Inter, sans-serif' }}
+            href={member.linkedin || 'https://linkedin.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#0A66C2] bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 transition-colors flex-shrink-0"
+            title="LinkedIn profile"
             onClick={(e) => e.stopPropagation()}
           >
-            {member.email}
+            <Linkedin size={14} />
           </a>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -47,522 +125,484 @@ function UnifiedMemberCard({ member }: { member: { id?: string; name: string; ro
 
 export function AboutPage() {
   const { t, lang } = useLanguage();
-  const { data: dynamicTeamList = [] } = useTeam();
-  
-  const teamMembersList = dynamicTeamList.filter(m => m.type !== 'advisor');
-  const advisorMembersList = dynamicTeamList.filter(m => m.type === 'advisor');
+  const { data: team = [] } = useTeam();
+  const { data: founderBrief } = useFounderBrief();
+  const { data: aboutContent } = useAboutContent();
+  const { data: blogs = [] } = useBlogs();
 
-  const [expandedStatement, setExpandedStatement] = useState(false);
+  const [activeDepartment, setActiveDepartment] = useState('All');
+  const [showAllAdvisors, setShowAllAdvisors] = useState(false);
+  const [showFullFounderModal, setShowFullFounderModal] = useState(false);
 
-  const values = [
-    {
-      icon: Shield, title: t('Climate Justice', 'জলবায়ু ন্যায়বিচার'),
-      desc: t('We believe climate change is a justice issue. Those least responsible bear the greatest burden, and our work centers their rights and voices.', 'আমরা বিশ্বাস করি জলবায়ু পরিবর্তন একটি ন্যায়বিচারের বিষয়। সবচেয়ে কম দায়ী ব্যক্তিরাই সবচেয়ে বেশি বোঝা বহন করে এবং আমাদের কাজ তাদের অধিকার ও কণ্ঠস্বরকে কেন্দ্র করে।'),
-      color: '#1A6B3C', bg: '#E8F5EE',
-    },
-    {
-      icon: Users, title: t('Youth Leadership', 'যুব নেতৃত্ব'),
-      desc: t('Young people are not just beneficiaries — they are agents of change, innovators, and leaders whose perspectives are essential.', 'তরুণরা কেবল সুবিধাভোগী নয় — তারা পরিবর্তনের চালিকাশক্তি, উদ্ভাবক এবং নেতা যাদের দৃষ্টিভঙ্গি অত্যন্ত গুরুত্বপূর্ণ।'),
-      color: '#E8521A', bg: '#FFF3EE',
-    },
-    {
-      icon: Heart, title: t('Inclusivity & Equity', 'অন্তর্ভুক্তি ও সমতা'),
-      desc: t('We prioritize gender equity, disability inclusion, and the meaningful participation of marginalized groups in all programs and governance.', 'আমরা আমাদের সমস্ত প্রোগ্রাম ও পরিচালনায় জেন্ডার সমতা, প্রতিবন্ধী অন্তর্ভুক্তি এবং প্রান্তিক জনগোষ্ঠীর অর্থপূর্ণ অংশগ্রহণকে অগ্রাধিকার দিই।'),
-      color: '#0E7490', bg: '#E0F7FA',
-    },
-    {
-      icon: Target, title: t('Community Ownership', 'সামাজিক মালিকানাধীন'),
-      desc: t('Our programs are co-designed with communities. Local knowledge, needs, and aspirations drive every initiative we undertake.', 'আমাদের প্রোগ্রামগুলো স্থানীয় জনগোষ্ঠীর সাথে যৌথভাবে ডিজাইন করা হয়। স্থানীয় জ্ঞান, চাহিদা এবং আকাঙ্ক্ষাই আমাদের প্রতিটি উদ্যোগ পরিচালনা করে।'),
-      color: '#7B1FA2', bg: '#F3E5F5',
-    },
-    {
-      icon: Eye, title: t('Transparency & Accountability', 'স্বচ্ছতা ও জবাবদিহিতা'),
-      desc: t('We uphold the highest standards of financial integrity, programmatic transparency, and stakeholder accountability in all operations.', 'আমরা আমাদের সমস্ত কার্যকলাপে আর্থিক সততা, প্রোগ্রামভিত্তিক স্বচ্ছতা এবং স্টেকহোল্ডারদের প্রতি জবাবদিহিতার সর্বোচ্চ মান বজায় রাখি।'),
-      color: '#D97706', bg: '#FFF8E1',
-    },
-    {
-      icon: Lightbulb, title: t('Science & Innovation', 'বিজ্ঞান ও উদ্ভাবন'),
-      desc: t('We ground our advocacy and programs in rigorous research, evidence-based approaches, and creative local innovation.', 'আমরা আমাদের অ্যাডভোকেসি এবং প্রোগ্রামগুলোকে কঠোর গবেষণা, প্রমাণ-ভিত্তিক পদ্ধতি এবং সৃজনশীল স্থানীয় উদ্ভাবনের ওপর ভিত্তি করে পরিচালনা করি।'),
-      color: '#2E7D32', bg: '#E8F5E9',
-    },
+  // Group team members
+  const advisors = team.filter(m => m.type === 'advisor');
+  const directors = team.filter(m => m.type === 'director');
+  const members = team.filter(m => m.type !== 'advisor' && m.type !== 'director');
+
+  // Filtered members by department
+  const filteredMembers = members.filter(m => {
+    if (activeDepartment === 'All') return true;
+    const dept = (m.department || '').toLowerCase();
+    return dept.includes(activeDepartment.toLowerCase());
+  });
+
+  const departmentTabs = [
+    { key: 'All', label: t('All', 'সব') },
+    { key: 'Programs', label: t('Programs', 'প্রোগ্রাম') },
+    { key: 'Research', label: t('Research', 'গবেষণা') },
+    { key: 'Communications', label: t('Communications', 'যোগাযোগ') },
+    { key: 'Operations', label: t('Operations', 'অপারেশনস') },
+    { key: 'Finance', label: t('Finance', 'অর্থ ও তহবিল') },
+    { key: 'Volunteers', label: t('Volunteers', 'স্বেচ্ছাসেবক') },
   ];
 
+  const displayedAdvisors = showAllAdvisors ? advisors : advisors.slice(0, 6);
+
   return (
-    <div>
-      <SEO 
-        title="About Us" 
-        description="Learn about the Youth Climate Network's history, mission, vision, and the passionate team working tirelessly to combat climate change in Bangladesh."
-        keywords="about youth climate network, climate organization mission, environmental team bangladesh, youth climate leaders, sustainable vision"
+    <div className="bg-white min-h-screen">
+      <SEO
+        title="About Us | Youth Climate Network Bangladesh"
+        description="A youth-led network working for a cleaner, greener and more resilient Bangladesh. Meet our advisory board, leadership, and changemakers."
+        keywords="about YCN Bangladesh, climate advisory board, executive directors, climate youth team, grassroots climate action"
       />
-      {/* Hero */}
-      <section
-        className="pt-32 pb-20 relative overflow-hidden"
-        style={{ backgroundColor: '#0A3320' }}
-      >
+
+      {/* ── 1. HERO SECTION ── */}
+      <section className="pt-36 pb-20 relative overflow-hidden" style={{ backgroundColor: '#072416' }}>
         <div
-          className="absolute inset-0 opacity-5"
+          className="absolute inset-0 opacity-10"
           style={{
-            backgroundImage: 'radial-gradient(circle at 20% 50%, #E8521A 0%, transparent 50%), radial-gradient(circle at 80% 20%, #1A6B3C 0%, transparent 50%)',
+            backgroundImage: 'radial-gradient(circle at 20% 40%, #E8521A 0%, transparent 40%), radial-gradient(circle at 80% 30%, #1A6B3C 0%, transparent 45%)',
           }}
         />
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: 'rgba(232,82,26,0.15)', color: '#E8521A' }}>
-            {t('About Us', 'আমাদের সম্পর্কে')}
-          </div>
-          <h1
-            className="mb-6"
-            style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3.2rem)', color: '#F0ECD8' }}
-          >
-            {t('Who We Are', 'আমরা কে')}
-          </h1>
-          <p
-            className="max-w-2xl mx-auto leading-relaxed"
-            style={{ fontFamily: 'Inter, sans-serif', color: '#A8C4B0', fontSize: '1.1rem' }}
-          >
-            {t(
-              'Youth Climate Network is a grassroots, youth-led non-profit established in Bangladesh, operating at the forefront of climate justice across Asia Pacific and South Asia.',
-              'ইয়ুথ ক্লাইমেট নেটওয়ার্ক হল বাংলাদেশে প্রতিষ্ঠিত একটি তৃণমূল, যুব-নেতৃত্বাধীন অলাভজনক সংস্থা, যা এশিয়া প্যাসিফিক এবং দক্ষিণ এশিয়া জুড়ে জলবায়ু ন্যায়বিচারের অগ্রভাগে কাজ করছে।'
-            )}
-          </p>
-        </div>
-      </section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <nav className="flex items-center gap-2 text-xs font-medium text-emerald-300/80 mb-4">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <span>&gt;</span>
+            <span className="text-white">About</span>
+          </nav>
 
-      {/* Wave */}
-      <div style={{ lineHeight: 0, backgroundColor: '#F3F4F6' }}>
-        <svg viewBox="0 0 1440 60" preserveAspectRatio="none" style={{ width: '100%', height: 60, display: 'block' }}>
-          <path d="M0,40 C360,0 1080,60 1440,20 L1440,0 L0,0 Z" fill="#0A3320" />
-        </svg>
-      </div>
-
-      {/* Who We Are */}
-      <section className="py-20" style={{ backgroundColor: '#F3F4F6' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2
-                className="mb-6"
-                style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}
-              >
-                {t('Founded by Young People,', 'তরুণদের দ্বারা প্রতিষ্ঠিত,')} <br />
-                <span style={{ color: '#1A6B3C' }}>{t('for Young People', 'তরুণদের জন্য')}</span>
-              </h2>
-              <p className="leading-relaxed mb-5" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>
-                {t(
-                  'Youth Climate Network (YCN) embodies the conviction that the generation most affected by the climate crisis must also lead the response to it. We work at the intersection of climate science, community resilience, social equity, and youth empowerment.',
-                  'ইয়ুথ ক্লাইমেট নেটওয়ার্ক (ওয়াইসিএন) এই দৃঢ় বিশ্বাস ধারণ করে যে জলবায়ু সংকট দ্বারা সবচেয়ে বেশি ক্ষতিগ্রস্ত প্রজন্মকেই এর নেতৃত্বে থাকতে হবে। আমরা জলবায়ু বিজ্ঞান, সামাজিক সহনশীলতা, সমতা এবং যুব ক্ষমতায়নের মেলবন্ধনে কাজ করি।'
-                )}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl sm:text-5xl font-extrabold text-[#F0ECD8] mb-4 tracking-tight leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {lang === 'bn' && aboutContent?.heroTitle_bn ? aboutContent.heroTitle_bn : (aboutContent?.heroTitle || t('About YCN Bangladesh', 'ওয়াইসিএন বাংলাদেশ সম্পর্কে'))}
+              </h1>
+              <p className="text-base sm:text-xl text-[#A8C4B0] font-normal leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {lang === 'bn' && aboutContent?.heroSubtitle_bn ? aboutContent.heroSubtitle_bn : (aboutContent?.heroSubtitle || t('A youth-led network working for a cleaner, greener and more resilient Bangladesh.', 'একটি যুব-নেতৃত্বাধীন নেটওয়ার্ক যা আরও পরিষ্কার, সবুজ এবং জলবায়ু-সহনশীল বাংলাদেশের জন্য কাজ করছে।'))}
               </p>
-              <p className="leading-relaxed mb-5" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>
-                {t(
-                  "Officially registered under the Department of Youth Development, Government of the People's Republic of Bangladesh (Registration No: DYD/Khulna/Reg-104), YCN operates with full legal standing and institutional accountability.",
-                  'গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের যুব উন্নয়ন অধিদপ্তরের অধীনে অফিসিয়ালি নিবন্ধিত (নিবন্ধন নম্বর: DYD/Khulna/Reg-104), ওয়াইসিএন সম্পূর্ণ আইনি ভিত্তি এবং প্রাতিষ্ঠানিক জবাবদিহিতার সাথে তার কার্যক্রম পরিচালনা করে।'
-                )}
-              </p>
-              <p className="leading-relaxed mb-8" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>
-                {t(
-                  'We recognize that environmental challenges are inseparable from issues of poverty, gender inequality, food security, and human dignity — and that real solutions must be community-led, inclusive, and just.',
-                  'আমরা বিশ্বাস করি যে পরিবেশগত চ্যালেঞ্জগুলো দারিদ্র্য, লিঙ্গ বৈষম্য, খাদ্য নিরাপত্তা এবং মানুষের মর্যাদার সাথে অবিচ্ছেদ্যভাবে জড়িত — এবং প্রকৃত সমাধানগুলোকে অবশ্যই সামাজিক-নেতৃত্বাধীন, অন্তর্ভুক্তিমূলক এবং ন্যায়সঙ্গত হতে হবে।'
-                )}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: t('Founded', 'প্রতিষ্ঠিত'), value: '2022' },
-                  { label: t('Registration', 'নিবন্ধন'), value: 'DYD/Khulna/Reg-104' },
-                  { label: t('Headquarters', 'প্রধান কার্যালয়'), value: t('15/KA, Shyamoli, Mirpur Road, Dhaka-1207, Bangladesh', '১৫/ক, শ্যামলী, মিরপুর রোড, ঢাকা-১২০৭, বাংলাদেশ') },
-                  { label: t('Scope', 'পরিধি'), value: t('South Asia & Asia Pacific', 'দক্ষিণ এশিয়া ও এশিয়া প্যাসিফিক') },
-                ].map(({ label, value }) => (
-                  <div key={label} className="p-4 rounded-xl bg-white" style={{ border: '1px solid #E5E7EB' }}>
-                    <p className="text-xs font-medium mb-1" style={{ color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>{label}</p>
-                    <p className="text-sm font-semibold" style={{ color: '#1F2937', fontFamily: 'Poppins, sans-serif' }}>{value}</p>
-                  </div>
-                ))}
-              </div>
             </div>
-            <div className="relative">
-              <div className="rounded-3xl p-8" style={{ backgroundColor: '#0A3320' }}>
-                <div className="text-center mb-6">
-                  <img src={logo2} alt="YCN" className="h-16 w-auto mx-auto" />
-                </div>
-                <div
-                  className="rounded-2xl p-6 mb-4"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <p className="text-sm leading-relaxed mb-2" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif', fontStyle: 'italic' }}>
-                    {t(
-                      '"YCN bridges the gap between local grassroots action and regional and global policy platforms, ensuring that the voices of frontline youth communities are heard, respected, and acted upon."',
-                      '"ওয়াইসিএন স্থানীয় তৃণমূলের পদক্ষেপ এবং আঞ্চলিক ও বৈশ্বিক নীতিনির্ধারণী প্ল্যাটফর্মগুলোর মধ্যে ব্যবধান দূর করে, যা ফ্রন্টলাইন যুব সম্প্রদায়ের কণ্ঠস্বর শোনা, সম্মান করা এবং সেই অনুযায়ী কাজ করা নিশ্চিত করে।"'
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { label: t('Type', 'ধরন'), value: t('Grassroots Non-Profit, Youth-Led', 'তৃণমূল অলাভজনক, যুব-নেতৃত্বাধীন') },
-                    { label: t('Geographic Focus', 'ভৌগোলিক ফোকাস'), value: t('Bangladesh (primary) · South Asia · Asia Pacific', 'বাংলাদেশ (প্রধান) · দক্ষিণ এশিয়া · এশিয়া প্যাসিফিক') },
-                    { label: t('Registration Body', 'নিবন্ধন সংস্থা'), value: t('Dept. of Youth Development, GoB', 'যুব উন্নয়ন অধিদপ্তর, বাংলাদেশ সরকার') },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex flex-col gap-0.5 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                      <span className="text-xs" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif' }}>{label}</span>
-                      <span className="text-sm" style={{ color: '#D4CDB8', fontFamily: 'Inter, sans-serif' }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+
+            {/* Badge pill */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-900/60 border border-emerald-500/30 text-emerald-200 text-xs font-semibold backdrop-blur-md">
+              <Sparkles size={14} className="text-[#E8521A]" />
+              <span>{lang === 'bn' && aboutContent?.heroTagline_bn ? aboutContent.heroTagline_bn : (aboutContent?.heroTagline || "People · Planet · Resilient Bangladesh")}</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Bangladesh Context */}
-      <section className="py-20 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 10% 80%, rgba(232,82,26,0.08) 0%, transparent 50%), radial-gradient(circle at 90% 20%, rgba(26,107,60,0.15) 0%, transparent 50%)',
-          }}
-        />
-        {/* Subtle dot pattern */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #F0ECD8 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-          }}
-        />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: 'rgba(232,82,26,0.15)', color: '#E8521A' }}>
-              {t('Our Context', 'আমাদের প্রেক্ষাপট')}
-            </div>
-            <h2
-              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#F0ECD8' }}
-            >
-              {t('Bangladesh: A Climate Frontline Nation', 'বাংলাদেশ: জলবায়ু পরিবর্তনের ফ্রন্টলাইন জাতি')}
-            </h2>
-            <p className="mt-4 max-w-2xl mx-auto" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif', lineHeight: 1.7 }}>
-              {t('Why Bangladesh matters — and why youth-led climate action is not optional, but urgent.', 'কেন বাংলাদেশ গুরুত্বপূর্ণ — এবং কেন যুব-নেতৃত্বাধীন জলবায়ু পদক্ষেপ ঐচ্ছিক নয়, বরং অত্যন্ত জরুরি।')}
-            </p>
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {[
-              { stat: '#7', label: t('Most Climate-Vulnerable Country', 'সবচেয়ে জলবায়ু-ঝুঁকিপূর্ণ দেশ'), sub: t('Global Climate Risk Index', 'গ্লোবাল ক্লাইমেট রিস্ক ইনডেক্স'), color: '#E8521A' },
-              { stat: '17%', label: t('Land at risk from sea level rise', 'সমুদ্রপৃষ্ঠের উচ্চতা বৃদ্ধির ঝুঁকিতে থাকা ভূমি'), sub: t('30 million people threatened', '৩ কোটি মানুষ হুমকির মুখে'), color: '#F59E0B' },
-              { stat: '60M+', label: t('Climate-Affected People', 'জলবায়ু-আক্রান্ত মানুষ'), sub: t('Annually from floods & cyclones', 'বার্ষিক বন্যা ও ঘূর্ণিঝড়ে'), color: '#10B981' },
-              { stat: '165M', label: t('Population Exposed', 'ঝুঁকিতে থাকা জনসংখ্যা'), sub: t('0.3% of global emissions', 'বৈশ্বিক নির্গমনের ০.৩%'), color: '#0E7490' },
-            ].map(({ stat, label, sub, color }) => (
-              <div
-                key={label}
-                className="rounded-2xl p-5 text-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                <div className="text-3xl font-black mb-2" style={{ color, fontFamily: 'Poppins, sans-serif' }}>{stat}</div>
-                <div className="text-sm font-semibold mb-1" style={{ color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}>{label}</div>
-                <div className="text-xs" style={{ color: '#7FAF8A', fontFamily: 'Inter, sans-serif' }}>{sub}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Content blocks */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* ── 2. FOUR CORE PILLARS / VALUES (Dynamic from Admin) ── */}
+      <section className="py-16 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                icon: Waves,
-                title: t('Coastal & River Flooding', 'উপকূলীয় এবং নদীর বন্যা'),
-                desc: t('Bangladesh experiences severe flooding annually, displacing millions. The Brahmaputra, Ganges, and Meghna river systems converge here, making it one of the world\'s most flood-prone nations.', 'বাংলাদেশে প্রতি বছর ভয়াবহ বন্যা দেখা দেয়, যা লাখ লাখ মানুষকে বাস্তুচ্যুত করে। ব্রহ্মপুত্র, গঙ্গা এবং মেঘনা নদী ব্যবস্থা এখানে মিলিত হয়েছে, যা এটিকে বিশ্বের অন্যতম বন্যাপ্রবণ দেশ করে তুলেছে।'),
-                color: '#0E7490',
+                icon: resolvePillarIcon(aboutContent?.missionIcon, Target),
+                title: lang === 'bn' && aboutContent?.missionTitle_bn ? aboutContent.missionTitle_bn : (aboutContent?.missionTitle || t('Our Mission', 'আমাদের মিশন')),
+                desc: lang === 'bn' && aboutContent?.missionDesc_bn ? aboutContent.missionDesc_bn : (aboutContent?.missionDesc || t('Empowering youth for a climate-resilient Bangladesh.', 'জলবায়ু-সহনশীল বাংলাদেশের জন্য তরুণদের ক্ষমতায়ন।')),
+                color: aboutContent?.missionColor || '#1A6B3C',
               },
               {
-                icon: Wind,
-                title: t('Cyclones & Storm Surges', 'ঘূর্ণিঝড় এবং জলোচ্ছ্বাস'),
-                desc: t('The Bay of Bengal\'s funnel shape amplifies tropical cyclones. Cyclone Sidr (2007) and Cyclone Amphan (2020) caused massive destruction — affecting millions of coastal communities where YCN works.', 'বঙ্গোপসাগরের ফানেল আকৃতি ক্রান্তীয় ঘূর্ণিঝড়কে আরও ঘনীভূত করে। সিডর (২০০৭) এবং আম্পান (২০২০) ভয়াবহ ধ্বংসলীলা সৃষ্টি করেছিল — যা লক্ষ লক্ষ উপকূলীয় মানুষকে প্রভাবিত করে যেখানে ওয়াইসিএন কাজ করে।'),
-                color: '#E8521A',
+                icon: resolvePillarIcon(aboutContent?.visionIcon, Eye),
+                title: lang === 'bn' && aboutContent?.visionTitle_bn ? aboutContent.visionTitle_bn : (aboutContent?.visionTitle || t('Our Vision', 'আমাদের ভিশন')),
+                desc: lang === 'bn' && aboutContent?.visionDesc_bn ? aboutContent.visionDesc_bn : (aboutContent?.visionDesc || t('A sustainable, just and climate-resilient Bangladesh.', 'একটি টেকসই, ন্যায়সঙ্গত এবং জলবায়ু-সহনশীল বাংলাদেশ।')),
+                color: aboutContent?.visionColor || '#E8521A',
               },
               {
-                icon: Droplets,
-                title: t('Sea Level Rise & Salinity', 'সমুদ্রপৃষ্ঠের উচ্চতা বৃদ্ধি ও লবণাক্ততা'),
-                desc: t('Rising sea levels are inundating coastal islands (chars). Saltwater intrusion is destroying farmland and freshwater sources, forcing climate migration — a crisis YCN addresses through advocacy and WASH programs.', 'সমুদ্রপৃষ্ঠের উচ্চতা বৃদ্ধি উপকূলীয় দ্বীপ ও চরাঞ্চলগুলোকে প্লাবিত করছে। লবণাক্ত পানির অনুপ্রবেশ কৃষি জমি এবং মিষ্টি পানির উৎস ধ্বংস করছে, জলবায়ু অভিবাসনকে ত্বরান্বিত করছে।'),
-                color: '#10B981',
+                icon: resolvePillarIcon(aboutContent?.approachIcon, Users),
+                title: lang === 'bn' && aboutContent?.approachTitle_bn ? aboutContent.approachTitle_bn : (aboutContent?.approachTitle || t('Our Approach', 'আমাদের পদ্ধতি')),
+                desc: lang === 'bn' && aboutContent?.approachDesc_bn ? aboutContent.approachDesc_bn : (aboutContent?.approachDesc || t('Youth leadership, collaboration and evidence-based action.', 'যুব নেতৃত্ব, সহযোগিতা এবং প্রমাণ-ভিত্তিক কর্মপদ্ধতি।')),
+                color: aboutContent?.approachColor || '#0E7490',
               },
               {
-                icon: Users,
-                title: t('Youth at the Forefront', 'অগ্রভাগে তরুণরা'),
-                desc: t('Over 65% of Bangladesh\'s population is under 35. Young people bear the brunt of climate impacts — losing homes, livelihoods, and educational opportunities. YCN exists to amplify their voices and agency.', 'বাংলাদেশের জনসংখ্যার ৬৫% এরও বেশি তরূণ (৩৫ বছরের নিচে)। তরুণরা জলবায়ুর প্রভাবের সবচেয়ে বেশি শিকার — তাদের কণ্ঠস্বর এবং এজেন্সিকে জোরালো করতে ওয়াইসিএন কাজ করে।'),
-                color: '#F59E0B',
-              },
-              {
-                icon: Scale,
-                title: t('Climate Justice Paradox', 'জলবায়ু ন্যায়বিচার বৈপরীত্য'),
-                desc: t('Bangladesh contributes less than 0.3% of global GHG emissions yet faces catastrophic consequences. YCN advocates for climate justice — demanding accountability from high-emitting nations at UNFCCC and beyond.', 'বাংলাদেশ বৈশ্বিক নির্গমনের ০.৩%-এরও কম অবদান রাখে অথচ মারাত্মক জলবায়ু হুমকির সম্মুখীন। ওয়াইসিএন জলবায়ু ন্যায়বিচারের পক্ষে কাজ করে এবং নির্গমনকারী দেশগুলোর জবাবদিহিতা দাবি করে।'),
-                color: '#8B5CF6',
-              },
-              {
-                icon: Sprout,
-                title: t('Youth-Led Solutions', 'যুব-নেতৃত্বাধীন সমাধান'),
-                desc: t('From mangrove restoration to solar energy, from WASH programs to policy advocacy — Bangladesh\'s youth are building resilience. YCN coordinates, trains, and amplifies these local solutions at regional scale.', 'ম্যানগ্রোভ পুনরুদ্ধার থেকে শুরু করে সৌর শক্তি, ওয়াশ প্রোগ্রাম থেকে নীতি নির্ধারণী অ্যাডভোকেসি — বাংলাদেশের যুবসমাজ সহনশীলতা তৈরি করছে। ওয়াইসিএন এই সমাধানগুলোর সমন্বয় করে।'),
-                color: '#1A6B3C',
+                icon: resolvePillarIcon(aboutContent?.valuesIcon, Heart),
+                title: lang === 'bn' && aboutContent?.valuesTitle_bn ? aboutContent.valuesTitle_bn : (aboutContent?.valuesTitle || t('Our Values', 'আমাদের মূল্যবোধ')),
+                desc: lang === 'bn' && aboutContent?.valuesDesc_bn ? aboutContent.valuesDesc_bn : (aboutContent?.valuesDesc || t('Inclusivity, integrity, innovation and impact.', 'অন্তর্ভুক্তি, সততা, উদ্ভাবন এবং ইতিবাচক প্রভাব।')),
+                color: aboutContent?.valuesColor || '#7C3AED',
               },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div
                 key={title}
-                className="rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${color}30`,
-                  borderLeft: `3px solid ${color}`,
-                }}
+                className="p-6 rounded-2xl border border-gray-100 bg-[#FAFAFA] hover:bg-white hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${color}15` }}>
-                  <Icon size={20} style={{ color }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${color}15`, color }}>
+                  <Icon size={20} />
                 </div>
-                <h4 className="font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#F0ECD8' }}>{title}</h4>
-                <p className="text-sm leading-relaxed" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif' }}>{desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Khulna highlight */}
-          <div
-            className="mt-10 rounded-2xl p-8"
-            style={{
-              background: 'linear-gradient(135deg, rgba(232,82,26,0.15) 0%, rgba(26,107,60,0.15) 100%)',
-              border: '1px solid rgba(232,82,26,0.2)',
-            }}
-          >
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(232,82,26,0.15)', border: '1px solid rgba(232,82,26,0.3)' }}>
-                <MapPin size={32} style={{ color: '#E8521A' }} />
-              </div>
-              <div>
-                <h4 className="font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#F0ECD8', fontSize: '1.1rem' }}>
-                  {t('Why Khulna? Why the Sundarbans?', 'কেন খুলনা? কেন সুন্দরবন?')}
-                </h4>
-                <p className="text-sm leading-relaxed" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif' }}>
-                  {t(
-                    "YCN was born in Khulna — Bangladesh's third-largest city and gateway to the Sundarbans mangrove forest, the world's largest coastal mangrove ecosystem and a UNESCO World Heritage site. The Sundarbans absorbs cyclone impacts, protects over 4 million coastal people, and hosts extraordinary biodiversity — yet faces devastating threats from rising seas, salinity, and deforestation. Working from this frontline context, YCN's programs are grounded in the lived realities of the most climate-vulnerable communities in South Asia.",
-                    'ওয়াইসিএন-এর জন্ম খুলনায় — যা বাংলাদেশের তৃতীয় বৃহত্তম শহর এবং বিশ্বের বৃহত্তম ম্যানগ্রোভ বন সুন্দরবনের প্রবেশদ্বার। সুন্দরবন ঘূর্ণিঝড়ের প্রভাব প্রতিরোধ করে, ৪ কোটিরও বেশি উপকূলীয় মানুষকে রক্ষা করে এবং অসাধারণ জীববৈচিত্র্য রক্ষা করে — তবুও সমুদ্রপৃষ্ঠের উচ্চতা বৃদ্ধি ও লবণাক্ততার কারণে হুমকির সম্মুখীন। এই ফ্রন্টলাইন প্রেক্ষাপট থেকে কাজ করে ওয়াইসিএন-এর প্রোগ্রামগুলো দক্ষিণ এশিয়ার সবচেয়ে জলবায়ু-ঝুঁকিপূর্ণ মানুষের জীবনযাত্রার বাস্তবতার ওপর ভিত্তি করে গড়ে উঠেছে।'
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Vision & Mission */}
-      <section className="py-20" style={{ backgroundColor: '#fff' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              {t('Vision, Mission & Values', 'ভিশন, মিশন এবং মূল্যবোধ')}
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-            <div
-              className="p-8 rounded-2xl"
-              style={{ background: 'linear-gradient(135deg, #0A3320 0%, #1A6B3C 100%)' }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(232,82,26,0.2)' }}>
-                <Eye size={20} style={{ color: '#E8521A' }} />
-              </div>
-              <h3 className="font-bold mb-4" style={{ fontFamily: 'Poppins, sans-serif', color: '#F0ECD8', fontSize: '1.2rem' }}>{t('Our Vision', 'আমাদের ভিশন')}</h3>
-              <p className="leading-relaxed" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif' }}>
-                {t(
-                  'A climate-resilient, environmentally just, and sustainably developed South Asia and Asia Pacific — where every young person has the knowledge, power, and opportunity to shape a thriving planet for present and future generations.',
-                  'একটি জলবায়ু-সহনশীল, পরিবেশগতভাবে ন্যায়সঙ্গত এবং টেকসইভাবে উন্নত দক্ষিণ এশিয়া ও এশিয়া প্যাসিফিক অঞ্চল গড়ে তোলা — যেখানে প্রতিটি তরুণ-তরুণীর বর্তমান এবং ভবিষ্যত প্রজন্মের জন্য একটি সমৃদ্ধ পৃথিবী গড়ে তোলার জ্ঞান, ক্ষমতা এবং সুযোগ থাকবে।'
-                )}
-              </p>
-            </div>
-            <div
-              className="p-8 rounded-2xl"
-              style={{ background: 'linear-gradient(135deg, #E8521A 0%, #D97706 100%)' }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
-                <Target size={20} style={{ color: '#fff' }} />
-              </div>
-              <h3 className="font-bold mb-4" style={{ fontFamily: 'Poppins, sans-serif', color: '#fff', fontSize: '1.2rem' }}>{t('Our Mission', 'আমাদের মিশন')}</h3>
-              <p className="leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Inter, sans-serif' }}>
-                {t(
-                  'Youth Climate Network mobilizes, equips, and amplifies the power of young people to drive transformative action on climate change, environmental justice, and sustainable development — leaving no community behind.',
-                  'ইয়ুথ ক্লাইমেট নেটওয়ার্ক যুবসমাজকে সংগঠিত করে, প্রস্তুত করে এবং তাদের ক্ষমতা বৃদ্ধি করে যাতে তারা জলবায়ু পরিবর্তন, পরিবেশগত ন্যায়বিচার এবং টেকসই উন্নয়নে রূপান্তরমূলক ভূমিকা রাখতে পারে — কোনো সম্প্রদায়কে পেছনে না রেখে।'
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Values */}
-          <h3 className="text-center font-bold mb-10" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937', fontSize: '1.3rem' }}>{t('Core Values', 'মূল মূল্যবোধসমূহ')}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {values.map(({ icon: Icon, title, desc, color, bg }) => (
-              <div key={title} className="p-6 rounded-2xl hover:shadow-lg transition-all duration-300" style={{ backgroundColor: bg }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: color }}>
-                  <Icon size={20} color="#fff" />
+                <div>
+                  <h3 className="font-bold text-gray-900 text-base mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {title}
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-relaxed font-inter">
+                    {desc}
+                  </p>
                 </div>
-                <h4 className="font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{title}</h4>
-                <p className="text-sm leading-relaxed" style={{ color: '#4B5563', fontFamily: 'Inter, sans-serif' }}>{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Founder Statement */}
-      <section className="py-20" style={{ backgroundColor: '#F3F4F6' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="bg-white rounded-3xl p-8 lg:p-12 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-12 items-start">
-            <div className="lg:w-1/3 flex-shrink-0">
-              <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-200 mb-6">
-                <img
-                  src="/Arafat Hossain Akash - Founder & Executive Director.jpg"
-                  alt="Arafat Hossain Akash"
-                  className="w-full h-full object-cover"
-                  onError={(e) => (e.currentTarget.src = '/Formal Image -  Meet our team /Arafat Hossain Akash - Founder & Executive Director - statement e ai sobita bosbe.jpg')}
-                />
-              </div>
-              <h3 className="font-bold text-xl mb-1" style={{ color: '#1F2937' }}>Arafat Hossain Akash</h3>
-              <p className="text-sm font-medium" style={{ color: '#E8521A' }}>Founder & Executive Director, Youth Climate Network</p>
-            </div>
-            <div className="lg:w-2/3">
-              <h2 className="mb-6 font-bold" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '2rem', color: '#1F2937' }}>
-                Founder & Executive Director's Statement
+      {/* ── 3. ADVISORY BOARD SECTION (Top of Team Sections) ── */}
+      <section className="py-20 bg-[#F9FAFB]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+              <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase mb-1 block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {t('OUR GUIDING VOICES', 'আমাদের দিকনির্দেশক কণ্ঠস্বর')}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {t('Advisory Board', 'উপদেষ্টা পরিষদ')}
               </h2>
-              <div className="space-y-4 text-gray-600 leading-relaxed font-inter">
-                <p>
-                  On 25 May 2009, Cyclone Aila struck the coast of Bangladesh. Our home, everything we had — washed away in hours. I was nine years old, and I lost my school before I ever fully understood what I was losing. That was not the only storm of my childhood.
-                </p>
-                {expandedStatement && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <p>
-                      I grew up watching cyclone after cyclone tear through our coast — Sidr, Aila, Fani, Amphan — each one arriving with a different name but the same devastating signature: homes destroyed, harvests lost, children pulled out of school, families pushed deeper into hardship. Year after year, I watched the same communities rebuild, only to be struck down again. That repetition — of suffering, survival, and starting over — moved something in me that has never left. It was not abstract data or distant news. It was my neighbors. It was people I loved, losing everything, again and again, through no fault of their own.
-                    </p>
-                    <p>
-                      Somewhere in the middle of all that loss, I made a decision I could not unmake: I would not simply survive this crisis. I would stand up and act — as a changemaker — to change the condition of the people around me who had suffered exactly as I had.
-                    </p>
-                    <p>
-                      In 2021, that conviction led me to establish Humanity Public Library, so that children and families in climate-vulnerable coastal communities — like the one I grew up in — would never have to lose their education to a disaster the way I nearly did. It was never meant to be the end of the work. It was only the beginning.
-                    </p>
-                    <p>
-                      That same conviction led to the founding of Youth Climate Network (YCN).
-                    </p>
-                    <p>
-                      Our Mission is to mobilize, equip, and amplify the power of young people to drive transformative action on climate change, environmental justice, and sustainable development — building the capacity of youth leaders and frontline communities, advocating for systemic change at local, national, and regional levels, and delivering life-changing programs in education, livelihoods, water, sanitation, disaster preparedness, and renewable energy, so that no community is left behind.
-                    </p>
-                    <p>
-                      Our Vision is a climate-resilient, environmentally just, and sustainably developed South Asia and Asia Pacific — where every young person has the knowledge, power, and opportunity to shape a thriving planet for present and future generations.
-                    </p>
-                    <p>
-                      Every program YCN runs today — from safe water access to disaster risk reduction to youth leadership training — carries the memory of a broken embankment, three years of uncertain tides, and a childhood measured out in cyclones. It is personal, and it is precisely why our work stays honest, urgent, and rooted in what frontline communities actually need — because I was one of them, and in many ways, I still am.
-                    </p>
-                    <p>
-                      We are deeply grateful to the partners, donors, and institutions who have chosen to invest in that belief — trusting young people from Bangladesh's coast not just to survive the climate crisis, but to lead the fight against it.
-                    </p>
-                    <p>
-                      There is an enormous distance still to travel. But I have seen what a cyclone can take from a community — and I have also seen what young people, given the trust and the tools, can rebuild in its place.
-                    </p>
-                    <p>
-                      This is only the beginning of that journey.
+              <p className="mt-2 text-sm text-gray-600 max-w-2xl font-inter">
+                {t(
+                  'Our advisors provide strategic guidance, sector expertise and support to strengthen our mission and impact.',
+                  'আমাদের উপদেষ্টামণ্ডলী কৌশলগত দিকনির্দেশনা, খাতভিত্তিক দক্ষতা এবং আমাদের লক্ষ্য ও প্রভাবকে শক্তিশালী করতে সহায়তা প্রদান করেন।'
+                )}
+              </p>
+            </div>
+
+            {advisors.length > 6 && (
+              <button
+                onClick={() => setShowAllAdvisors(!showAllAdvisors)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 hover:text-[#1A6B3C] hover:border-[#1A6B3C] transition-all bg-white shadow-sm flex-shrink-0"
+              >
+                <span>{showAllAdvisors ? t('Show Less', 'কম দেখুন') : t('View All Advisors', 'সকল উপদেষ্টা দেখুন')}</span>
+                <ArrowRight size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
+            {displayedAdvisors.map((advisor) => (
+              <MemberCard key={advisor.id || advisor.name} member={advisor} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. FOUNDER'S BRIEF SECTION (Immediately after Advisor Section) ── */}
+      <section className="py-20 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-[#F9FAFB] rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-[0_10px_40px_rgba(0,0,0,0.04)] grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left text */}
+            <div className="lg:col-span-7 space-y-5">
+              <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {lang === 'bn' && founderBrief?.subtitle_bn ? founderBrief.subtitle_bn : (founderBrief?.subtitle || t("FOUNDER'S STORY", 'প্রতিষ্ঠাতার গল্প'))}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900 leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {lang === 'bn' && founderBrief?.title_bn ? founderBrief.title_bn : (founderBrief?.title || t('From a Simple Belief to a Growing Movement', 'একটি সাধারণ বিশ্বাস থেকে ক্রমবর্ধমান আন্দোলন'))}
+              </h2>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed font-inter">
+                {lang === 'bn' && founderBrief?.content_bn ? founderBrief.content_bn : (founderBrief?.content || t(
+                  'YCN Bangladesh began with a simple belief — that young people can drive real change for our climate, communities and future. Our founder’s journey reflects this belief and the story behind the network.',
+                  'ওয়াইসিএন বাংলাদেশ একটি সাধারণ বিশ্বাসের মধ্য দিয়ে শুরু হয়েছিল — যে তরুণরা আমাদের জলবায়ু, সম্প্রদায় এবং ভবিষ্যতের জন্য প্রকৃত পরিবর্তন আনতে পারে।'
+                ))}
+              </p>
+
+              <div className="pt-2 flex flex-wrap items-center gap-4">
+                <button
+                  onClick={() => setShowFullFounderModal(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 shadow-md"
+                  style={{ backgroundColor: '#E8521A' }}
+                >
+                  <span>{lang === 'bn' && founderBrief?.buttonText_bn ? founderBrief.buttonText_bn : (founderBrief?.buttonText || t('Read the Full Founder\'s Story', 'প্রতিষ্ঠাতার পূর্ণাঙ্গ গল্প পড়ুন'))}</span>
+                  <ArrowRight size={15} />
+                </button>
+                {(founderBrief?.articleLink || founderBrief?.articleUrl) && (
+                  <Link
+                    to={founderBrief.articleLink || founderBrief.articleUrl || '/blog'}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 border"
+                    style={{ borderColor: '#E8521A', color: '#E8521A', backgroundColor: 'transparent' }}
+                  >
+                    <span>{lang === 'bn' ? 'প্রতিষ্ঠাতার লেখা পড়ুন' : (founderBrief?.readMoreText || 'Read Founder\'s Article')}</span>
+                    <ArrowRight size={14} />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Right photo / video player */}
+            <div className="lg:col-span-5 relative group">
+              <div className="aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden shadow-xl relative bg-black/5">
+                <img
+                  src={founderBrief?.founderImage || "/Arafat Hossain Akash - Founder & Executive Director.jpg"}
+                  alt={founderBrief?.founderName || "Founder"}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.src = "/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button
+                    onClick={() => setShowFullFounderModal(true)}
+                    className="w-14 h-14 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform group-hover:bg-[#E8521A] group-hover:text-white"
+                    aria-label="Play Founder Story"
+                  >
+                    <Play size={20} className="ml-1 fill-current" />
+                  </button>
+                </div>
+
+                {/* Subtitle bottom banner */}
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <p className="font-bold text-sm font-poppins">{founderBrief?.founderName || "Arafat Hossain Akash"}</p>
+                  <p className="text-[11px] text-gray-300 font-inter">{founderBrief?.founderRole || "Founder & Executive Director, YCN"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. EXECUTIVE DIRECTORS SECTION ── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+              <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase mb-1 block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {t('OUR LEADERSHIP', 'আমাদের নেতৃত্ব')}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {t('Executive Directors', 'নির্বাহী পরিচালকবৃন্দ')}
+              </h2>
+              <p className="mt-2 text-sm text-gray-600 max-w-2xl font-inter">
+                {t(
+                  'Our Executive Directors lead the strategic direction and day-to-day operations of YCN Bangladesh.',
+                  'আমাদের নির্বাহী পরিচালকবৃন্দ ওয়াইসিএন বাংলাদেশের কৌশলগত দিকনির্দেশনা ও সার্বিক কার্যক্রম পরিচালনা করেন।'
+                )}
+              </p>
+            </div>
+
+            <Link
+              to="/about"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 hover:text-[#1A6B3C] hover:border-[#1A6B3C] transition-all bg-white shadow-sm flex-shrink-0"
+            >
+              <span>{t('View Leadership Team', 'নেতৃত্ব টিম দেখুন')}</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {directors.map((director) => (
+              <MemberCard key={director.id || director.name} member={director} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. MEET THE TEAM SECTION (With Chronological Numbering & Department Filter) ── */}
+      <section className="py-20 bg-[#F9FAFB]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+            <div>
+              <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase mb-1 block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {t('OUR TEAM', 'আমাদের টিম')}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {t('Meet the Team', 'দলের সাথে পরিচিত হোন')}
+              </h2>
+              <p className="mt-2 text-sm text-gray-600 max-w-2xl font-inter">
+                {t(
+                  'A diverse group of young changemakers working together for climate action across Bangladesh.',
+                  'বাংলাদেশজুড়ে জলবায়ু পদক্ষেপের জন্য কাজ করা তরুণ পরিবর্তনের এক প্রতিশ্রুতিশীল দল।'
+                )}
+              </p>
+            </div>
+
+            <div className="text-xs text-gray-500 font-semibold bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm flex-shrink-0">
+              {filteredMembers.length} {t('Members', 'সদস্য')}
+            </div>
+          </div>
+
+          {/* Department Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
+            {departmentTabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveDepartment(tab.key)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  activeDepartment === tab.key
+                    ? 'bg-[#E8521A] text-white shadow-md'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Team Members Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {filteredMembers.map((member, index) => (
+              <MemberCard
+                key={member.id || member.name}
+                member={member}
+                showNumber={true}
+                numberIndex={index}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. LATEST STORIES & UPDATES ── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+              <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase mb-1 block" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {t('LATEST FROM YCN', 'ওয়াইসিএন-এর সাম্প্রতিক আপডেট')}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {t('Recent Stories & Updates', 'সাম্প্রতিক গল্প ও আপডেট')}
+              </h2>
+              <p className="mt-2 text-sm text-gray-600 font-inter">
+                {t('Explore our latest news, field stories, events and announcements.', 'আমাদের সাম্প্রতিক সংবাদ, মাঠপর্যায়ের গল্প, ইভেন্ট এবং ঘোষণা অন্বেষণ করুন।')}
+              </p>
+            </div>
+
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 hover:text-[#1A6B3C] hover:border-[#1A6B3C] transition-all bg-white shadow-sm flex-shrink-0"
+            >
+              <span>{t('View All Stories', 'সকল গল্প দেখুন')}</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {blogs.slice(0, 3).map((blog) => (
+              <Link
+                key={blog.id || blog.slug}
+                to={`/blog/${blog.slug || blog.id}`}
+                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+              >
+                <div className="aspect-[16/10] overflow-hidden bg-gray-100 relative">
+                  <img
+                    src={blog.image || "/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png"}
+                    alt={blog.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider">
+                    {blog.category || 'Story'}
+                  </div>
+                </div>
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base leading-snug mb-2 group-hover:text-[#1A6B3C] transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      {blog.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4 font-inter">
+                      {blog.excerpt}
                     </p>
                   </div>
-                )}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-50 text-xs text-gray-400">
+                    <span>{new Date(blog.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span className="text-[#1A6B3C] font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                      Read <ArrowRight size={12} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 8. CALL TO ACTION BANNER ── */}
+      <section className="py-20 relative overflow-hidden" style={{ backgroundColor: '#072416' }}>
+        <div className="absolute inset-0 opacity-15" style={{ background: 'radial-gradient(circle at 70% 50%, #E8521A 0%, transparent 60%)' }} />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#E8521A] mb-2 block">
+            {lang === 'bn' ? 'আমাদের যাত্রার সঙ্গী হোন' : 'BE PART OF OUR JOURNEY'}
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-black text-[#F0ECD8] mb-6 leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {lang === 'bn' && aboutContent?.ctaTitle_bn ? aboutContent.ctaTitle_bn : (aboutContent?.ctaTitle || t('Join Us for a Greener, More Resilient Bangladesh', 'একটি সবুজ, আরও সহনশীল বাংলাদেশের জন্য আমাদের সাথে যুক্ত হোন'))}
+          </h2>
+          <p className="max-w-2xl mx-auto text-base text-[#A8C4B0] leading-relaxed mb-10 font-inter">
+            {lang === 'bn' && aboutContent?.ctaDesc_bn ? aboutContent.ctaDesc_bn : (aboutContent?.ctaDesc || t(
+              'Whether you want to volunteer, partner or support our work, there are many ways to make a difference.',
+              'আপনি স্বেচ্ছাসেবক হতে চান, অংশীদার হতে চান বা আমাদের কাজে সহায়তা করতে চান — ইতিবাচক পরিবর্তন আনার অনেক উপায় রয়েছে।'
+            ))}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              to={aboutContent?.ctaButton1Link || "/get-involved"}
+              className="px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 shadow-lg"
+              style={{ backgroundColor: '#E8521A' }}
+            >
+              {lang === 'bn' && aboutContent?.ctaButton1Text_bn ? aboutContent.ctaButton1Text_bn : (aboutContent?.ctaButton1Text || t('Get Involved', 'যুক্ত হোন'))}
+            </Link>
+            <Link
+              to={aboutContent?.ctaButton2Link || "/contact"}
+              className="px-8 py-3.5 rounded-full text-sm font-semibold text-[#F0ECD8] border border-white/20 hover:border-white/40 transition-all bg-white/5 backdrop-blur-md"
+            >
+              {lang === 'bn' && aboutContent?.ctaButton2Text_bn ? aboutContent.ctaButton2Text_bn : (aboutContent?.ctaButton2Text || t('Support Our Work', 'আমাদের সমর্থন করুন'))}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FULL FOUNDER STORY MODAL ── */}
+      {showFullFounderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-10 relative shadow-2xl">
+            <button
+              onClick={() => setShowFullFounderModal(false)}
+              className="absolute top-6 right-6 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
+            >
+              ✕
+            </button>
+            <div className="space-y-4 font-inter text-gray-700 leading-relaxed text-sm sm:text-base">
+              <span className="text-xs font-bold text-[#E8521A] uppercase tracking-wider block">
+                {lang === 'bn' && founderBrief?.subtitle_bn ? founderBrief.subtitle_bn : (founderBrief?.subtitle || "Founder's Message")}
+              </span>
+              <h3 className="text-2xl font-bold text-gray-900 font-poppins">
+                {lang === 'bn' && founderBrief?.title_bn ? founderBrief.title_bn : (founderBrief?.title || "From a Simple Belief to a Growing Movement")}
+              </h3>
+              <p className="text-gray-500 text-xs italic">
+                By {founderBrief?.founderName || "Arafat Hossain Akash"}, {founderBrief?.founderRole || "Founder & Executive Director"}
+              </p>
+              
+              <div className="pt-4 space-y-4 text-gray-600 border-t border-gray-100">
+                {((lang === 'bn' && founderBrief?.fullStory_bn ? founderBrief.fullStory_bn : founderBrief?.fullStory) || `On 25 May 2009, Cyclone Aila struck the coast of Bangladesh. Our home, everything we had — washed away in hours. I was nine years old, and I lost my school before I ever fully understood what I was losing. That was not the only storm of my childhood.
+
+I grew up watching cyclone after cyclone tear through our coast — Sidr, Aila, Fani, Amphan — each one arriving with a different name but the same devastating signature: homes destroyed, harvests lost, children pulled out of school, families pushed deeper into hardship. Year after year, I watched the same communities rebuild, only to be struck down again.
+
+That repetition — of suffering, survival, and starting over — moved something in me that has never left. In 2021, that conviction led me to establish Humanity Public Library, and subsequently the Youth Climate Network (YCN).
+
+Our Mission is to mobilize, equip, and amplify the power of young people to drive transformative action on climate change, environmental justice, and sustainable development — building the capacity of youth leaders and frontline communities, so that no community is left behind.`)
+                  .split('\n\n')
+                  .filter(Boolean)
+                  .map((para, idx) => (
+                    <p key={idx}>{para}</p>
+                  ))}
+              </div>
+
+              <div className="pt-6 border-t border-gray-100 flex justify-end">
                 <button
-                  onClick={() => setExpandedStatement(!expandedStatement)}
-                  className="mt-4 font-semibold hover:underline flex items-center gap-1 transition-colors"
-                  style={{ color: '#1A6B3C' }}
+                  onClick={() => setShowFullFounderModal(false)}
+                  className="px-6 py-2.5 rounded-full bg-gray-900 text-white text-xs font-semibold hover:bg-black transition-colors"
                 >
-                  {expandedStatement ? 'Show Less ↑' : 'Read Full Story →'}
+                  Close Story
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Leadership Team */}
-      <section className="py-20" style={{ backgroundColor: '#fff' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>
-              {t('Leadership', 'নেতৃত্ব')}
-            </div>
-            <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              {t('Meet our Team', 'আমাদের দলের সাথে পরিচিত হোন')}
-            </h2>
-            <p className="mt-3 max-w-xl mx-auto" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
-              {t('Dedicated young professionals driving YCN\'s mission across programs, advocacy, and operations.', 'প্রোগ্রাম, অ্যাডভোকেসি এবং অপারেশন জুড়ে ওয়াইসিএন-এর মিশন পরিচালনাকারী নিবেদিত তরুণ দল।')}
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembersList.map((member, i) => (
-              <UnifiedMemberCard key={member.id || i} member={{ id: member.id, name: lang === 'bn' && member.name_bn ? member.name_bn : member.name, role: lang === 'bn' && member.role_bn ? member.role_bn : member.role, bio: '', email: '', image: member.image }} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Advisors */}
-      <section className="py-20" style={{ backgroundColor: '#F9FAFB' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>
-              Advisors
-            </div>
-            <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              Meet Our Advisors
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {advisorMembersList.map((advisor, i) => (
-              <UnifiedMemberCard key={advisor.id || i} member={{ id: advisor.id, name: lang === 'bn' && advisor.name_bn ? advisor.name_bn : advisor.name, role: lang === 'bn' && advisor.role_bn ? advisor.role_bn : advisor.role, bio: '', email: '', image: advisor.image }} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Governance */}
-      <section className="py-20" style={{ backgroundColor: '#F3F4F6' }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#1F2937' }}>
-              {t('Governance Structure', 'পরিচালনা কাঠামো')}
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { title: t('General Assembly', 'সাধারণ পরিষদ'), desc: t('The supreme decision-making body comprising all active YCN members. Meets annually to review strategy, elect leadership, and approve plans and budgets.', 'সকল ওয়াইসিএন সদস্যদের নিয়ে গঠিত নীতি নির্ধারণী মূল চালিকাশক্তি। বার্ষিক সাধারণ সভায় কৌশল পর্যালোচনা, নেতৃত্ব নির্বাচন এবং বাজেট অনুমোদন করা হয়।') },
-              { title: t('Executive Committee', 'কার্যনির্বাহী কমিটি'), desc: t('Elected body of 7–11 youth leaders responsible for governance oversight, policy, and major institutional decisions.', '৭-১১ জন নির্বাচিত যুব নেতাদের সমন্বয়ে গঠিত কমিটি যা নীতি ও অন্যান্য প্রাতিষ্ঠানিক সিদ্ধান্তের জন্য দায়িত্বশীল।') },
-              { title: t('Executive Director', 'নির্বাহী পরিচালক'), desc: t('Chief executive responsible for organizational management, external representation, and strategic leadership.', 'সাংগঠনিক ব্যবস্থাপনা, বাহ্যিক প্রতিনিধিত্ব এবং কৌশলগত নেতৃত্বের জন্য দায়ী প্রধান নির্বাহী কর্মকর্তা।') },
-              { title: t('Program Teams', 'প্রোগ্রাম টিমসমূহ'), desc: t('Dedicated teams for each of YCN\'s 20 strategic pillars, led by Program Coordinators with thematic expertise.', 'ওয়াইসিএন-এর ২০টি কৌশলগত পিলারের প্রতিটির জন্য নিবেদিত দল, যা নির্দিষ্ট ক্ষেত্রে বিশেষজ্ঞ সমন্বয়কারীদের দ্বারা পরিচালিত।') },
-              { title: t('Finance & Administration', 'অর্থ ও প্রশাসন'), desc: t('Independent finance function with internal audit, transparent reporting, and donor accountability systems.', 'অভ্যন্তরীণ অডিট, স্বচ্ছ রিপোর্টিং এবং দাতার প্রতি জবাবদিহিতা সম্বলিত একটি স্বাধীন অর্থ বিভাগ।') },
-              { title: t('Youth Advisory Council', 'যুব উপদেষ্টা পরিষদ'), desc: t('Representative body of young people from YCN\'s program areas, ensuring grassroots perspectives inform all decisions.', 'ওয়াইসিএন-এর প্রোগ্রাম এলাকাগুলোর যুব প্রতিনিধিদের নিয়ে গঠিত পরিষদ, যা নিশ্চিত করে যে তৃণমূলের মতামত সমস্ত সিদ্ধান্ত গ্রহণে প্রতিফলিত হচ্ছে।') },
-            ].map((item) => (
-              <div key={item.title} className="bg-white rounded-xl p-5 shadow-sm">
-                <h4 className="font-semibold mb-3" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937' }}>{item.title}</h4>
-                <p className="text-sm leading-relaxed" style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16" style={{ backgroundColor: '#0A3320' }}>
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <h3 className="mb-4" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: '#F0ECD8' }}>
-            {t('Ready to take action?', 'পদক্ষেপ নিতে প্রস্তুত?')}
-          </h3>
-          <p className="mb-8 text-sm" style={{ color: '#A8C4B0', fontFamily: 'Inter, sans-serif' }}>
-            {t('Join thousands of young people working to build a climate-resilient, just future for Bangladesh and beyond.', 'বাংলাদেশ এবং এর বাইরেও একটি জলবায়ু-সহনশীল, ন্যায়সঙ্গত ভবিষ্যৎ গড়তে হাজার হাজার তরুণের সাথে যুক্ত হোন।')}
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/get-involved" className="px-7 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105" style={{ backgroundColor: '#E8521A', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
-              {t('Get Involved', 'যুক্ত হোন')} <ArrowRight size={14} className="inline ml-1" />
-            </Link>
-            <Link to="/contact" className="px-7 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105" style={{ border: '1.5px solid rgba(240,236,216,0.3)', color: '#F0ECD8', fontFamily: 'Inter, sans-serif' }}>
-              {t('Contact Us', 'যোগাযোগ করুন')}
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

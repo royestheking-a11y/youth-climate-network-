@@ -4,6 +4,7 @@ import { HomePage } from './components/HomePage';
 import { AboutPage } from './components/AboutPage';
 import { OurWorkPage } from './components/OurWorkPage';
 import { OurWorkDetailsPage } from './components/OurWorkDetailsPage';
+import { ProgramsPage } from './components/ProgramsPage';
 import { ImpactPage } from './components/ImpactPage';
 import { GetInvolvedPage } from './components/GetInvolvedPage';
 import { DonatePage } from './components/DonatePage';
@@ -31,6 +32,8 @@ export const router = createBrowserRouter([
       { path: 'about', Component: AboutPage },
       { path: 'our-work', Component: OurWorkPage },
       { path: 'our-work/:id', Component: OurWorkDetailsPage },
+      { path: 'programs', Component: ProgramsPage },
+      { path: 'programs/:id', Component: OurWorkDetailsPage },
       { path: 'impact', Component: ImpactPage },
       { path: 'get-involved', Component: GetInvolvedPage },
       { path: 'donate', Component: DonatePage },

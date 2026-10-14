@@ -3,6 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import apiRoutes from './routes/api';
+import { RobotsConfig } from './models';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -16,6 +19,24 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Connect to MongoDB
 connectDB();
+
+// Serve dynamic robots.txt at website root
+app.get('/robots.txt', async (req, res) => {
+  try {
+    const config = await RobotsConfig.findOne().lean();
+    res.type('text/plain');
+    if (config?.content) {
+      return res.send(config.content);
+    }
+    const fallbackPath = path.join(process.cwd(), 'public', 'robots.txt');
+    if (fs.existsSync(fallbackPath)) {
+      return res.send(fs.readFileSync(fallbackPath, 'utf-8'));
+    }
+    res.send("User-agent: *\nAllow: /\n\nSitemap: https://ycnbd.org/sitemap.xml");
+  } catch (e) {
+    res.type('text/plain').send("User-agent: *\nAllow: /\n\nSitemap: https://ycnbd.org/sitemap.xml");
+  }
+});
 
 // Routes
 app.use('/api', apiRoutes);

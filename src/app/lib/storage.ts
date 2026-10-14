@@ -40,12 +40,319 @@ export interface TeamMember {
   name: string;
   name_bn?: string;
   role: string;
-  role_bn: string;
-  bio: string;
-  bio_bn: string;
+  role_bn?: string;
+  department?: string;
+  department_bn?: string;
+  bio?: string;
+  bio_bn?: string;
+  email?: string;
+  image?: string;
+  type?: 'member' | 'advisor' | 'director';
+  order?: number;
+  number?: number;
+  linkedin?: string;
+  featured?: boolean;
+}
+
+export interface NavigationItem {
+  id: string;
+  label: string;
+  label_bn?: string;
+  path: string;
+  order: number;
+  isExternal?: boolean;
+  isActive?: boolean;
+  dropdown?: { label: string; label_bn?: string; path: string }[];
+}
+
+export interface FounderBriefData {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  content: string;
+  content_bn?: string;
+  quote?: string;
+  author?: string;
+  authorRole?: string;
+  image?: string;
+  articleUrl?: string;
+  readMoreText?: string;
+  founderName?: string;
+  founderRole?: string;
+  founderImage?: string;
+  videoUrl?: string;
+  articleLink?: string;
+  buttonText?: string;
+  title_bn?: string;
+  subtitle_bn?: string;
+  quote_bn?: string;
+  buttonText_bn?: string;
+  fullStory?: string;
+  fullStory_bn?: string;
+}
+
+export interface OurWorkItem {
+  id?: string;
+  _id?: string;
+  slug?: string;
+  title: string;
+  title_bn?: string;
+  desc?: string;
+  desc_bn?: string;
+  iconName?: string;
+  image?: string;
+  link?: string;
+  order?: number;
+}
+
+export interface AboutContent {
+  id?: string;
+  _id?: string;
+  heroTagline?: string;
+  heroTagline_bn?: string;
+  heroTitle?: string;
+  heroTitle_bn?: string;
+  heroSubtitle?: string;
+  heroSubtitle_bn?: string;
+
+  missionTitle?: string;
+  missionTitle_bn?: string;
+  missionDesc?: string;
+  missionDesc_bn?: string;
+  missionColor?: string;
+  missionIcon?: string;
+
+  visionTitle?: string;
+  visionTitle_bn?: string;
+  visionDesc?: string;
+  visionDesc_bn?: string;
+  visionColor?: string;
+  visionIcon?: string;
+
+  approachTitle?: string;
+  approachTitle_bn?: string;
+  approachDesc?: string;
+  approachDesc_bn?: string;
+  approachColor?: string;
+  approachIcon?: string;
+
+  valuesTitle?: string;
+  valuesTitle_bn?: string;
+  valuesDesc?: string;
+  valuesDesc_bn?: string;
+  valuesColor?: string;
+  valuesIcon?: string;
+
+  ctaTitle?: string;
+  ctaTitle_bn?: string;
+  ctaDesc?: string;
+  ctaDesc_bn?: string;
+  ctaButton1Text?: string;
+  ctaButton1Text_bn?: string;
+  ctaButton1Link?: string;
+  ctaButton2Text?: string;
+  ctaButton2Text_bn?: string;
+  ctaButton2Link?: string;
+}
+
+export interface SiteSettings {
+  id?: string;
+  _id?: string;
+  phone?: string;
+  email?: string;
+  addressDhaka?: string;
+  addressDhaka_bn?: string;
+  addressKhulna?: string;
+  addressKhulna_bn?: string;
+  whatsappLink?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  linkedinUrl?: string;
+  youtubeUrl?: string;
+  registrationNumber?: string;
+  registrationAuthority?: string;
+  registrationAuthority_bn?: string;
+  bkashNumber?: string;
+  bkashType?: string;
+  nagadNumber?: string;
+  nagadType?: string;
+  bankName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankRoutingNumber?: string;
+  bankBranch?: string;
+  bankCell?: string;
+  intlPaymentNote?: string;
+  intlPaymentNote_bn?: string;
+  mindShantaraStartupPlanUrl?: string;
+  mindShantaraTitle?: string;
+  mindShantaraTitle_bn?: string;
+  mindShantaraSubtitle?: string;
+  mindShantaraSubtitle_bn?: string;
+  mindShantaraDesc?: string;
+  mindShantaraDesc_bn?: string;
+  privacyLastUpdated?: string;
+  privacyLastUpdated_bn?: string;
+  termsLastUpdated?: string;
+  termsLastUpdated_bn?: string;
+}
+
+export interface CopHistoryItem {
+  id?: string;
+  _id?: string;
+  event: string;
+  event_bn?: string;
+  year: string;
+  role: string;
+  role_bn?: string;
+  outcome: string;
+  outcome_bn?: string;
+  highlight?: boolean;
+  order?: number;
+}
+
+export interface PolicyPositionItem {
+  id?: string;
+  _id?: string;
+  title: string;
+  title_bn?: string;
+  desc: string;
+  desc_bn?: string;
+  order?: number;
+}
+
+
+export interface ImpactReport {
+  id?: string;
+  _id?: string;
+  title: string;
+  title_bn?: string;
+  date: string;
+  pages: string;
+  type: string;
+  fileUrl?: string;
+  order?: number;
+}
+
+export interface CaseStudy {
+  id?: string;
+  _id?: string;
+  name: string;
+  name_bn?: string;
+  location: string;
+  location_bn?: string;
+  program: string;
+  program_bn?: string;
+  story: string;
+  story_bn?: string;
+  impact: string;
+  impact_bn?: string;
+  image?: string;
+  color?: string;
+  bg?: string;
+  order?: number;
+}
+
+export interface VolunteerTrack {
+  id?: string;
+  _id?: string;
+  slug: string;
+  title: string;
+  title_bn?: string;
+  badge: string;
+  commitment: string;
+  location: string;
+  description: string;
+  description_bn?: string;
+  responsibilities: string[];
+  responsibilities_bn?: string[];
+  skills: string[];
+  benefits: string[];
+  order?: number;
+}
+
+
+export interface AuthorItem {
+  id: string;
+  name: string;
+  role: string;
+  bio?: string;
+  image?: string;
+  avatar?: string;
+  email?: string;
+  linkedin?: string;
+  twitter?: string;
+}
+
+export interface SDGItem {
+  id?: string;
+  number: number;
+  name?: string;
+  title?: string;
+  description?: string;
+  color?: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  title_bn?: string;
+  slug?: string;
+  content: string;
+  content_bn?: string;
+  excerpt?: string;
+  excerpt_bn?: string;
+  image?: string;
+  galleryImages?: string[];
+  gallery?: string[];
+  category?: string;
+  category_bn?: string;
+  tags?: string[];
+  date: string;
+  readTime?: string;
+  location?: string;
+  featured?: boolean;
+  published?: boolean;
+  views?: number;
+  authorId?: string;
+  authorName?: string;
+  authorRole?: string;
+  authorImage?: string;
+  sdgs?: number[];
+  sdgIds?: number[];
+  metaTitle?: string;
+  seoTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  imageAlt?: string;
+  noIndex?: boolean;
+  geoEntity?: string;
+  geoSummary?: string;
+  faqs?: { question: string; answer: string }[];
+  inboundLinks?: { text: string; url: string }[];
+  outboundLinks?: { text: string; url: string; openInNewTab?: boolean }[];
+  schemaType?: string;
+  customSchema?: string;
+}
+
+export interface InquiryItem {
+  id: string;
+  originalId?: string;
+  type: string;
+  typeName?: string;
+  name: string;
   email: string;
-  image: string;
-  type?: 'member' | 'advisor';
+  phone?: string;
+  title?: string;
+  message?: string;
+  details?: string;
+  date: string;
+  status: string;
+  read?: boolean;
+  data?: any;
 }
 
 export interface Partner {
@@ -76,6 +383,7 @@ export interface NewsletterSub {
   id: string;
   email: string;
   date: string;
+  status?: string;
 }
 
 export interface ContactMessage {
@@ -123,14 +431,19 @@ export interface HeroCarouselItem {
 
 export interface AdvocacyItem {
   id: string;
+  _id?: string;
   title: string;
-  title_bn: string;
+  title_bn?: string;
   type: 'position-paper' | 'statement' | 'press-release' | 'report';
   date: string;
   summary: string;
-  summary_bn: string;
+  summary_bn?: string;
   file?: string;
-  featured: boolean;
+  pdfUrl?: string;
+  demands?: string[];
+  demands_bn?: string[];
+  featured?: boolean;
+  order?: number;
 }
 
 export interface PartnershipInquiry {
