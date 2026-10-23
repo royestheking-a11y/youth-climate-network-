@@ -28,7 +28,12 @@ export function EnhancedTeamTab() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  const sortedMembers = [...rawMembers].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const sortedMembers = [...rawMembers].sort((a, b) => {
+    const orderA = typeof a.order === 'number' ? a.order : (a.number ?? 0);
+    const orderB = typeof b.order === 'number' ? b.order : (b.number ?? 0);
+    if (orderA !== orderB) return orderA - orderB;
+    return String(a.id || (a as any)._id || '').localeCompare(String(b.id || (b as any)._id || ''));
+  });
 
   const blankMember: TeamMember = {
     id: '',
@@ -95,20 +100,54 @@ export function EnhancedTeamTab() {
     }
   };
 
-  const handleMove = async (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= sortedMembers.length) return;
+  const handleMove = async (filteredIndex: number, direction: 'up' | 'down') => {
+    const targetFilteredIndex = direction === 'up' ? filteredIndex - 1 : filteredIndex + 1;
+    if (targetFilteredIndex < 0 || targetFilteredIndex >= filteredMembers.length) return;
 
-    const items = [...sortedMembers];
-    const [moved] = items.splice(index, 1);
-    items.splice(targetIndex, 0, moved);
+    const currentMember = filteredMembers[filteredIndex];
+    const targetMember = filteredMembers[targetFilteredIndex];
+    if (!currentMember || !targetMember) return;
 
-    const reorderedPayload = items.map((it, idx) => ({ id: it.id, order: idx }));
+    const currentId = currentMember.id || (currentMember as any)._id;
+    const targetId = targetMember.id || (targetMember as any)._id;
+
+    // Find indices of both members in the complete sortedMembers array
+    const currentPos = sortedMembers.findIndex(m => (m.id || (m as any)._id) === currentId);
+    if (currentPos === -1) return;
+
+    const newSorted = [...sortedMembers];
+    const [moved] = newSorted.splice(currentPos, 1);
+
+    const targetPosInNew = newSorted.findIndex(m => (m.id || (m as any)._id) === targetId);
+    if (targetPosInNew === -1) return;
+
+    if (direction === 'up') {
+      newSorted.splice(targetPosInNew, 0, moved);
+    } else {
+      newSorted.splice(targetPosInNew + 1, 0, moved);
+    }
+
+    const reorderedPayload = newSorted.map((it, idx) => ({
+      id: (it.id || (it as any)._id) as string,
+      order: idx,
+      number: idx + 1,
+    }));
+
+    // Optimistic UI update so buttons and list react immediately
+    const optimisticData = newSorted.map((it, idx) => ({
+      ...it,
+      order: idx,
+      number: idx + 1,
+    }));
+    mutate(optimisticData, false);
+
     try {
       await apiTeam.reorder(reorderedPayload);
-      mutate();
-    } catch (err) {
-      console.error(err);
+      await mutate();
+    } catch (err: any) {
+      console.error('Reorder error:', err);
+      setStatusMsg({ text: 'Failed to reorder: ' + (err.message || 'Unknown error'), type: 'error' });
+      await mutate();
     }
   };
 
@@ -116,13 +155,13 @@ export function EnhancedTeamTab() {
     if (!window.confirm('Automatically renumber all members sequentially (1, 2, 3...)?')) return;
     try {
       setStatusMsg(null);
-      for (let i = 0; i < sortedMembers.length; i++) {
-        await apiTeam.update(sortedMembers[i].id, {
-          order: i,
-          number: i + 1,
-        });
-      }
-      mutate();
+      const reorderedPayload = sortedMembers.map((it, idx) => ({
+        id: (it.id || (it as any)._id) as string,
+        order: idx,
+        number: idx + 1,
+      }));
+      await apiTeam.reorder(reorderedPayload);
+      await mutate();
       setStatusMsg({ text: 'Chronological numbering synchronized successfully!', type: 'success' });
     } catch (err: any) {
       alert(err.message);
@@ -483,17 +522,25 @@ export function EnhancedTeamTab() {
                 <td className="px-4 py-3.5 text-center">
                   <div className="inline-flex items-center gap-1">
                     <button
+                      type="button"
                       disabled={index === 0}
-                      onClick={() => handleMove(index, 'up')}
-                      className="p-1 rounded hover:bg-gray-200 disabled:opacity-20 text-gray-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMove(index, 'up');
+                      }}
+                      className="p-1 rounded hover:bg-gray-200 disabled:opacity-20 text-gray-600 transition-colors"
                       title="Move Up"
                     >
                       <ArrowUp size={13} />
                     </button>
                     <button
+                      type="button"
                       disabled={index === filteredMembers.length - 1}
-                      onClick={() => handleMove(index, 'down')}
-                      className="p-1 rounded hover:bg-gray-200 disabled:opacity-20 text-gray-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMove(index, 'down');
+                      }}
+                      className="p-1 rounded hover:bg-gray-200 disabled:opacity-20 text-gray-600 transition-colors"
                       title="Move Down"
                     >
                       <ArrowDown size={13} />

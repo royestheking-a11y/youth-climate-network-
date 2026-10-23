@@ -4,12 +4,11 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import {
   ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users,
-  Play, Sparkles, X, CheckCircle2, Handshake, ShieldCheck, Award,
-  Quote
+  CheckCircle2, Handshake, ShieldCheck, Award
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { apiNewsletter, apiProgram } from '../lib/api';
-import { useStats, useNews, useEvents, useCarousel, usePartners, useTeam, useFounderBrief } from '../lib/api';
+import { useStats, useNews, useEvents, useCarousel, usePartners } from '../lib/api';
 import type { NewsItem, EventItem, HeroCarouselItem } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
@@ -398,7 +397,7 @@ function HeroAccordion() {
 
 /* ───── MAIN COMPONENT ───── */
 export function HomePage() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { data: stats = { peopleReached: 0, treesPlanted: 0, volunteers: 0, projects: 0, partners: 0, districts: 0 } as any } = useStats();
   const { data: allNews, isLoading: newsLoading } = useNews();
   const { data: allEvents, isLoading: eventsLoading } = useEvents();
@@ -408,11 +407,7 @@ export function HomePage() {
   const blogs = allNews ? allNews.filter(n => n.category === 'Blog').slice(0, 3) : [];
   const events = allEvents ? allEvents.slice(0, 4) : [];
   
-  const { data: team = [] } = useTeam();
-  const { data: founderBrief } = useFounderBrief();
-  const [showFounderModal, setShowFounderModal] = useState(false);
 
-  const advisors = team.filter((m: any) => m.type === 'advisor').slice(0, 4);
 
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
@@ -631,217 +626,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Thin orange brand strip separator */}
-      <div style={{ lineHeight: 0, height: '12px' }} className="relative overflow-hidden w-full">
-        <img src={heroBgOrange} alt="" className="w-full h-full object-cover object-center" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(10,51,32,0.3) 0%, transparent 50%, rgba(10,51,32,0.3) 100%)' }} />
-      </div>
 
-      {/* ══════════════════════════════════════════
-          FOUNDER'S BRIEF & ADVISORY BOARD SHOWCASE
-      ══════════════════════════════════════════ */}
-      <section className="py-20 lg:py-24 bg-gradient-to-b from-[#F9FAFB] to-white border-b border-gray-100 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
-            
-            {/* Founder's Brief Card */}
-            <div className="lg:col-span-7 bg-white rounded-3xl p-8 sm:p-12 border border-gray-100 shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-              {/* Subtle warm accent watermark */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/[0.03] rounded-full blur-2xl pointer-events-none" />
-
-              <div>
-                <div className="flex items-center gap-2 mb-3.5">
-                  <span className="w-2 h-2 rounded-full bg-[#E8521A] animate-pulse" />
-                  <span className="text-xs font-bold tracking-widest text-[#E8521A] uppercase font-inter">
-                    {lang === 'bn' && founderBrief?.subtitle_bn ? founderBrief.subtitle_bn : (founderBrief?.subtitle || t("FOUNDER'S BRIEF", 'প্রতিষ্ঠাতার বার্তা'))}
-                  </span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight mb-4 tracking-tight font-poppins">
-                  {lang === 'bn' && founderBrief?.title_bn ? founderBrief.title_bn : (founderBrief?.title || t('From a Grassroots Dream to a Regional Movement', 'তৃণমূলের স্বপ্ন থেকে আঞ্চলিক আন্দোলনে'))}
-                </h2>
-                <p className="text-sm sm:text-base text-gray-600 leading-relaxed font-inter mb-6">
-                  {lang === 'bn' && founderBrief?.content_bn ? founderBrief.content_bn : (founderBrief?.content || t(
-                    'YCN Bangladesh began with a simple belief — that young people can drive real change for our climate, communities and future. Our founder’s journey reflects this belief and the story behind the network.',
-                    'ওয়াইসিএন বাংলাদেশ একটি সাধারণ বিশ্বাসের মধ্য দিয়ে শুরু হয়েছিল — যে তরুণরা আমাদের জলবায়ু, সম্প্রদায় এবং ভবিষ্যতের জন্য প্রকৃত পরিবর্তন আনতে পারে।'
-                  ))}
-                </p>
-
-                {/* Founder Quote Callout */}
-                <div className="p-5 rounded-2xl bg-gradient-to-r from-[#0A3320]/[0.04] to-emerald-500/[0.02] border-l-4 border-[#1A6B3C] mb-8 relative">
-                  <Quote size={20} className="text-[#1A6B3C]/30 mb-1" />
-                  <p className="italic text-xs sm:text-sm text-[#0A3320] font-semibold leading-relaxed">
-                    "{lang === 'bn' && founderBrief?.quote_bn ? founderBrief.quote_bn : (founderBrief?.quote || t('We believe youth are not just the future of climate resilience — they are the indispensable force shaping it today.', 'আমরা বিশ্বাস করি তরুণরা কেবল জলবায়ু সহনশীলতার ভবিষ্যৎ নয় — তারাই আজকের অপরিহার্য চালিকাশক্তি।'))}"
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pt-5 border-t border-gray-100">
-                <div className="flex items-center gap-3.5">
-                  <div className="relative group/avatar">
-                    <img
-                      src={founderBrief?.founderImage || "/Arafat Hossain Akash - Founder & Executive Director.jpg"}
-                      alt={founderBrief?.founderName || "Founder"}
-                      className="w-13 h-13 rounded-full object-cover object-top border-2 border-[#1A6B3C] shadow-sm transition-transform duration-300 group-hover/avatar:scale-105"
-                      style={{ width: '3.25rem', height: '3.25rem' }}
-                      onError={(e) => {
-                        e.currentTarget.src = "/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png";
-                      }}
-                    />
-                    <button
-                      onClick={() => setShowFounderModal(true)}
-                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#E8521A] text-white flex items-center justify-center hover:scale-110 shadow-md transition-transform"
-                      title="Play Statement"
-                    >
-                      <Play size={10} className="ml-0.5 fill-current" />
-                    </button>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-900 font-poppins">{founderBrief?.founderName || "Arafat Hossain Akash"}</h4>
-                    <p className="text-xs text-gray-500 font-inter">{founderBrief?.founderRole || "Founder & Executive Director, YCN"}</p>
-                  </div>
-                </div>
-
-                <Link
-                  to={founderBrief?.articleLink || founderBrief?.articleUrl || "/about"}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-white transition-all hover:scale-105 shadow-md hover:shadow-lg flex-shrink-0 self-start sm:self-auto bg-[#E8521A] hover:bg-[#d0420f]"
-                >
-                  <span>{founderBrief?.buttonText || t("Read Founder's Story", 'প্রতিষ্ঠাতার গল্প পড়ুন')}</span>
-                  <ArrowRight size={13} />
-                </Link>
-              </div>
-            </div>
-
-            {/* Advisory Board Highlight Card */}
-            <div className="lg:col-span-5 bg-gradient-to-br from-[#061F14] via-[#0A3320] to-[#0D3823] rounded-3xl p-8 sm:p-10 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden border border-emerald-500/20">
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-3.5">
-                  <Sparkles size={14} className="text-[#E8521A]" />
-                  <span className="text-xs font-bold tracking-widest text-emerald-300 uppercase font-inter">
-                    {t('OUR GUIDING VOICES', 'আমাদের দিকনির্দেশক কণ্ঠস্বর')}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-extrabold text-[#F0ECD8] mb-3 leading-tight tracking-tight font-poppins">
-                  {t('Advisory Board & Mentors', 'উপদেষ্টা পরিষদ ও মেন্টর')}
-                </h3>
-                <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed font-inter mb-6">
-                  {t('Sector experts, academicians, and international advocates guiding YCN’s mission toward systemic climate justice.', 'খাতভিত্তিক বিশেষজ্ঞ, শিক্ষাবিদ এবং আন্তর্জাতিক নীতি নির্ধারক যারা ওয়াইসিএন-এর লক্ষ্যকে পরিচালিত করছেন।')}
-                </p>
-
-                {/* Advisors Avatars List */}
-                <div className="space-y-3 mb-6">
-                  {advisors.length > 0 ? (
-                    advisors.map((adv: any, i: number) => (
-                      <div key={adv.id || adv.name || i} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.06] border border-white/10 hover:border-emerald-400/40 hover:bg-white/[0.1] transition-all duration-200">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-emerald-950 flex-shrink-0 border border-white/15">
-                          {adv.image ? (
-                            <img src={adv.image} alt={adv.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-emerald-200">
-                              {adv.name.slice(0, 2)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-white truncate font-poppins">{adv.name}</p>
-                          <p className="text-[11px] text-emerald-300/80 truncate font-inter">{adv.role}</p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-xs text-emerald-200/70 py-2 font-inter">
-                      {t('Strategic advisors from academia, diplomacy, and environmental law.', 'একাডেমিয়া, কূটনীতি ও পরিবেশ আইনের কৌশলগত উপদেষ্টাগণ।')}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between">
-                <span className="text-xs text-emerald-300 font-medium font-inter">
-                  {t('Full Board & Executive Directors', 'পূর্ণাঙ্গ বোর্ড ও নির্বাহী পরিচালকগণ')}
-                </span>
-                <Link
-                  to="/about"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-[#0A3320] text-xs font-bold hover:bg-emerald-50 transition-all shadow-sm hover:scale-105"
-                >
-                  <span>{t('View All Team', 'সকল টিম দেখুন')}</span>
-                  <ArrowRight size={12} />
-                </Link>
-              </div>
-
-              {/* Decorative background glow */}
-              <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-[#E8521A]/10 blur-2xl pointer-events-none" />
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* Modal Video / Statement for Founder */}
-      {showFounderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl">
-            <button
-              onClick={() => setShowFounderModal(false)}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex items-center gap-4 mb-5">
-              <img
-                src={founderBrief?.founderImage || "/Arafat Hossain Akash - Founder & Executive Director.jpg"}
-                alt="Founder"
-                className="w-14 h-14 rounded-full object-cover border-2 border-[#1A6B3C]"
-                onError={(e) => {
-                  e.currentTarget.src = "/Formal Image -  Meet our team /1. Arafat Hossain Akash - Founder & Executive Director .png";
-                }}
-              />
-              <div>
-                <h3 className="font-bold text-lg text-gray-900 font-poppins">{founderBrief?.founderName || "Arafat Hossain Akash"}</h3>
-                <p className="text-xs text-gray-500 font-inter">{founderBrief?.founderRole || "Founder & Executive Director, YCN"}</p>
-              </div>
-            </div>
-
-            {founderBrief?.videoUrl ? (
-              <div className="aspect-video w-full rounded-xl overflow-hidden mb-5 bg-black">
-                <iframe
-                  src={founderBrief.videoUrl}
-                  title="Founder Message"
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ) : null}
-
-            <div className="space-y-3 text-sm text-gray-700 leading-relaxed font-inter mb-6 max-h-60 overflow-y-auto pr-2">
-              <p className="font-semibold text-gray-900">
-                "{founderBrief?.quote || 'We believe youth are the indispensable force shaping climate action.'}"
-              </p>
-              <p>
-                {founderBrief?.content || 'Youth Climate Network was founded to empower youth across vulnerable deltaic and frontline communities with tools, leadership capacity, and institutional access to demand climate justice.'}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
-              <button
-                onClick={() => setShowFounderModal(false)}
-                className="px-5 py-2 rounded-full border border-gray-300 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Close
-              </button>
-              <Link
-                to={founderBrief?.articleLink || founderBrief?.articleUrl || "/about"}
-                onClick={() => setShowFounderModal(false)}
-                className="px-5 py-2 rounded-full bg-[#1A6B3C] text-white text-xs font-semibold hover:bg-[#13532e] transition-colors inline-flex items-center gap-1.5"
-              >
-                <span>Full Founder's Article</span>
-                <ArrowRight size={12} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ══════════════════════════════════════════
           FEATURED PROGRAMS

@@ -30,11 +30,9 @@ interface MemberCardProps {
     number?: number;
     type?: string;
   };
-  showNumber?: boolean;
-  numberIndex?: number;
 }
 
-function MemberCard({ member, showNumber, numberIndex }: MemberCardProps) {
+function MemberCard({ member }: MemberCardProps) {
   const [imgError, setImgError] = useState(false);
   const { lang } = useLanguage();
 
@@ -59,12 +57,6 @@ function MemberCard({ member, showNumber, numberIndex }: MemberCardProps) {
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full group hover:-translate-y-1 relative">
-      {/* Number Badge */}
-      {showNumber && (
-        <div className="absolute top-6 left-6 z-10 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[10px] font-bold tracking-wider">
-          #{member.number || (numberIndex !== undefined ? numberIndex + 1 : 1)}
-        </div>
-      )}
 
       {/* Image container */}
       <div className="aspect-[4/4.5] w-full rounded-xl overflow-hidden bg-gray-100 mb-4 relative flex items-center justify-center">
@@ -444,12 +436,10 @@ export function AboutPage() {
 
           {/* Team Members Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {filteredMembers.map((member, index) => (
+            {filteredMembers.map((member) => (
               <MemberCard
                 key={member.id || member.name}
                 member={member}
-                showNumber={true}
-                numberIndex={index}
               />
             ))}
           </div>

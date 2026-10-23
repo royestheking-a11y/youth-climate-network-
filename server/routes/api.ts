@@ -145,22 +145,13 @@ router.get('/team', async (req, res) => {
     if (req.query.department) filter.department = req.query.department;
 
     let items = await Team.find(filter).sort({ order: 1, _id: 1 }).lean();
-    
-    // Ensure chronological numbering exists and is synchronized
-    let needsUpdate = false;
     const mapped = items.map((t: any, index: number) => {
       t.id = t._id;
-      if (!t.number || t.number !== index + 1) {
+      if (t.number === undefined || t.number === null) {
         t.number = index + 1;
-        needsUpdate = true;
       }
       return t;
     });
-
-    if (needsUpdate && items.length > 0) {
-      // Background sync of chronological numbers without blocking
-      Promise.all(mapped.map((t: any) => Team.findByIdAndUpdate(t.id, { number: t.number }))).catch(() => {});
-    }
 
     res.json(mapped);
   } catch (err: any) {
@@ -218,12 +209,14 @@ router.delete('/team/:id', async (req, res) => {
 
 router.post('/team/reorder', async (req, res) => {
   try {
-    const { items } = req.body; // { id, order }[]
+    const { items } = req.body; // { id, order, number }[]
     if (Array.isArray(items)) {
       for (let i = 0; i < items.length; i++) {
-        await Team.findByIdAndUpdate(items[i].id, {
-          order: items[i].order !== undefined ? items[i].order : i + 1,
-          number: i + 1
+        const item = items[i];
+        if (!item || !item.id) continue;
+        await Team.findByIdAndUpdate(item.id, {
+          order: typeof item.order === 'number' ? item.order : i,
+          number: typeof item.number === 'number' ? item.number : i + 1,
         });
       }
     }
