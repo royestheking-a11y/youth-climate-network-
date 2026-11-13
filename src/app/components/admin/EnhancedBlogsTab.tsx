@@ -1,10 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   FileText, Plus, Edit3, Trash2, Eye, X, Search,
   User, HelpCircle, Image as ImageIcon, Upload, Globe,
   Sparkles, RefreshCw, Check, AlertCircle,
-  AlignLeft, Bold, Italic, List, ListOrdered,
-  Quote, Tag
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Bold, Italic, Underline, Strikethrough, Subscript, Superscript,
+  List, ListOrdered, Indent, Outdent,
+  Highlighter, Type, Table, Quote, Minus, Link2,
+  Eraser, Replace, Maximize2, Minimize2, Wand2, Zap,
+  Info, AlertTriangle, Code, LayoutTemplate
 } from 'lucide-react';
 import {
   useBlogs, apiBlog, BlogPost, useAuthors, apiAuthors, useSDGs, uploadFile, uploadMultipleFiles
@@ -118,6 +122,48 @@ function smartArrangeContent(raw: string): string {
 
   // Ensure clean separation between blocks (max 2 newlines)
   return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
+ * Clean Word Paste HTML:
+ * Strips Microsoft Word artifacts, Mso classes, conditional comments, and junk XML
+ */
+function cleanWordPasteHtml(html: string): string {
+  if (!html) return '';
+  let output = html;
+
+  // Remove Word conditional comments <!--[if ...]>...<![endif]-->
+  output = output.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '');
+  output = output.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Remove Office XML tags <o:p>, <w:WordDocument>, <m:math>, etc.
+  output = output.replace(/<\/?(?:o:p|w:[^>]+|m:[^>]+|v:[^>]+|xml|meta|link)[^>]*>/gi, '');
+
+  // Remove Mso classes (e.g., class="MsoNormal", class="MsoListParagraph")
+  output = output.replace(/\s*class=["']?Mso[a-zA-Z0-9_-]*["']?/gi, '');
+
+  // Clean mso- inline styles
+  output = output.replace(/\s*style=["']([^"']*)["']/gi, (_match, styleContent) => {
+    const cleaned = styleContent
+      .split(';')
+      .map((s: string) => s.trim())
+      .filter((s: string) => {
+        if (!s) return false;
+        if (/^mso-/i.test(s)) return false;
+        if (/^font-family/i.test(s)) return false;
+        if (/^line-height/i.test(s)) return false;
+        return true;
+      })
+      .join('; ');
+    return cleaned ? ` style="${cleaned}"` : '';
+  });
+
+  // Replace &nbsp;
+  output = output.replace(/&nbsp;/g, ' ');
+  output = output.replace(/<span\s*>(.*?)<\/span>/gi, '$1');
+  output = output.replace(/<p\s*>\s*<\/p>/gi, '');
+
+  return output.trim();
 }
 
 /**
@@ -258,14 +304,29 @@ export function EnhancedBlogsTab() {
   const [slugStatus, setSlugStatus] = useState<{ available?: boolean; message?: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Enhanced Editor States
-  const [contentViewTab, setContentViewTab] = useState<'edit' | 'preview'>('edit');
+  // Microsoft Word Suite States
+  const [editorMode, setEditorMode] = useState<'visual' | 'code' | 'preview'>('visual');
+  const [ribbonTab, setRibbonTab] = useState<'home' | 'insert' | 'tools' | 'templates'>('home');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoArrangeOnPaste, setAutoArrangeOnPaste] = useState(true);
   const [newTagInput, setNewTagInput] = useState('');
   const [editorLanguageTab, setEditorLanguageTab] = useState<'en' | 'bn'>('en');
   const [authorSaveStatus, setAuthorSaveStatus] = useState<string | null>(null);
   const [savingAuthorToSystem, setSavingAuthorToSystem] = useState(false);
   const [autoGenFeedback, setAutoGenFeedback] = useState<string | null>(null);
+
+  // Find & Replace
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [findText, setFindText] = useState('');
+  const [replaceText, setReplaceText] = useState('');
+
+  // Link Dialog
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
+
+  // Visual Word Document Ref
+  const visualEditorRef = useRef<HTMLDivElement | null>(null);
 
   const blankPost: Partial<BlogPost> = {
     title: '',
@@ -305,6 +366,45 @@ export function EnhancedBlogsTab() {
     outboundLinks: [],
   };
 
+  // Sync content into Visual Editor when editing post changes
+  useEffect(() => {
+    if (visualEditorRef.current && editingPost) {
+      const activeContent = (editorLanguageTab === 'bn' ? editingPost.content_bn : editingPost.content) || '';
+      if (visualEditorRef.current.innerHTML !== activeContent) {
+        visualEditorRef.current.innerHTML = activeContent;
+      }
+    }
+  }, [editingPost?.id, editorLanguageTab]);
+
+  // Synchronize visual editor input back to state
+  const handleVisualInput = () => {
+    if (visualEditorRef.current) {
+      const html = visualEditorRef.current.innerHTML;
+      setEditingPost((prev: any) => ({
+        ...prev,
+        [editorLanguageTab === 'bn' ? 'content_bn' : 'content']: html,
+      }));
+    }
+  };
+
+  // Execute standard Word document command
+  const executeWordCmd = (cmd: string, val: string | undefined = undefined) => {
+    if (visualEditorRef.current) {
+      visualEditorRef.current.focus();
+    }
+    document.execCommand(cmd, false, val);
+    handleVisualInput();
+  };
+
+  // Insert HTML snippet directly into Word document at cursor
+  const insertHtmlSnippet = (html: string) => {
+    if (visualEditorRef.current) {
+      visualEditorRef.current.focus();
+    }
+    document.execCommand('insertHTML', false, html);
+    handleVisualInput();
+  };
+
   // Convert title to URL slug
   const formatSlug = (val: string) => {
     return val
@@ -329,6 +429,8 @@ export function EnhancedBlogsTab() {
       canonicalUrl: `https://youthclimatenetwork.org/blog/${formatted}`
     }));
     setSlugStatus(null);
+    setAutoGenFeedback('Slug synchronized with article title!');
+    setTimeout(() => setAutoGenFeedback(null), 3000);
   };
 
   const checkSlugAvailability = async () => {
@@ -344,55 +446,141 @@ export function EnhancedBlogsTab() {
     }
   };
 
-  // Auto-arrange content in editor
+  // Paste handler in Word document
+  const handleWordPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (!autoArrangeOnPaste) return;
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+
+    if (html) {
+      e.preventDefault();
+      const cleaned = cleanWordPasteHtml(html);
+      insertHtmlSnippet(cleaned);
+      setAutoGenFeedback('Pasted Word content cleaned and formatted!');
+      setTimeout(() => setAutoGenFeedback(null), 3500);
+    } else if (text) {
+      e.preventDefault();
+      const arranged = smartArrangeContent(text);
+      insertHtmlSnippet(arranged.replace(/\n\n/g, '<p></p>'));
+      setAutoGenFeedback('Pasted text auto-spaced into paragraphs!');
+      setTimeout(() => setAutoGenFeedback(null), 3500);
+    }
+  };
+
+  // Auto-arrange whole content
   const handleAutoArrangeContent = () => {
     if (!editingPost?.content) return;
     const arranged = smartArrangeContent(editingPost.content);
     setEditingPost((prev: any) => ({ ...prev, content: arranged }));
-    setAutoGenFeedback('Content arranged with neat line-by-line spacing & paragraphs!');
+    if (visualEditorRef.current) {
+      visualEditorRef.current.innerHTML = arranged;
+    }
+    setAutoGenFeedback('Article content organized with clean paragraph line-spacing!');
     setTimeout(() => setAutoGenFeedback(null), 3500);
   };
 
-  // Smart Paste Handler
-  const handleContentPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    if (!autoArrangeOnPaste) return;
-    const pastedText = e.clipboardData.getData('text/plain');
-    const pastedHtml = e.clipboardData.getData('text/html');
-    const rawToUse = pastedHtml || pastedText;
-    if (!rawToUse) return;
+  // Find and replace all
+  const handleFindReplaceAll = () => {
+    if (!findText) return;
+    const activeKey = editorLanguageTab === 'bn' ? 'content_bn' : 'content';
+    const current = editingPost[activeKey] || '';
+    const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const count = (current.match(regex) || []).length;
+    if (count === 0) {
+      alert(`No matches found for "${findText}"`);
+      return;
+    }
+    const updated = current.replace(regex, replaceText);
+    setEditingPost((prev: any) => ({ ...prev, [activeKey]: updated }));
+    if (visualEditorRef.current) {
+      visualEditorRef.current.innerHTML = updated;
+    }
+    setAutoGenFeedback(`Replaced ${count} instance(s) of "${findText}"`);
+    setTimeout(() => setAutoGenFeedback(null), 3500);
+  };
 
-    e.preventDefault();
-    const arranged = smartArrangeContent(rawToUse);
+  // Insert Table
+  const handleInsertTable = (rows: number = 3, cols: number = 3) => {
+    let tableHtml = '<table class="w-full my-4 border-collapse border border-gray-300 text-sm"><thead><tr class="bg-gray-100">';
+    for (let c = 1; c <= cols; c++) {
+      tableHtml += `<th class="border border-gray-300 p-2.5 font-bold text-left">Header ${c}</th>`;
+    }
+    tableHtml += '</tr></thead><tbody>';
+    for (let r = 1; r <= rows; r++) {
+      tableHtml += '<tr>';
+      for (let c = 1; c <= cols; c++) {
+        tableHtml += `<td class="border border-gray-300 p-2.5">Row ${r} Col ${c}</td>`;
+      }
+      tableHtml += '</tr>';
+    }
+    tableHtml += '</tbody></table><p></p>';
+    insertHtmlSnippet(tableHtml);
+  };
 
-    const textarea = e.currentTarget;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const current = editingPost.content || '';
-    const nextContent = current.slice(0, start) + arranged + current.slice(end);
+  // Insert Callout Box
+  const handleInsertCallout = (type: 'info' | 'climate' | 'warning' | 'quote') => {
+    let calloutHtml = '';
+    if (type === 'info') {
+      calloutHtml = '<div class="my-5 p-4 rounded-xl bg-blue-50 border-l-4 border-blue-600 text-blue-950 font-inter"><p class="font-bold text-sm mb-1">Key Context & Information</p><p class="text-xs text-blue-900 leading-relaxed">Provide background research, policy context, or community statistics here...</p></div><p></p>';
+    } else if (type === 'climate') {
+      calloutHtml = '<div class="my-5 p-4 rounded-xl bg-emerald-50 border-l-4 border-[#1A6B3C] text-emerald-950 font-inter"><p class="font-bold text-sm mb-1">Climate Action Impact</p><p class="text-xs text-emerald-900 leading-relaxed">Over 15,000 mangrove seedlings planted across coastal embankment sites in Satkhira.</p></div><p></p>';
+    } else if (type === 'warning') {
+      calloutHtml = '<div class="my-5 p-4 rounded-xl bg-amber-50 border-l-4 border-amber-600 text-amber-950 font-inter"><p class="font-bold text-sm mb-1">Urgent Alert</p><p class="text-xs text-amber-900 leading-relaxed">Rising salinity levels threatening freshwater supplies in vulnerable delta villages.</p></div><p></p>';
+    } else if (type === 'quote') {
+      calloutHtml = '<blockquote class="my-6 pl-6 py-3 border-l-4 border-[#E8521A] bg-orange-50/50 rounded-r-2xl italic text-gray-900 font-poppins text-lg"><p>"Empowering youth is not just an alternative — it is our primary survival strategy against accelerating climate emergencies."</p><cite class="block text-xs font-bold text-gray-500 mt-2 not-italic">— Youth Climate Network Bangladesh</cite></blockquote><p></p>';
+    }
+    insertHtmlSnippet(calloutHtml);
+  };
 
-    setEditingPost((prev: any) => ({ ...prev, content: nextContent }));
-    setAutoGenFeedback('Pasted text auto-arranged into clean paragraphs!');
+  // Insert Document Template
+  const handleInsertTemplate = (templateName: 'field' | 'policy' | 'interview') => {
+    let templateHtml = '';
+    if (templateName === 'field') {
+      templateHtml = `
+        <h2>1. Executive Summary & Field Mission</h2>
+        <p>Introduce the background of the climate intervention, the region involved (e.g. coastal Khulna or Satkhira), and the youth volunteer mobilization.</p>
+        <h2>2. Key Climate Challenges on the Ground</h2>
+        <ul>
+          <li>Salinity intrusion impacting local agricultural yields and potable drinking water.</li>
+          <li>Erosion along river embankments caused by tidal surges and cyclonic storms.</li>
+        </ul>
+        <h2>3. Grassroots Youth Action & Solutions</h2>
+        <p>Describe how student networks coordinated community disaster preparedness, mangrove nursery plantations, and mobile water purification.</p>
+        <h2>4. Measurable Impacts & Community Testimonials</h2>
+        <p>Summarize outcomes achieved, families supported, and long-term adaptation benefits.</p>
+      `;
+    } else if (templateName === 'policy') {
+      templateHtml = `
+        <h2>Policy Position & COP Strategic Demands</h2>
+        <p>Detailed policy brief presenting youth perspectives on international climate negotiations and loss and damage financing.</p>
+        <h2>Key Recommendations for Decision-Makers</h2>
+        <ol>
+          <li>Accelerate non-debt climate adaptation funding for frontline coastal communities.</li>
+          <li>Institutionalize youth seats within national disaster management councils.</li>
+          <li>Invest in renewable mini-grids for remote off-grid delta communities.</li>
+        </ol>
+      `;
+    } else if (templateName === 'interview') {
+      templateHtml = `
+        <h2>Voices of the Frontlines: Youth Leader Profile</h2>
+        <p>An in-depth conversation with a grassroots activist leading climate adaptation in Bangladesh.</p>
+        <p><strong>YCN:</strong> What initially compelled you to join youth climate advocacy in your village?</p>
+        <p><strong>Leader:</strong> After witnessing consecutive cyclone surges dismantle our school, we realized waiting was not an option.</p>
+      `;
+    }
+    insertHtmlSnippet(templateHtml);
+    setAutoGenFeedback(`Inserted ${templateName} document template!`);
     setTimeout(() => setAutoGenFeedback(null), 3000);
   };
 
-  // Insert markdown helper into textarea
-  const insertMarkdown = (prefix: string, suffix: string = '') => {
-    const textarea = document.getElementById('article-content-editor') as HTMLTextAreaElement | null;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const current = editingPost.content || '';
-    const selected = current.slice(start, end);
-    const replacement = `${prefix}${selected || 'text'}${suffix}`;
-
-    const nextContent = current.slice(0, start) + replacement + current.slice(end);
-    setEditingPost((prev: any) => ({ ...prev, content: nextContent }));
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, start + prefix.length + (selected.length || 4));
-    }, 50);
+  // Link Insertion
+  const handleConfirmLink = () => {
+    if (!linkUrl) return;
+    const aTag = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline font-semibold hover:text-emerald-900">${linkText || linkUrl}</a>`;
+    insertHtmlSnippet(aTag);
+    setShowLinkDialog(false);
+    setLinkUrl('');
+    setLinkText('');
   };
 
   // Auto-generate Tags
@@ -425,7 +613,7 @@ export function EnhancedBlogsTab() {
     setEditingPost({ ...editingPost, tags: currentTags.filter((t: string) => t !== tagToRemove) });
   };
 
-  // Auto-generate all SEO & Social Sharing Metadata
+  // Auto-generate SEO
   const handleAutoGenerateSEO = () => {
     if (!editingPost) return;
     const seoData = generateAutoSEO(editingPost);
@@ -486,9 +674,9 @@ export function EnhancedBlogsTab() {
         setEditingPost((prev: any) => ({
           ...prev,
           image: url,
-          ogImage: prev.ogImage || url // also auto set social image if empty
+          ogImage: prev.ogImage || url
         }));
-      } catch (err) {
+      } catch {
         alert('Image upload failed');
       } finally {
         setUploadingImage(false);
@@ -502,7 +690,7 @@ export function EnhancedBlogsTab() {
         setUploadingAuthorAvatar(true);
         const url = await uploadFile(e.target.files[0]);
         setEditingPost((prev: any) => ({ ...prev, authorImage: url }));
-      } catch (err) {
+      } catch {
         alert('Avatar upload failed');
       } finally {
         setUploadingAuthorAvatar(false);
@@ -520,7 +708,7 @@ export function EnhancedBlogsTab() {
           gallery: [...(prev.gallery || []), ...urls],
           galleryImages: [...(prev.galleryImages || []), ...urls],
         }));
-      } catch (err) {
+      } catch {
         alert('Multiple images upload failed');
       } finally {
         setUploadingGallery(false);
@@ -553,7 +741,6 @@ export function EnhancedBlogsTab() {
 
     try {
       setSaving(true);
-      // Ensure sync between metaTitle and seoTitle
       const payload = {
         ...editingPost,
         seoTitle: editingPost.seoTitle || editingPost.metaTitle || editingPost.title,
@@ -594,17 +781,18 @@ export function EnhancedBlogsTab() {
     return p.title.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q) || (p.authorName && p.authorName.toLowerCase().includes(q));
   });
 
-  // Calculate live content stats
+  // Calculate live Microsoft Word document stats
   const contentStats = useMemo(() => {
-    if (!editingPost?.content) return { words: 0, chars: 0, readTime: '1 min read' };
+    if (!editingPost?.content) return { words: 0, chars: 0, pages: 1, readTime: '1 min' };
     const clean = editingPost.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const words = clean ? clean.split(' ').filter(Boolean).length : 0;
     const chars = clean.length;
+    const pages = Math.max(1, Math.ceil(words / 350));
     const readTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
-    return { words, chars, readTime };
+    return { words, chars, pages, readTime };
   }, [editingPost?.content]);
 
-  // Quick recommended topic pills
+  // Popular topic suggestions
   const popularTopics = [
     'Climate Action', 'Youth Leadership', 'Coastal Resilience',
     'Mangrove Restoration', 'Renewable Energy', 'Climate Policy',
@@ -613,9 +801,9 @@ export function EnhancedBlogsTab() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Top Notification Toast */}
+      {/* Toast Notification */}
       {autoGenFeedback && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A3320] text-[#F0ECD8] text-xs font-semibold shadow-xl border border-emerald-500/30 animate-in fade-in slide-in-from-top-2">
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A3320] text-[#F0ECD8] text-xs font-semibold shadow-2xl border border-emerald-500/30">
           <Sparkles size={15} className="text-[#E8521A]" />
           <span>{autoGenFeedback}</span>
         </div>
@@ -776,7 +964,6 @@ export function EnhancedBlogsTab() {
                           </a>
                           <button
                             onClick={() => {
-                              // Ensure author details and SEO fields are populated when opening
                               const existingAuthor = authors.find(a => a.id === post.authorId);
                               setEditingPost({
                                 ...post,
@@ -817,7 +1004,7 @@ export function EnhancedBlogsTab() {
       {subTab === 'posts' && editingPost && (
         <form onSubmit={handleSave} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-6">
           {/* Editor Header */}
-          <div className="flex items-center justify-between border-b pb-4">
+          <div className="flex items-center justify-between border-b pb-4 flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">
                 <FileText size={20} />
@@ -827,7 +1014,7 @@ export function EnhancedBlogsTab() {
                   {isNew ? 'Create New Article' : 'Edit Article, Author & SEO'}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Auto-formatted body, intelligent tags, automatic SEO/Social sharing, and full author controls
+                  Microsoft Word Suite, automated topic tags, one-click SEO & social sharing
                 </p>
               </div>
             </div>
@@ -838,7 +1025,7 @@ export function EnhancedBlogsTab() {
                   type="button"
                   onClick={() => setEditorLanguageTab('en')}
                   className={`px-3 py-1 rounded-md transition-all ${
-                    editorLanguageTab === 'en' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                    editorLanguageTab === 'en' ? 'bg-white shadow text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   English
@@ -847,7 +1034,7 @@ export function EnhancedBlogsTab() {
                   type="button"
                   onClick={() => setEditorLanguageTab('bn')}
                   className={`px-3 py-1 rounded-md transition-all ${
-                    editorLanguageTab === 'bn' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                    editorLanguageTab === 'bn' ? 'bg-white shadow text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   বাংলা (Bengali)
@@ -989,206 +1176,625 @@ export function EnhancedBlogsTab() {
               </div>
 
               {/* ──────────────────────────────────────────────────────────────
-                  SMART ARTICLE BODY (Markdown / HTML) & AUTO-ARRANGER
+                  MICROSOFT WORD WRITING SUITE
                  ────────────────────────────────────────────────────────────── */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className={`space-y-0 border border-gray-300 rounded-2xl overflow-hidden shadow-sm transition-all ${
+                isFullscreen ? 'fixed inset-4 z-50 bg-white flex flex-col' : 'relative'
+              }`}>
+                {/* Word Ribbon Header Bar */}
+                <div className="bg-[#1A6B3C] text-white px-4 py-2 flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                      <AlignLeft size={14} className="text-emerald-700" />
-                      <span>Full Article Body {editorLanguageTab === 'bn' ? '(বাংলা)' : '(Markdown / HTML)'}</span>
-                    </label>
-                    <span className="text-[11px] text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded-full">
-                      {contentStats.words} words · ~{contentStats.readTime}
+                    <div className="w-6 h-6 rounded bg-white/20 flex items-center justify-center font-bold text-xs">
+                      W
+                    </div>
+                    <span className="text-xs font-bold font-inter tracking-wide">
+                      Microsoft Word Suite {editorLanguageTab === 'bn' ? '— বাংলা মোড' : '— Article Editor'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* View mode toggle */}
-                    <div className="flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
+                    {/* View Mode Switcher */}
+                    <div className="flex rounded-lg bg-black/20 p-0.5 text-xs font-semibold">
                       <button
                         type="button"
-                        onClick={() => setContentViewTab('edit')}
-                        className={`px-2.5 py-1 rounded-md transition-all ${
-                          contentViewTab === 'edit' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                        onClick={() => setEditorMode('visual')}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                          editorMode === 'visual' ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:text-white'
                         }`}
                       >
-                        ✏️ Editor
+                        <Edit3 size={13} />
+                        <span>Word Document</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => setContentViewTab('preview')}
-                        className={`px-2.5 py-1 rounded-md transition-all ${
-                          contentViewTab === 'preview' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                        onClick={() => setEditorMode('code')}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                          editorMode === 'code' ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:text-white'
                         }`}
                       >
-                        👁️ Reader Preview
+                        <Code size={13} />
+                        <span>HTML / Markdown</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditorMode('preview')}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                          editorMode === 'preview' ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:text-white'
+                        }`}
+                      >
+                        <Eye size={13} />
+                        <span>Reader Preview</span>
                       </button>
                     </div>
 
-                    {/* Auto Arrange Button */}
+                    {/* Fullscreen Toggle */}
                     <button
                       type="button"
-                      onClick={handleAutoArrangeContent}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer transition-all hover:scale-105 active:scale-95"
-                      title="Automatically clean pasted HTML, space lines line-by-line, and format paragraphs"
+                      onClick={() => setIsFullscreen(!isFullscreen)}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                      title={isFullscreen ? 'Exit Fullscreen Focus' : 'Fullscreen Focus Mode'}
                     >
-                      <Sparkles size={13} className="text-amber-300" />
-                      <span>Auto-Arrange & Space</span>
+                      {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Editor Toolbar */}
-                {contentViewTab === 'edit' && (
-                  <div className="flex items-center justify-between flex-wrap gap-1.5 p-2 bg-gray-100 rounded-t-xl border border-b-0 border-gray-200 text-xs">
-                    <div className="flex items-center gap-1 flex-wrap">
+                {/* Word Ribbon Tabs (Home, Insert, Tools, Templates) */}
+                <div className="bg-gray-100 border-b border-gray-200 px-3 pt-2 flex items-center justify-between flex-wrap gap-2 text-xs">
+                  <div className="flex gap-1">
+                    {[
+                      { key: 'home', label: 'Home' },
+                      { key: 'insert', label: 'Insert' },
+                      { key: 'tools', label: 'Word Cleaners' },
+                      { key: 'templates', label: 'Templates' },
+                    ].map(tab => (
                       <button
+                        key={tab.key}
                         type="button"
-                        onClick={() => insertMarkdown('## ', '\n')}
-                        className="px-2 py-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200 font-bold"
-                        title="Heading 2 (Creates Table of Contents anchor)"
+                        onClick={() => setRibbonTab(tab.key as any)}
+                        className={`px-3.5 py-1.5 rounded-t-lg font-bold text-xs transition-colors border-t border-x ${
+                          ribbonTab === tab.key
+                            ? 'bg-white text-emerald-900 border-gray-200 shadow-2xs'
+                            : 'bg-transparent text-gray-600 border-transparent hover:text-gray-900'
+                        }`}
                       >
-                        H2
+                        {tab.label}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('### ', '\n')}
-                        className="px-2 py-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200 font-bold"
-                        title="Heading 3"
-                      >
-                        H3
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('**', '**')}
-                        className="p-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200"
-                        title="Bold text"
-                      >
-                        <Bold size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('*', '*')}
-                        className="p-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200"
-                        title="Italic text"
-                      >
-                        <Italic size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('- ', '\n')}
-                        className="p-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200"
-                        title="Bullet list"
-                      >
-                        <List size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('1. ', '\n')}
-                        className="p-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200"
-                        title="Numbered list"
-                      >
-                        <ListOrdered size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('> ', '\n')}
-                        className="p-1 bg-white hover:bg-gray-50 text-gray-700 rounded border border-gray-200"
-                        title="Blockquote"
-                      >
-                        <Quote size={14} />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={autoArrangeOnPaste}
-                          onChange={e => setAutoArrangeOnPaste(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded text-emerald-600"
-                        />
-                        <span>Auto-arrange on paste</span>
-                      </label>
-                    </div>
+                    ))}
                   </div>
-                )}
 
-                {/* Content Box: Edit mode OR Reader Preview */}
-                {contentViewTab === 'edit' ? (
-                  <textarea
-                    id="article-content-editor"
-                    rows={16}
-                    value={editorLanguageTab === 'bn' ? (editingPost.content_bn || '') : (editingPost.content || '')}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (editorLanguageTab === 'bn') {
-                        setEditingPost({ ...editingPost, content_bn: val });
-                      } else {
-                        setEditingPost({ ...editingPost, content: val });
-                      }
-                    }}
-                    onPaste={editorLanguageTab === 'en' ? handleContentPaste : undefined}
-                    className="w-full px-4 py-3 text-xs bg-gray-50 border border-gray-200 rounded-b-xl font-mono leading-relaxed focus:bg-white focus:outline-none"
-                    placeholder="Copy or write article content here. You can paste full text or HTML from Word or websites — the system will automatically arrange paragraphs and lines line-by-line! Use ## Headings for Table of Contents..."
-                    required={editorLanguageTab === 'en'}
-                  />
-                ) : (
-                  <div className="w-full min-h-[350px] p-6 bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[500px]">
-                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4 pb-2 border-b">
-                      Reader Live Preview (Exact Styling)
-                    </div>
-                    {/* Rendered output */}
-                    {editingPost.content ? (
-                      <div className="space-y-4 font-inter text-gray-800 text-sm leading-relaxed">
-                        {smartArrangeContent(editingPost.content).split(/\n\s*\n/).map((block, idx) => {
-                          const trimmed = block.trim();
-                          if (!trimmed) return null;
-                          if (trimmed.startsWith('### ')) {
-                            return <h3 key={idx} className="text-base font-bold text-gray-900 mt-4 mb-2 font-poppins">{trimmed.replace(/^###\s+/, '')}</h3>;
-                          }
-                          if (trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
-                            return <h2 key={idx} className="text-lg font-bold text-emerald-950 mt-5 mb-2 font-poppins pb-1 border-b border-gray-100">{trimmed.replace(/^#{1,2}\s+/, '')}</h2>;
-                          }
-                          if (trimmed.startsWith('> ')) {
-                            return (
-                              <blockquote key={idx} className="border-l-4 border-emerald-600 pl-4 py-2 italic bg-emerald-50/60 rounded-r-xl text-gray-800 my-3">
-                                {trimmed.replace(/^>\s*/gm, '')}
-                              </blockquote>
-                            );
-                          }
-                          if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
-                            const items = trimmed.split('\n').filter(Boolean);
-                            return (
-                              <ul key={idx} className="list-disc pl-5 space-y-1.5 my-3 text-gray-700">
-                                {items.map((it, i) => (
-                                  <li key={i}>{it.replace(/^[-*•]\s+/, '')}</li>
-                                ))}
-                              </ul>
-                            );
-                          }
-                          return (
-                            <p key={idx} className="text-gray-700 leading-relaxed">
-                              {trimmed}
-                            </p>
-                          );
-                        })}
+                  {/* Auto-arrange toggle */}
+                  <div className="flex items-center gap-3 pb-1">
+                    <label className="flex items-center gap-1.5 text-[11px] text-gray-700 font-medium cursor-pointer">
+                      <Zap size={13} className="text-emerald-700" />
+                      <input
+                        type="checkbox"
+                        checked={autoArrangeOnPaste}
+                        onChange={e => setAutoArrangeOnPaste(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded text-emerald-600"
+                      />
+                      <span>Auto-clean Word Paste</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Ribbon Toolbar Content Panels */}
+                <div className="bg-white p-2.5 border-b border-gray-200 flex items-center flex-wrap gap-2 text-xs">
+                  
+                  {/* HOME TAB: Typography, Fonts, Paragraphs, Lists */}
+                  {ribbonTab === 'home' && (
+                    <>
+                      {/* Heading / Style dropdown */}
+                      <select
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === 'p') executeWordCmd('formatBlock', '<p>');
+                          else if (val === 'h1') executeWordCmd('formatBlock', '<h1>');
+                          else if (val === 'h2') executeWordCmd('formatBlock', '<h2>');
+                          else if (val === 'h3') executeWordCmd('formatBlock', '<h3>');
+                          else if (val === 'blockquote') executeWordCmd('formatBlock', '<blockquote>');
+                          else if (val === 'pre') executeWordCmd('formatBlock', '<pre>');
+                        }}
+                        className="px-2.5 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg font-semibold text-gray-800 focus:outline-none"
+                        defaultValue="p"
+                      >
+                        <option value="p">Normal Text</option>
+                        <option value="h1">Heading 1 (Main Title)</option>
+                        <option value="h2">Heading 2 (Major Section)</option>
+                        <option value="h3">Heading 3 (Subsection)</option>
+                        <option value="blockquote">Pullquote Block</option>
+                        <option value="pre">Code Block</option>
+                      </select>
+
+                      <div className="h-5 w-px bg-gray-200 mx-1" />
+
+                      {/* Font Format: B, I, U, S, Sub, Super */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('bold')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700 font-bold"
+                          title="Bold (Ctrl+B)"
+                        >
+                          <Bold size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('italic')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Italic (Ctrl+I)"
+                        >
+                          <Italic size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('underline')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Underline (Ctrl+U)"
+                        >
+                          <Underline size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('strikeThrough')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Strikethrough"
+                        >
+                          <Strikethrough size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('subscript')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Subscript"
+                        >
+                          <Subscript size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('superscript')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Superscript"
+                        >
+                          <Superscript size={14} />
+                        </button>
                       </div>
-                    ) : (
-                      <p className="text-gray-400 italic text-center py-10">No content entered yet. Paste or write above to preview here.</p>
-                    )}
+
+                      <div className="h-5 w-px bg-gray-200 mx-1" />
+
+                      {/* Colors: Text & Highlight */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200">
+                          <Type size={13} className="text-gray-500" />
+                          <select
+                            onChange={e => executeWordCmd('foreColor', e.target.value)}
+                            className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
+                            defaultValue="#111827"
+                          >
+                            <option value="#111827">Default Dark</option>
+                            <option value="#1A6B3C">Forest Green</option>
+                            <option value="#059669">Emerald</option>
+                            <option value="#E8521A">YCN Orange</option>
+                            <option value="#DC2626">Crimson Red</option>
+                            <option value="#2563EB">Royal Blue</option>
+                            <option value="#4B5563">Slate Gray</option>
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200">
+                          <Highlighter size={13} className="text-amber-500" />
+                          <select
+                            onChange={e => executeWordCmd('hiliteColor', e.target.value)}
+                            className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
+                            defaultValue="transparent"
+                          >
+                            <option value="transparent">No Highlight</option>
+                            <option value="#FEF08A">Yellow</option>
+                            <option value="#A7F3D0">Green</option>
+                            <option value="#BAE6FD">Cyan</option>
+                            <option value="#FBCFE8">Pink</option>
+                            <option value="#FED7AA">Orange</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="h-5 w-px bg-gray-200 mx-1" />
+
+                      {/* Alignment */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('justifyLeft')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Align Left"
+                        >
+                          <AlignLeft size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('justifyCenter')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Center"
+                        >
+                          <AlignCenter size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('justifyRight')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Align Right"
+                        >
+                          <AlignRight size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('justifyFull')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Justify"
+                        >
+                          <AlignJustify size={14} />
+                        </button>
+                      </div>
+
+                      <div className="h-5 w-px bg-gray-200 mx-1" />
+
+                      {/* Lists & Indent */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('insertUnorderedList')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Bulleted List"
+                        >
+                          <List size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('insertOrderedList')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Numbered List"
+                        >
+                          <ListOrdered size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('outdent')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Decrease Indent"
+                        >
+                          <Outdent size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('indent')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
+                          title="Increase Indent"
+                        >
+                          <Indent size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => executeWordCmd('removeFormat')}
+                          className="p-1.5 hover:bg-gray-100 rounded text-red-600"
+                          title="Clear Formatting (Eraser)"
+                        >
+                          <Eraser size={14} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* INSERT TAB: Tables, Callouts, Quotes, Dividers, Links */}
+                  {ribbonTab === 'insert' && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleInsertTable(3, 3)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
+                      >
+                        <Table size={14} className="text-emerald-700" />
+                        <span>Insert 3x3 Table</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertTable(4, 2)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
+                      >
+                        <Table size={14} className="text-emerald-700" />
+                        <span>Insert 4x2 Table</span>
+                      </button>
+
+                      <div className="h-5 w-px bg-gray-200 mx-1" />
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertCallout('climate')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <Sparkles size={13} className="text-[#1A6B3C]" />
+                        <span>Climate Fact Box</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertCallout('info')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <Info size={13} className="text-blue-600" />
+                        <span>Info Callout Box</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertCallout('warning')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <AlertTriangle size={13} className="text-amber-600" />
+                        <span>Alert Callout Box</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertCallout('quote')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <Quote size={13} className="text-[#E8521A]" />
+                        <span>Pullquote</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => insertHtmlSnippet('<hr class="my-6 border-t-2 border-gray-200" /><p></p>')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
+                        title="Horizontal Divider"
+                      >
+                        <Minus size={14} />
+                        <span>Divider</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowLinkDialog(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
+                      >
+                        <Link2 size={14} className="text-emerald-700" />
+                        <span>Hyperlink</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* TOOLS TAB: Word Cleaning & Spacing */}
+                  {ribbonTab === 'tools' && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (visualEditorRef.current) {
+                            const cleaned = cleanWordPasteHtml(visualEditorRef.current.innerHTML);
+                            visualEditorRef.current.innerHTML = cleaned;
+                            handleVisualInput();
+                            setAutoGenFeedback('Stripped all Microsoft Word Mso junk & normalized formatting!');
+                            setTimeout(() => setAutoGenFeedback(null), 3500);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A3320] text-white hover:bg-[#1A6B3C] font-bold text-xs cursor-pointer"
+                      >
+                        <Wand2 size={13} className="text-amber-300" />
+                        <span>Clean Word Document (Strip Mso Junk)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleAutoArrangeContent}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs cursor-pointer"
+                      >
+                        <Sparkles size={13} className="text-amber-300" />
+                        <span>Auto-Arrange & Space Paragraphs</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowFindReplace(!showFindReplace)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
+                      >
+                        <Replace size={13} />
+                        <span>Find & Replace</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* TEMPLATES TAB: Pre-built Editorial Layouts */}
+                  {ribbonTab === 'templates' && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleInsertTemplate('field')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <LayoutTemplate size={13} className="text-emerald-700" />
+                        <span>Climate Action Field Story</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertTemplate('policy')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <LayoutTemplate size={13} className="text-blue-700" />
+                        <span>Policy Brief & COP Position</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInsertTemplate('interview')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold text-xs cursor-pointer"
+                      >
+                        <LayoutTemplate size={13} className="text-amber-700" />
+                        <span>Youth Leader Q&A Profile</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Find & Replace Bar */}
+                {showFindReplace && (
+                  <div className="bg-amber-50/90 border-b border-amber-200 p-2.5 flex items-center gap-2 flex-wrap text-xs">
+                    <span className="font-bold text-amber-950 flex items-center gap-1">
+                      <Search size={13} /> Find:
+                    </span>
+                    <input
+                      type="text"
+                      value={findText}
+                      onChange={e => setFindText(e.target.value)}
+                      placeholder="Word or phrase to find..."
+                      className="px-2.5 py-1 text-xs bg-white border border-amber-300 rounded focus:outline-none"
+                    />
+                    <span className="font-bold text-amber-950 flex items-center gap-1">
+                      <Replace size={13} /> Replace with:
+                    </span>
+                    <input
+                      type="text"
+                      value={replaceText}
+                      onChange={e => setReplaceText(e.target.value)}
+                      placeholder="Replacement text..."
+                      className="px-2.5 py-1 text-xs bg-white border border-amber-300 rounded focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFindReplaceAll}
+                      className="px-3 py-1 rounded bg-[#0A3320] text-white font-bold hover:bg-[#1A6B3C] cursor-pointer"
+                    >
+                      Replace All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowFindReplace(false)}
+                      className="p-1 rounded text-gray-500 hover:text-gray-800"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
                 )}
+
+                {/* Link Inserter Modal Bar */}
+                {showLinkDialog && (
+                  <div className="bg-emerald-50 border-b border-emerald-200 p-2.5 flex items-center gap-2 flex-wrap text-xs">
+                    <span className="font-bold text-emerald-950 flex items-center gap-1">
+                      <Link2 size={13} /> Insert Hyperlink:
+                    </span>
+                    <input
+                      type="url"
+                      value={linkUrl}
+                      onChange={e => setLinkUrl(e.target.value)}
+                      placeholder="https://example.com/target-link..."
+                      className="px-2.5 py-1 text-xs bg-white border border-emerald-300 rounded focus:outline-none flex-1 max-w-xs"
+                    />
+                    <input
+                      type="text"
+                      value={linkText}
+                      onChange={e => setLinkText(e.target.value)}
+                      placeholder="Display text (optional)"
+                      className="px-2.5 py-1 text-xs bg-white border border-emerald-300 rounded focus:outline-none max-w-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleConfirmLink}
+                      className="px-3 py-1 rounded bg-[#1A6B3C] text-white font-bold hover:bg-[#14532D] cursor-pointer"
+                    >
+                      Insert Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowLinkDialog(false)}
+                      className="p-1 rounded text-gray-500 hover:text-gray-800"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+
+                {/* ── MAIN WRITING CANVAS ── */}
+                <div className={`overflow-y-auto ${isFullscreen ? 'flex-1' : 'max-h-[650px]'}`}>
+                  {/* Mode 1: Visual Word Document Sheet */}
+                  {editorMode === 'visual' && (
+                    <div className="bg-[#525659] p-4 sm:p-10 flex justify-center min-h-[550px]">
+                      <div
+                        ref={visualEditorRef}
+                        contentEditable
+                        onInput={handleVisualInput}
+                        onPaste={handleWordPaste}
+                        spellCheck={true}
+                        className="w-full max-w-3xl min-h-[600px] bg-white p-8 sm:p-14 shadow-2xl border border-gray-300 rounded-sm focus:outline-none font-inter text-gray-900 leading-relaxed text-[15px] space-y-4 [&>h1]:text-3xl [&>h1]:font-black [&>h1]:text-gray-950 [&>h1]:font-poppins [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-emerald-950 [&>h2]:font-poppins [&>h2]:mt-8 [&>h2]:mb-3 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-6 [&>h3]:mb-2 [&>p]:mb-4 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-600 [&>blockquote]:pl-4 [&>blockquote]:py-2 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/60 [&>blockquote]:rounded-r-xl [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-1.5 [&>ul]:my-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-1.5 [&>ol]:my-4 [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 [&>table]:border [&>table]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:p-2.5 [&_th]:bg-gray-100 [&_th]:font-bold [&_td]:border [&_td]:border-gray-300 [&_td]:p-2.5"
+                      />
+                    </div>
+                  )}
+
+                  {/* Mode 2: HTML / Markdown Code Editor */}
+                  {editorMode === 'code' && (
+                    <textarea
+                      rows={20}
+                      value={editorLanguageTab === 'bn' ? (editingPost.content_bn || '') : (editingPost.content || '')}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (editorLanguageTab === 'bn') {
+                          setEditingPost({ ...editingPost, content_bn: val });
+                        } else {
+                          setEditingPost({ ...editingPost, content: val });
+                        }
+                        if (visualEditorRef.current) {
+                          visualEditorRef.current.innerHTML = val;
+                        }
+                      }}
+                      className="w-full h-full min-h-[550px] p-6 text-xs bg-gray-900 text-emerald-400 font-mono leading-relaxed focus:outline-none"
+                      placeholder="Write or edit raw HTML / Markdown here..."
+                    />
+                  )}
+
+                  {/* Mode 3: Published Reader Live Preview */}
+                  {editorMode === 'preview' && (
+                    <div className="w-full min-h-[550px] p-8 sm:p-14 bg-[#FAF9F5] overflow-y-auto">
+                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-6 pb-2 border-b flex items-center justify-between">
+                        <span>Live Published Reader Simulation</span>
+                        <span className="text-emerald-800 font-mono">/blog/{editingPost.slug || 'slug'}</span>
+                      </div>
+                      {editingPost.content ? (
+                        <div
+                          className="prose prose-lg max-w-none text-gray-800 font-inter space-y-5 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-950 [&>h2]:font-poppins [&>h2]:mt-8 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-3 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl"
+                          dangerouslySetInnerHTML={{ __html: smartArrangeContent(editingPost.content) }}
+                        />
+                      ) : (
+                        <p className="text-gray-400 italic text-center py-20">No content entered yet. Switch to Word Document mode to start writing.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Microsoft Word Status Bar (Bottom) */}
+                <div className="bg-gray-100 border-t border-gray-200 px-4 py-1.5 flex items-center justify-between flex-wrap text-[11px] text-gray-600 font-mono">
+                  <div className="flex items-center gap-4">
+                    <span>Page {contentStats.pages} of {contentStats.pages}</span>
+                    <span>{contentStats.words} words</span>
+                    <span>{contentStats.chars} characters</span>
+                    <span>{contentStats.readTime}</span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-emerald-800 font-semibold flex items-center gap-1">
+                      <Check size={12} /> Word Sync Active
+                    </span>
+                    <span>100% Zoom</span>
+                  </div>
+                </div>
               </div>
 
               {/* ──────────────────────────────────────────────────────────────
-                  SMART AUTO-GENERATED TAGS & CATEGORIES
+                  SMART TOPIC TAGS & CATEGORIZATION
                  ────────────────────────────────────────────────────────────── */}
               <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-200/80 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-1.5">
-                    <Tag size={15} className="text-emerald-700" />
+                    <Globe size={15} className="text-emerald-700" />
                     <h4 className="text-xs font-bold text-emerald-950">Article Tags & Topic Categorization</h4>
                   </div>
                   <button
@@ -1523,7 +2129,7 @@ export function EnhancedBlogsTab() {
                   <button
                     type="button"
                     onClick={handleAutoGenerateSEO}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#1A6B3C] text-white hover:bg-[#14532D] shadow-2xs transition-all"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#1A6B3C] text-white hover:bg-[#14532D] shadow-2xs transition-all cursor-pointer"
                     title="Auto generate SEO Title, Meta Description, Keywords, and Canonical URL from article content"
                   >
                     <Sparkles size={11} className="text-amber-300" />
@@ -1603,7 +2209,7 @@ export function EnhancedBlogsTab() {
                     <button
                       type="button"
                       onClick={() => setEditingPost((prev: any) => ({ ...prev, ogImage: prev.image }))}
-                      className="px-2 py-1.5 text-[10px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded whitespace-nowrap"
+                      className="px-2 py-1.5 text-[10px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded whitespace-nowrap cursor-pointer"
                       title="Use featured cover image as social share image"
                     >
                       Use Cover
@@ -1722,7 +2328,7 @@ export function EnhancedBlogsTab() {
                         key={s.number}
                         onClick={() => toggleSdg(s.number)}
                         title={`SDG ${s.number}: ${s.title || s.name}`}
-                        className={`h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all ${
+                        className={`h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all cursor-pointer ${
                           isSelected ? 'ring-2 ring-black scale-105 shadow-sm text-white' : 'opacity-35 hover:opacity-80 text-white'
                         }`}
                         style={{ backgroundColor: s.color }}
