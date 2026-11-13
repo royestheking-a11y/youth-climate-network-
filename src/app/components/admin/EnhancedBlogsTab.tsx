@@ -4,11 +4,11 @@ import {
   User, HelpCircle, Image as ImageIcon, Upload, Globe,
   Sparkles, RefreshCw, Check, AlertCircle,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Bold, Italic, Underline, Strikethrough, Subscript, Superscript,
+  Bold, Italic, Underline, Strikethrough,
   List, ListOrdered, Indent, Outdent,
   Highlighter, Type, Table, Quote, Minus, Link2,
   Eraser, Replace, Maximize2, Minimize2, Wand2, Zap,
-  Info, AlertTriangle, Code, LayoutTemplate
+  Info, Code
 } from 'lucide-react';
 import {
   useBlogs, apiBlog, BlogPost, useAuthors, apiAuthors, useSDGs, uploadFile, uploadMultipleFiles
@@ -304,9 +304,8 @@ export function EnhancedBlogsTab() {
   const [slugStatus, setSlugStatus] = useState<{ available?: boolean; message?: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Microsoft Word Suite States
+  // Rich Article Editor States
   const [editorMode, setEditorMode] = useState<'visual' | 'code' | 'preview'>('visual');
-  const [ribbonTab, setRibbonTab] = useState<'home' | 'insert' | 'tools' | 'templates'>('home');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoArrangeOnPaste, setAutoArrangeOnPaste] = useState(true);
   const [newTagInput, setNewTagInput] = useState('');
@@ -532,46 +531,6 @@ export function EnhancedBlogsTab() {
     insertHtmlSnippet(calloutHtml);
   };
 
-  // Insert Document Template
-  const handleInsertTemplate = (templateName: 'field' | 'policy' | 'interview') => {
-    let templateHtml = '';
-    if (templateName === 'field') {
-      templateHtml = `
-        <h2>1. Executive Summary & Field Mission</h2>
-        <p>Introduce the background of the climate intervention, the region involved (e.g. coastal Khulna or Satkhira), and the youth volunteer mobilization.</p>
-        <h2>2. Key Climate Challenges on the Ground</h2>
-        <ul>
-          <li>Salinity intrusion impacting local agricultural yields and potable drinking water.</li>
-          <li>Erosion along river embankments caused by tidal surges and cyclonic storms.</li>
-        </ul>
-        <h2>3. Grassroots Youth Action & Solutions</h2>
-        <p>Describe how student networks coordinated community disaster preparedness, mangrove nursery plantations, and mobile water purification.</p>
-        <h2>4. Measurable Impacts & Community Testimonials</h2>
-        <p>Summarize outcomes achieved, families supported, and long-term adaptation benefits.</p>
-      `;
-    } else if (templateName === 'policy') {
-      templateHtml = `
-        <h2>Policy Position & COP Strategic Demands</h2>
-        <p>Detailed policy brief presenting youth perspectives on international climate negotiations and loss and damage financing.</p>
-        <h2>Key Recommendations for Decision-Makers</h2>
-        <ol>
-          <li>Accelerate non-debt climate adaptation funding for frontline coastal communities.</li>
-          <li>Institutionalize youth seats within national disaster management councils.</li>
-          <li>Invest in renewable mini-grids for remote off-grid delta communities.</li>
-        </ol>
-      `;
-    } else if (templateName === 'interview') {
-      templateHtml = `
-        <h2>Voices of the Frontlines: Youth Leader Profile</h2>
-        <p>An in-depth conversation with a grassroots activist leading climate adaptation in Bangladesh.</p>
-        <p><strong>YCN:</strong> What initially compelled you to join youth climate advocacy in your village?</p>
-        <p><strong>Leader:</strong> After witnessing consecutive cyclone surges dismantle our school, we realized waiting was not an option.</p>
-      `;
-    }
-    insertHtmlSnippet(templateHtml);
-    setAutoGenFeedback(`Inserted ${templateName} document template!`);
-    setTimeout(() => setAutoGenFeedback(null), 3000);
-  };
 
   // Link Insertion
   const handleConfirmLink = () => {
@@ -781,15 +740,14 @@ export function EnhancedBlogsTab() {
     return p.title.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q) || (p.authorName && p.authorName.toLowerCase().includes(q));
   });
 
-  // Calculate live Microsoft Word document stats
+  // Calculate live content stats
   const contentStats = useMemo(() => {
-    if (!editingPost?.content) return { words: 0, chars: 0, pages: 1, readTime: '1 min' };
+    if (!editingPost?.content) return { words: 0, chars: 0, readTime: '1 min' };
     const clean = editingPost.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const words = clean ? clean.split(' ').filter(Boolean).length : 0;
     const chars = clean.length;
-    const pages = Math.max(1, Math.ceil(words / 350));
     const readTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
-    return { words, chars, pages, readTime };
+    return { words, chars, readTime };
   }, [editingPost?.content]);
 
   // Popular topic suggestions
@@ -1014,7 +972,7 @@ export function EnhancedBlogsTab() {
                   {isNew ? 'Create New Article' : 'Edit Article, Author & SEO'}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Microsoft Word Suite, automated topic tags, one-click SEO & social sharing
+                  Rich WYSIWYG article editor, automated topic tags, one-click SEO & social sharing
                 </p>
               </div>
             </div>
@@ -1176,40 +1134,40 @@ export function EnhancedBlogsTab() {
               </div>
 
               {/* ──────────────────────────────────────────────────────────────
-                  MICROSOFT WORD WRITING SUITE
+                  RICH ARTICLE CONTENT EDITOR (Modern CMS Style)
                  ────────────────────────────────────────────────────────────── */}
-              <div className={`space-y-0 border border-gray-300 rounded-2xl overflow-hidden shadow-sm transition-all ${
-                isFullscreen ? 'fixed inset-4 z-50 bg-white flex flex-col' : 'relative'
+              <div className={`space-y-0 border border-gray-200 rounded-2xl overflow-hidden shadow-xs bg-white transition-all ${
+                isFullscreen ? 'fixed inset-4 z-50 flex flex-col shadow-2xl' : 'relative'
               }`}>
-                {/* Word Ribbon Header Bar */}
-                <div className="bg-[#1A6B3C] text-white px-4 py-2 flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-white/20 flex items-center justify-center font-bold text-xs">
-                      W
-                    </div>
-                    <span className="text-xs font-bold font-inter tracking-wide">
-                      Microsoft Word Suite {editorLanguageTab === 'bn' ? '— বাংলা মোড' : '— Article Editor'}
+                {/* Editor Top Bar: Title, Stats & View Mode Tabs */}
+                <div className="bg-gray-50/90 border-b border-gray-200 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-bold text-gray-900 font-inter">
+                      Article Content {editorLanguageTab === 'bn' ? '(বাংলা)' : '(English)'}
+                    </span>
+                    <span className="text-[11px] text-gray-500 font-mono bg-white px-2.5 py-0.5 rounded-full border border-gray-200">
+                      {contentStats.words} words · ~{contentStats.readTime}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {/* View Mode Switcher */}
-                    <div className="flex rounded-lg bg-black/20 p-0.5 text-xs font-semibold">
+                    <div className="flex rounded-lg bg-gray-200/80 p-0.5 text-xs font-semibold">
                       <button
                         type="button"
                         onClick={() => setEditorMode('visual')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
-                          editorMode === 'visual' ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:text-white'
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                          editorMode === 'visual' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
-                        <Edit3 size={13} />
-                        <span>Word Document</span>
+                        <Edit3 size={13} className="text-emerald-700" />
+                        <span>Visual Editor</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditorMode('code')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
-                          editorMode === 'code' ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:text-white'
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                          editorMode === 'code' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
                         <Code size={13} />
@@ -1218,428 +1176,286 @@ export function EnhancedBlogsTab() {
                       <button
                         type="button"
                         onClick={() => setEditorMode('preview')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
-                          editorMode === 'preview' ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:text-white'
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                          editorMode === 'preview' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
                         <Eye size={13} />
-                        <span>Reader Preview</span>
+                        <span>Live Preview</span>
                       </button>
                     </div>
 
-                    {/* Fullscreen Toggle */}
+                    {/* Fullscreen Focus Toggle */}
                     <button
                       type="button"
                       onClick={() => setIsFullscreen(!isFullscreen)}
-                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                      title={isFullscreen ? 'Exit Fullscreen Focus' : 'Fullscreen Focus Mode'}
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors cursor-pointer"
+                      title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Writing Mode'}
                     >
-                      {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                      {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Word Ribbon Tabs (Home, Insert, Tools, Templates) */}
-                <div className="bg-gray-100 border-b border-gray-200 px-3 pt-2 flex items-center justify-between flex-wrap gap-2 text-xs">
-                  <div className="flex gap-1">
-                    {[
-                      { key: 'home', label: 'Home' },
-                      { key: 'insert', label: 'Insert' },
-                      { key: 'tools', label: 'Word Cleaners' },
-                      { key: 'templates', label: 'Templates' },
-                    ].map(tab => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setRibbonTab(tab.key as any)}
-                        className={`px-3.5 py-1.5 rounded-t-lg font-bold text-xs transition-colors border-t border-x ${
-                          ribbonTab === tab.key
-                            ? 'bg-white text-emerald-900 border-gray-200 shadow-2xs'
-                            : 'bg-transparent text-gray-600 border-transparent hover:text-gray-900'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
+                {/* Unified Modern Toolbar */}
+                <div className="bg-white px-3 py-2 border-b border-gray-200 flex items-center justify-between flex-wrap gap-1.5 text-xs">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {/* Style selector */}
+                    <select
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === 'p') executeWordCmd('formatBlock', '<p>');
+                        else if (val === 'h2') executeWordCmd('formatBlock', '<h2>');
+                        else if (val === 'h3') executeWordCmd('formatBlock', '<h3>');
+                        else if (val === 'blockquote') executeWordCmd('formatBlock', '<blockquote>');
+                        else if (val === 'pre') executeWordCmd('formatBlock', '<pre>');
+                      }}
+                      className="px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded-md font-semibold text-gray-800 focus:outline-none"
+                      defaultValue="p"
+                    >
+                      <option value="p">Paragraph</option>
+                      <option value="h2">Heading 2 (Section)</option>
+                      <option value="h3">Heading 3 (Subsection)</option>
+                      <option value="blockquote">Quote Block</option>
+                      <option value="pre">Code Block</option>
+                    </select>
 
-                  {/* Auto-arrange toggle */}
-                  <div className="flex items-center gap-3 pb-1">
-                    <label className="flex items-center gap-1.5 text-[11px] text-gray-700 font-medium cursor-pointer">
-                      <Zap size={13} className="text-emerald-700" />
-                      <input
-                        type="checkbox"
-                        checked={autoArrangeOnPaste}
-                        onChange={e => setAutoArrangeOnPaste(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded text-emerald-600"
-                      />
-                      <span>Auto-clean Word Paste</span>
-                    </label>
-                  </div>
-                </div>
+                    <div className="h-4 w-px bg-gray-200 mx-1" />
 
-                {/* Ribbon Toolbar Content Panels */}
-                <div className="bg-white p-2.5 border-b border-gray-200 flex items-center flex-wrap gap-2 text-xs">
-                  
-                  {/* HOME TAB: Typography, Fonts, Paragraphs, Lists */}
-                  {ribbonTab === 'home' && (
-                    <>
-                      {/* Heading / Style dropdown */}
+                    {/* Basic Formatting: B, I, U, S */}
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('bold')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 font-bold cursor-pointer"
+                      title="Bold (Ctrl+B)"
+                    >
+                      <Bold size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('italic')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Italic (Ctrl+I)"
+                    >
+                      <Italic size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('underline')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Underline (Ctrl+U)"
+                    >
+                      <Underline size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('strikeThrough')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Strikethrough"
+                    >
+                      <Strikethrough size={14} />
+                    </button>
+
+                    <div className="h-4 w-px bg-gray-200 mx-1" />
+
+                    {/* Colors */}
+                    <div className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
+                      <Type size={12} className="text-gray-500" />
                       <select
-                        onChange={e => {
-                          const val = e.target.value;
-                          if (val === 'p') executeWordCmd('formatBlock', '<p>');
-                          else if (val === 'h1') executeWordCmd('formatBlock', '<h1>');
-                          else if (val === 'h2') executeWordCmd('formatBlock', '<h2>');
-                          else if (val === 'h3') executeWordCmd('formatBlock', '<h3>');
-                          else if (val === 'blockquote') executeWordCmd('formatBlock', '<blockquote>');
-                          else if (val === 'pre') executeWordCmd('formatBlock', '<pre>');
-                        }}
-                        className="px-2.5 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg font-semibold text-gray-800 focus:outline-none"
-                        defaultValue="p"
+                        onChange={e => executeWordCmd('foreColor', e.target.value)}
+                        className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
+                        defaultValue="#111827"
                       >
-                        <option value="p">Normal Text</option>
-                        <option value="h1">Heading 1 (Main Title)</option>
-                        <option value="h2">Heading 2 (Major Section)</option>
-                        <option value="h3">Heading 3 (Subsection)</option>
-                        <option value="blockquote">Pullquote Block</option>
-                        <option value="pre">Code Block</option>
+                        <option value="#111827">Dark</option>
+                        <option value="#1A6B3C">Green</option>
+                        <option value="#E8521A">Orange</option>
+                        <option value="#DC2626">Red</option>
+                        <option value="#2563EB">Blue</option>
                       </select>
-
-                      <div className="h-5 w-px bg-gray-200 mx-1" />
-
-                      {/* Font Format: B, I, U, S, Sub, Super */}
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('bold')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700 font-bold"
-                          title="Bold (Ctrl+B)"
-                        >
-                          <Bold size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('italic')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Italic (Ctrl+I)"
-                        >
-                          <Italic size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('underline')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Underline (Ctrl+U)"
-                        >
-                          <Underline size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('strikeThrough')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Strikethrough"
-                        >
-                          <Strikethrough size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('subscript')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Subscript"
-                        >
-                          <Subscript size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('superscript')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Superscript"
-                        >
-                          <Superscript size={14} />
-                        </button>
-                      </div>
-
-                      <div className="h-5 w-px bg-gray-200 mx-1" />
-
-                      {/* Colors: Text & Highlight */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200">
-                          <Type size={13} className="text-gray-500" />
-                          <select
-                            onChange={e => executeWordCmd('foreColor', e.target.value)}
-                            className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
-                            defaultValue="#111827"
-                          >
-                            <option value="#111827">Default Dark</option>
-                            <option value="#1A6B3C">Forest Green</option>
-                            <option value="#059669">Emerald</option>
-                            <option value="#E8521A">YCN Orange</option>
-                            <option value="#DC2626">Crimson Red</option>
-                            <option value="#2563EB">Royal Blue</option>
-                            <option value="#4B5563">Slate Gray</option>
-                          </select>
-                        </div>
-
-                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200">
-                          <Highlighter size={13} className="text-amber-500" />
-                          <select
-                            onChange={e => executeWordCmd('hiliteColor', e.target.value)}
-                            className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
-                            defaultValue="transparent"
-                          >
-                            <option value="transparent">No Highlight</option>
-                            <option value="#FEF08A">Yellow</option>
-                            <option value="#A7F3D0">Green</option>
-                            <option value="#BAE6FD">Cyan</option>
-                            <option value="#FBCFE8">Pink</option>
-                            <option value="#FED7AA">Orange</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="h-5 w-px bg-gray-200 mx-1" />
-
-                      {/* Alignment */}
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('justifyLeft')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Align Left"
-                        >
-                          <AlignLeft size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('justifyCenter')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Center"
-                        >
-                          <AlignCenter size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('justifyRight')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Align Right"
-                        >
-                          <AlignRight size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('justifyFull')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Justify"
-                        >
-                          <AlignJustify size={14} />
-                        </button>
-                      </div>
-
-                      <div className="h-5 w-px bg-gray-200 mx-1" />
-
-                      {/* Lists & Indent */}
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('insertUnorderedList')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Bulleted List"
-                        >
-                          <List size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('insertOrderedList')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Numbered List"
-                        >
-                          <ListOrdered size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('outdent')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Decrease Indent"
-                        >
-                          <Outdent size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('indent')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-700"
-                          title="Increase Indent"
-                        >
-                          <Indent size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => executeWordCmd('removeFormat')}
-                          className="p-1.5 hover:bg-gray-100 rounded text-red-600"
-                          title="Clear Formatting (Eraser)"
-                        >
-                          <Eraser size={14} />
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {/* INSERT TAB: Tables, Callouts, Quotes, Dividers, Links */}
-                  {ribbonTab === 'insert' && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => handleInsertTable(3, 3)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
-                      >
-                        <Table size={14} className="text-emerald-700" />
-                        <span>Insert 3x3 Table</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleInsertTable(4, 2)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
-                      >
-                        <Table size={14} className="text-emerald-700" />
-                        <span>Insert 4x2 Table</span>
-                      </button>
-
-                      <div className="h-5 w-px bg-gray-200 mx-1" />
-
-                      <button
-                        type="button"
-                        onClick={() => handleInsertCallout('climate')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <Sparkles size={13} className="text-[#1A6B3C]" />
-                        <span>Climate Fact Box</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleInsertCallout('info')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <Info size={13} className="text-blue-600" />
-                        <span>Info Callout Box</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleInsertCallout('warning')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <AlertTriangle size={13} className="text-amber-600" />
-                        <span>Alert Callout Box</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleInsertCallout('quote')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <Quote size={13} className="text-[#E8521A]" />
-                        <span>Pullquote</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => insertHtmlSnippet('<hr class="my-6 border-t-2 border-gray-200" /><p></p>')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
-                        title="Horizontal Divider"
-                      >
-                        <Minus size={14} />
-                        <span>Divider</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowLinkDialog(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
-                      >
-                        <Link2 size={14} className="text-emerald-700" />
-                        <span>Hyperlink</span>
-                      </button>
                     </div>
-                  )}
 
-                  {/* TOOLS TAB: Word Cleaning & Spacing */}
-                  {ribbonTab === 'tools' && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (visualEditorRef.current) {
-                            const cleaned = cleanWordPasteHtml(visualEditorRef.current.innerHTML);
-                            visualEditorRef.current.innerHTML = cleaned;
-                            handleVisualInput();
-                            setAutoGenFeedback('Stripped all Microsoft Word Mso junk & normalized formatting!');
-                            setTimeout(() => setAutoGenFeedback(null), 3500);
-                          }
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A3320] text-white hover:bg-[#1A6B3C] font-bold text-xs cursor-pointer"
+                    <div className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
+                      <Highlighter size={12} className="text-amber-500" />
+                      <select
+                        onChange={e => executeWordCmd('hiliteColor', e.target.value)}
+                        className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
+                        defaultValue="transparent"
                       >
-                        <Wand2 size={13} className="text-amber-300" />
-                        <span>Clean Word Document (Strip Mso Junk)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleAutoArrangeContent}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs cursor-pointer"
-                      >
-                        <Sparkles size={13} className="text-amber-300" />
-                        <span>Auto-Arrange & Space Paragraphs</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowFindReplace(!showFindReplace)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-xs cursor-pointer"
-                      >
-                        <Replace size={13} />
-                        <span>Find & Replace</span>
-                      </button>
+                        <option value="transparent">None</option>
+                        <option value="#FEF08A">Yellow</option>
+                        <option value="#A7F3D0">Green</option>
+                        <option value="#BAE6FD">Cyan</option>
+                        <option value="#FED7AA">Orange</option>
+                      </select>
                     </div>
-                  )}
 
-                  {/* TEMPLATES TAB: Pre-built Editorial Layouts */}
-                  {ribbonTab === 'templates' && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => handleInsertTemplate('field')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <LayoutTemplate size={13} className="text-emerald-700" />
-                        <span>Climate Action Field Story</span>
-                      </button>
+                    <div className="h-4 w-px bg-gray-200 mx-1" />
 
-                      <button
-                        type="button"
-                        onClick={() => handleInsertTemplate('policy')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <LayoutTemplate size={13} className="text-blue-700" />
-                        <span>Policy Brief & COP Position</span>
-                      </button>
+                    {/* Alignment */}
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('justifyLeft')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Align Left"
+                    >
+                      <AlignLeft size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('justifyCenter')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Align Center"
+                    >
+                      <AlignCenter size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('justifyRight')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Align Right"
+                    >
+                      <AlignRight size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('justifyFull')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Justify"
+                    >
+                      <AlignJustify size={14} />
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleInsertTemplate('interview')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold text-xs cursor-pointer"
-                      >
-                        <LayoutTemplate size={13} className="text-amber-700" />
-                        <span>Youth Leader Q&A Profile</span>
-                      </button>
-                    </div>
-                  )}
+                    <div className="h-4 w-px bg-gray-200 mx-1" />
+
+                    {/* Lists */}
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('insertUnorderedList')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Bulleted List"
+                    >
+                      <List size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('insertOrderedList')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Numbered List"
+                    >
+                      <ListOrdered size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('outdent')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Decrease Indent"
+                    >
+                      <Outdent size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('indent')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Increase Indent"
+                    >
+                      <Indent size={14} />
+                    </button>
+
+                    <div className="h-4 w-px bg-gray-200 mx-1" />
+
+                    {/* Insert Elements */}
+                    <button
+                      type="button"
+                      onClick={() => setShowLinkDialog(!showLinkDialog)}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Insert Link"
+                    >
+                      <Link2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTable(3, 3)}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Insert Table (3x3)"
+                    >
+                      <Table size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertCallout('climate')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Insert Climate Box"
+                    >
+                      <Info size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertCallout('quote')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Insert Pullquote"
+                    >
+                      <Quote size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertHtmlSnippet('<hr class="my-6 border-t border-gray-200" /><p></p>')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      title="Horizontal Divider"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executeWordCmd('removeFormat')}
+                      className="p-1.5 hover:bg-gray-100 rounded text-red-600 cursor-pointer"
+                      title="Clear Formatting"
+                    >
+                      <Eraser size={14} />
+                    </button>
+                  </div>
+
+                  {/* Right side helper actions */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleAutoArrangeContent}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                      title="Automatically arrange lines & paragraphs with proper spacing"
+                    >
+                      <Sparkles size={12} className="text-emerald-700" />
+                      <span>Format & Space</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (visualEditorRef.current) {
+                          const cleaned = cleanWordPasteHtml(visualEditorRef.current.innerHTML);
+                          visualEditorRef.current.innerHTML = cleaned;
+                          handleVisualInput();
+                          setAutoGenFeedback('Pasted Word styles cleaned into neat HTML!');
+                          setTimeout(() => setAutoGenFeedback(null), 3000);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+                      title="Strip messy Word formatting"
+                    >
+                      <Wand2 size={12} />
+                      <span>Clean Word Junk</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowFindReplace(!showFindReplace)}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-600 cursor-pointer"
+                      title="Find & Replace"
+                    >
+                      <Replace size={14} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Find & Replace Bar */}
+                {/* Find & Replace bar */}
                 {showFindReplace && (
-                  <div className="bg-amber-50/90 border-b border-amber-200 p-2.5 flex items-center gap-2 flex-wrap text-xs">
+                  <div className="bg-amber-50/80 border-b border-amber-200 px-3 py-2 flex items-center gap-2 flex-wrap text-xs">
                     <span className="font-bold text-amber-950 flex items-center gap-1">
                       <Search size={13} /> Find:
                     </span>
@@ -1647,23 +1463,23 @@ export function EnhancedBlogsTab() {
                       type="text"
                       value={findText}
                       onChange={e => setFindText(e.target.value)}
-                      placeholder="Word or phrase to find..."
-                      className="px-2.5 py-1 text-xs bg-white border border-amber-300 rounded focus:outline-none"
+                      placeholder="Find text..."
+                      className="px-2 py-0.5 text-xs bg-white border border-amber-300 rounded focus:outline-none"
                     />
                     <span className="font-bold text-amber-950 flex items-center gap-1">
-                      <Replace size={13} /> Replace with:
+                      <Replace size={13} /> Replace:
                     </span>
                     <input
                       type="text"
                       value={replaceText}
                       onChange={e => setReplaceText(e.target.value)}
-                      placeholder="Replacement text..."
-                      className="px-2.5 py-1 text-xs bg-white border border-amber-300 rounded focus:outline-none"
+                      placeholder="Replace with..."
+                      className="px-2 py-0.5 text-xs bg-white border border-amber-300 rounded focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleFindReplaceAll}
-                      className="px-3 py-1 rounded bg-[#0A3320] text-white font-bold hover:bg-[#1A6B3C] cursor-pointer"
+                      className="px-2.5 py-0.5 rounded bg-emerald-800 text-white font-bold hover:bg-emerald-900 cursor-pointer text-[11px]"
                     >
                       Replace All
                     </button>
@@ -1672,35 +1488,35 @@ export function EnhancedBlogsTab() {
                       onClick={() => setShowFindReplace(false)}
                       className="p-1 rounded text-gray-500 hover:text-gray-800"
                     >
-                      <X size={14} />
+                      <X size={13} />
                     </button>
                   </div>
                 )}
 
-                {/* Link Inserter Modal Bar */}
+                {/* Hyperlink input bar */}
                 {showLinkDialog && (
-                  <div className="bg-emerald-50 border-b border-emerald-200 p-2.5 flex items-center gap-2 flex-wrap text-xs">
+                  <div className="bg-emerald-50 border-b border-emerald-200 px-3 py-2 flex items-center gap-2 flex-wrap text-xs">
                     <span className="font-bold text-emerald-950 flex items-center gap-1">
-                      <Link2 size={13} /> Insert Hyperlink:
+                      <Link2 size={13} /> Link URL:
                     </span>
                     <input
                       type="url"
                       value={linkUrl}
                       onChange={e => setLinkUrl(e.target.value)}
-                      placeholder="https://example.com/target-link..."
-                      className="px-2.5 py-1 text-xs bg-white border border-emerald-300 rounded focus:outline-none flex-1 max-w-xs"
+                      placeholder="https://..."
+                      className="px-2 py-0.5 text-xs bg-white border border-emerald-300 rounded focus:outline-none flex-1 max-w-xs"
                     />
                     <input
                       type="text"
                       value={linkText}
                       onChange={e => setLinkText(e.target.value)}
-                      placeholder="Display text (optional)"
-                      className="px-2.5 py-1 text-xs bg-white border border-emerald-300 rounded focus:outline-none max-w-xs"
+                      placeholder="Link display text"
+                      className="px-2 py-0.5 text-xs bg-white border border-emerald-300 rounded focus:outline-none max-w-xs"
                     />
                     <button
                       type="button"
                       onClick={handleConfirmLink}
-                      className="px-3 py-1 rounded bg-[#1A6B3C] text-white font-bold hover:bg-[#14532D] cursor-pointer"
+                      className="px-2.5 py-0.5 rounded bg-[#1A6B3C] text-white font-bold hover:bg-[#14532D] cursor-pointer text-[11px]"
                     >
                       Insert Link
                     </button>
@@ -1709,31 +1525,29 @@ export function EnhancedBlogsTab() {
                       onClick={() => setShowLinkDialog(false)}
                       className="p-1 rounded text-gray-500 hover:text-gray-800"
                     >
-                      <X size={14} />
+                      <X size={13} />
                     </button>
                   </div>
                 )}
 
-                {/* ── MAIN WRITING CANVAS ── */}
-                <div className={`overflow-y-auto ${isFullscreen ? 'flex-1' : 'max-h-[650px]'}`}>
-                  {/* Mode 1: Visual Word Document Sheet */}
+                {/* Main Typing Canvas */}
+                <div className={`overflow-y-auto ${isFullscreen ? 'flex-1' : 'max-h-[600px]'}`}>
+                  {/* Visual Editor (Direct writing canvas, no gray background or fake margins) */}
                   {editorMode === 'visual' && (
-                    <div className="bg-[#525659] p-4 sm:p-10 flex justify-center min-h-[550px]">
-                      <div
-                        ref={visualEditorRef}
-                        contentEditable
-                        onInput={handleVisualInput}
-                        onPaste={handleWordPaste}
-                        spellCheck={true}
-                        className="w-full max-w-3xl min-h-[600px] bg-white p-8 sm:p-14 shadow-2xl border border-gray-300 rounded-sm focus:outline-none font-inter text-gray-900 leading-relaxed text-[15px] space-y-4 [&>h1]:text-3xl [&>h1]:font-black [&>h1]:text-gray-950 [&>h1]:font-poppins [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-emerald-950 [&>h2]:font-poppins [&>h2]:mt-8 [&>h2]:mb-3 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-6 [&>h3]:mb-2 [&>p]:mb-4 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-600 [&>blockquote]:pl-4 [&>blockquote]:py-2 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/60 [&>blockquote]:rounded-r-xl [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-1.5 [&>ul]:my-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-1.5 [&>ol]:my-4 [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 [&>table]:border [&>table]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:p-2.5 [&_th]:bg-gray-100 [&_th]:font-bold [&_td]:border [&_td]:border-gray-300 [&_td]:p-2.5"
-                      />
-                    </div>
+                    <div
+                      ref={visualEditorRef}
+                      contentEditable
+                      onInput={handleVisualInput}
+                      onPaste={handleWordPaste}
+                      spellCheck={true}
+                      className="w-full min-h-[440px] bg-white p-6 sm:p-8 focus:outline-none font-inter text-gray-900 leading-relaxed text-[15px] space-y-4 [&>h1]:text-2xl [&>h1]:font-black [&>h1]:text-gray-950 [&>h1]:font-poppins [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-emerald-950 [&>h2]:font-poppins [&>h2]:mt-6 [&>h2]:mb-2.5 [&>h3]:text-lg sm:[&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-5 [&>h3]:mb-2 [&>p]:mb-4 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-600 [&>blockquote]:pl-4 [&>blockquote]:py-2 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/60 [&>blockquote]:rounded-r-xl [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-1.5 [&>ul]:my-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-1.5 [&>ol]:my-4 [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 [&>table]:border [&>table]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:p-2.5 [&_th]:bg-gray-100 [&_th]:font-bold [&_td]:border [&_td]:border-gray-300 [&_td]:p-2.5"
+                    />
                   )}
 
-                  {/* Mode 2: HTML / Markdown Code Editor */}
+                  {/* Code Editor */}
                   {editorMode === 'code' && (
                     <textarea
-                      rows={20}
+                      rows={18}
                       value={editorLanguageTab === 'bn' ? (editingPost.content_bn || '') : (editingPost.content || '')}
                       onChange={e => {
                         const val = e.target.value;
@@ -1746,44 +1560,51 @@ export function EnhancedBlogsTab() {
                           visualEditorRef.current.innerHTML = val;
                         }
                       }}
-                      className="w-full h-full min-h-[550px] p-6 text-xs bg-gray-900 text-emerald-400 font-mono leading-relaxed focus:outline-none"
+                      className="w-full h-full min-h-[440px] p-5 text-xs bg-gray-900 text-emerald-400 font-mono leading-relaxed focus:outline-none"
                       placeholder="Write or edit raw HTML / Markdown here..."
                     />
                   )}
 
-                  {/* Mode 3: Published Reader Live Preview */}
+                  {/* Reader Live Preview */}
                   {editorMode === 'preview' && (
-                    <div className="w-full min-h-[550px] p-8 sm:p-14 bg-[#FAF9F5] overflow-y-auto">
-                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-6 pb-2 border-b flex items-center justify-between">
-                        <span>Live Published Reader Simulation</span>
+                    <div className="w-full min-h-[440px] p-6 sm:p-8 bg-[#FAF9F5] overflow-y-auto">
+                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4 pb-2 border-b flex items-center justify-between">
+                        <span>Live Reader Preview</span>
                         <span className="text-emerald-800 font-mono">/blog/{editingPost.slug || 'slug'}</span>
                       </div>
                       {editingPost.content ? (
                         <div
-                          className="prose prose-lg max-w-none text-gray-800 font-inter space-y-5 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-950 [&>h2]:font-poppins [&>h2]:mt-8 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-3 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl"
+                          className="prose prose-lg max-w-none text-gray-800 font-inter space-y-4 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-950 [&>h2]:font-poppins [&>h2]:mt-6 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-2.5 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl"
                           dangerouslySetInnerHTML={{ __html: smartArrangeContent(editingPost.content) }}
                         />
                       ) : (
-                        <p className="text-gray-400 italic text-center py-20">No content entered yet. Switch to Word Document mode to start writing.</p>
+                        <p className="text-gray-400 italic text-center py-16">No content entered yet. Switch to Visual Editor to start writing.</p>
                       )}
                     </div>
                   )}
                 </div>
 
-                {/* Microsoft Word Status Bar (Bottom) */}
-                <div className="bg-gray-100 border-t border-gray-200 px-4 py-1.5 flex items-center justify-between flex-wrap text-[11px] text-gray-600 font-mono">
-                  <div className="flex items-center gap-4">
-                    <span>Page {contentStats.pages} of {contentStats.pages}</span>
+                {/* Minimalist Bottom Bar */}
+                <div className="bg-gray-50 border-t border-gray-200 px-4 py-2 flex items-center justify-between flex-wrap text-[11px] text-gray-500">
+                  <div className="flex items-center gap-3 font-mono">
                     <span>{contentStats.words} words</span>
-                    <span>{contentStats.chars} characters</span>
+                    <span>·</span>
+                    <span>{contentStats.chars} chars</span>
+                    <span>·</span>
                     <span>{contentStats.readTime}</span>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-emerald-800 font-semibold flex items-center gap-1">
-                      <Check size={12} /> Word Sync Active
-                    </span>
-                    <span>100% Zoom</span>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 text-gray-600 cursor-pointer">
+                      <Zap size={12} className="text-emerald-700" />
+                      <input
+                        type="checkbox"
+                        checked={autoArrangeOnPaste}
+                        onChange={e => setAutoArrangeOnPaste(e.target.checked)}
+                        className="w-3 h-3 rounded text-emerald-600"
+                      />
+                      <span>Auto-clean on paste</span>
+                    </label>
                   </div>
                 </div>
               </div>
