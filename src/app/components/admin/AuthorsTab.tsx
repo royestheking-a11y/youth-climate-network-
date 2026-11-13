@@ -44,10 +44,15 @@ export function AuthorsTab() {
     try {
       setSaving(true);
       setStatusMsg(null);
+      const payload = {
+        ...editingAuthor,
+        image: editingAuthor.avatar || editingAuthor.image,
+        avatar: editingAuthor.avatar || editingAuthor.image,
+      };
       if (isNew) {
-        await apiAuthors.create(editingAuthor);
+        await apiAuthors.create(payload);
       } else {
-        await apiAuthors.update(editingAuthor.id, editingAuthor);
+        await apiAuthors.update(editingAuthor.id, payload);
       }
       mutate();
       setEditingAuthor(null);

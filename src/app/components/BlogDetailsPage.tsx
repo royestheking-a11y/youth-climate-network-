@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router';
 import { SEO } from './ui/SEO';
 import {
@@ -82,6 +82,69 @@ export function BlogDetailsPage() {
   const excerpt = lang === 'bn' && blog.excerpt_bn ? blog.excerpt_bn : blog.excerpt;
   const category = lang === 'bn' && blog.category_bn ? blog.category_bn : (blog.category || 'Climate Action');
 
+  // Process and arrange content seamlessly whether raw text, markdown, or HTML
+  const { processedContent, headings } = useMemo(() => {
+    if (!content) return { processedContent: '', headings: [] };
+    let raw = content.trim();
+    const hasHtml = /<\s*(p|div|h1|h2|h3|h4|ul|ol|blockquote)\b/i.test(raw);
+
+    let html = raw;
+    if (hasHtml) {
+      // Strip messy inline styles, font tags, and mso junk from copied content
+      html = html
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<\/?(?:o:p|font|span)[^>]*>/gi, '')
+        .replace(/\s*(?:style|class|face|size|color)=["'][^"']*["']/gi, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '<p>$1</p>')
+        .replace(/(?:<br\s*\/?>\s*){2,}/gi, '</p>\n\n<p>')
+        .replace(/<h1([^>]*)>/gi, '<h2$1>').replace(/<\/h1>/gi, '</h2>');
+    } else {
+      const blocks = raw.split(/\n\s*\n/);
+      html = blocks.map(b => {
+        const trimmed = b.trim();
+        if (!trimmed) return '';
+        if (/^###\s+(.+)$/m.test(trimmed)) {
+          return `<h3>${trimmed.replace(/^###\s+/, '')}</h3>`;
+        }
+        if (/^##?\s+(.+)$/m.test(trimmed)) {
+          return `<h2>${trimmed.replace(/^##?\s+/, '')}</h2>`;
+        }
+        if (/^>\s+(.+)$/s.test(trimmed)) {
+          return `<blockquote>${trimmed.replace(/^>\s*/gm, '')}</blockquote>`;
+        }
+        if (/^[-*•]\s+/m.test(trimmed)) {
+          const lis = trimmed.split('\n').filter(Boolean).map(li => `<li>${li.replace(/^[-*•]\s+/, '')}</li>`).join('');
+          return `<ul>${lis}</ul>`;
+        }
+        if (/^\d+\.\s+/m.test(trimmed)) {
+          const lis = trimmed.split('\n').filter(Boolean).map(li => `<li>${li.replace(/^\d+\.\s+/, '')}</li>`).join('');
+          return `<ol>${lis}</ol>`;
+        }
+        const formatted = trimmed
+          .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline font-semibold hover:text-emerald-900">$1</a>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/\n/g, '<br />');
+        return `<p>${formatted}</p>`;
+      }).filter(Boolean).join('\n\n');
+    }
+
+    // Extract headings and inject unique slug IDs for Table of Contents
+    const extractedHeadings: { text: string; id: string; level: number }[] = [];
+    let headingCounter = 0;
+
+    const contentWithIds = html.replace(/<h([23])([^>]*)>(.*?)<\/h\1>/gi, (_match, level, attrs, innerText) => {
+      headingCounter++;
+      const plainText = innerText.replace(/<[^>]+>/g, '').trim();
+      const slugId = plainText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `section-${headingCounter}`;
+      extractedHeadings.push({ text: plainText, id: slugId, level: parseInt(level, 10) });
+      return `<h${level}${attrs} id="${slugId}">${innerText}</h${level}>`;
+    });
+
+    return { processedContent: contentWithIds, headings: extractedHeadings };
+  }, [content]);
+
   const relatedBlogs = allBlogs
     .filter(b => (b.slug || b.id) !== (blog.slug || blog.id))
     .slice(0, 3);
@@ -116,9 +179,10 @@ export function BlogDetailsPage() {
   return (
     <div className="bg-[#FAF9F5] min-h-screen">
       <SEO
-        title={blog.seoTitle || `${title} | YCN Bangladesh`}
+        title={blog.seoTitle || blog.metaTitle || `${title} | YCN Bangladesh`}
         description={blog.metaDescription || excerpt || ''}
         keywords={blog.metaKeywords || blog.tags?.join(', ') || ''}
+        image={blog.ogImage || blog.image}
       />
 
       {/* JSON-LD Schema markup */}
@@ -264,8 +328,8 @@ export function BlogDetailsPage() {
           <div className="lg:col-span-8 space-y-10">
             {/* Rich Text Body */}
             <div
-              className="prose prose-lg max-w-none text-gray-700 font-inter leading-relaxed space-y-6 [&>h3]:text-2xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-8 [&>h3]:mb-3 [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-2 [&>blockquote]:my-6 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl"
-              dangerouslySetInnerHTML={{ __html: content }}
+              className="prose prose-lg max-w-none text-gray-700 font-inter leading-relaxed space-y-6 [&>p]:mb-6 [&>p]:leading-relaxed [&>p]:text-gray-700 [&>p]:text-[17px] [&>h2]:text-2xl sm:[&>h2]:text-3xl [&>h2]:font-bold [&>h2]:text-gray-900 [&>h2]:font-poppins [&>h2]:mt-12 [&>h2]:mb-5 [&>h2]:pt-4 [&>h2]:scroll-mt-32 [&>h3]:text-xl sm:[&>h3]:text-2xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-9 [&>h3]:mb-4 [&>h3]:scroll-mt-32 [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-3 [&>blockquote]:my-8 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl [&>blockquote]:text-gray-800 [&>blockquote]:text-lg [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2.5 [&>ul]:my-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-2.5 [&>ol]:my-6 [&>strong]:text-gray-950 [&>strong]:font-bold"
+              dangerouslySetInnerHTML={{ __html: processedContent }}
             />
 
             {/* Multiple Gallery Images if available */}
@@ -434,21 +498,28 @@ export function BlogDetailsPage() {
             {/* Table of Contents card */}
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4 sticky top-28">
               <h4 className="font-bold text-gray-900 text-sm font-poppins">{t('Table of Contents', 'সূচিপত্র')}</h4>
-              <ul className="space-y-3 text-xs text-gray-600 font-inter">
-                <li className="flex items-center gap-2 text-[#1A6B3C] font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1A6B3C]" />
-                  <span>Building Stronger Coasts</span>
-                </li>
-                <li className="flex items-center gap-2 hover:text-[#1A6B3C] transition-colors pl-3.5">
-                  <span>Restoring Mangroves, Restoring Hope</span>
-                </li>
-                <li className="flex items-center gap-2 hover:text-[#1A6B3C] transition-colors pl-3.5">
-                  <span>Raising Awareness for a Safer Tomorrow</span>
-                </li>
-                <li className="flex items-center gap-2 hover:text-[#1A6B3C] transition-colors pl-3.5">
-                  <span>Looking Ahead</span>
-                </li>
-              </ul>
+              {headings.length > 0 ? (
+                <ul className="space-y-2.5 text-xs text-gray-600 font-inter max-h-[60vh] overflow-y-auto pr-1">
+                  {headings.map((h, i) => (
+                    <li key={i} className={`flex items-start gap-2 hover:text-[#1A6B3C] transition-colors ${h.level === 3 ? 'pl-3 text-gray-500' : 'font-medium text-gray-700'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${h.level === 3 ? 'bg-gray-300' : 'bg-[#1A6B3C]'}`} />
+                      <a href={`#${h.id}`} className="hover:underline leading-relaxed line-clamp-2">
+                        {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="space-y-3 text-xs text-gray-600 font-inter">
+                  <li className="flex items-center gap-2 text-[#1A6B3C] font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#1A6B3C]" />
+                    <span>{category}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-500 pl-3.5">
+                    <span>{t('Youth Climate Action Overview', 'যুব জলবায়ু কর্মসূচির রূপরেখা')}</span>
+                  </li>
+                </ul>
+              )}
 
               {/* Related Topics */}
               <div className="pt-6 border-t border-gray-100">

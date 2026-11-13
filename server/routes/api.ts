@@ -1368,13 +1368,21 @@ router.post('/blogs', async (req, res) => {
     data.slug = finalSlug;
 
     // Attach author details if authorId provided
-    if (data.authorId) {
+    if (data.authorId && /^[0-9a-fA-F]{24}$/.test(data.authorId)) {
       const author = await Author.findById(data.authorId);
       if (author) {
-        data.authorName = author.name;
-        data.authorRole = author.role;
-        data.authorImage = author.image;
+        if (!data.authorName) data.authorName = author.name;
+        if (!data.authorRole) data.authorRole = author.role;
+        if (!data.authorImage) data.authorImage = author.image || (author as any).avatar;
       }
+    }
+
+    if (data.metaTitle && !data.seoTitle) data.seoTitle = data.metaTitle;
+    if (data.seoTitle && !data.metaTitle) data.metaTitle = data.seoTitle;
+    if (data.image && !data.ogImage) data.ogImage = data.image;
+
+    if (!data.sdgs && data.sdgIds) {
+      data.sdgs = data.sdgIds;
     }
 
     if (!data.date) data.date = new Date().toISOString();
@@ -1401,13 +1409,21 @@ router.put('/blogs/:id', async (req, res) => {
       }
     }
 
-    if (data.authorId) {
+    if (data.authorId && /^[0-9a-fA-F]{24}$/.test(data.authorId)) {
       const author = await Author.findById(data.authorId);
       if (author) {
-        data.authorName = author.name;
-        data.authorRole = author.role;
-        data.authorImage = author.image;
+        if (!data.authorName) data.authorName = author.name;
+        if (!data.authorRole) data.authorRole = author.role;
+        if (!data.authorImage) data.authorImage = author.image || (author as any).avatar;
       }
+    }
+
+    if (data.metaTitle && !data.seoTitle) data.seoTitle = data.metaTitle;
+    if (data.seoTitle && !data.metaTitle) data.metaTitle = data.seoTitle;
+    if (data.image && !data.ogImage) data.ogImage = data.image;
+
+    if (!data.sdgs && data.sdgIds) {
+      data.sdgs = data.sdgIds;
     }
 
     const updated = await Blog.findByIdAndUpdate(req.params.id, data, { new: true });

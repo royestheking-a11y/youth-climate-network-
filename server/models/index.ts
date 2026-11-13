@@ -68,6 +68,7 @@ const authorSchema = new mongoose.Schema({
   role: String,
   bio: String,
   image: String,
+  avatar: String,
   email: String,
   linkedin: String,
   twitter: String,
