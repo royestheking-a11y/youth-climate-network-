@@ -865,28 +865,6 @@ function HeroSlider() {
           </div>
         </div>
 
-        {/* ── ARROW NAVIGATION CONTROLS (Left & Right) ── */}
-        {heroCards.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={handlePrev}
-              aria-label="Previous slide"
-              className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/40 hover:bg-[#E8521A] text-white backdrop-blur-md border border-white/20 transition-all flex items-center justify-center shadow-xl active:scale-90 cursor-pointer"
-            >
-              <ChevronLeft size={22} />
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              aria-label="Next slide"
-              className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/40 hover:bg-[#E8521A] text-white backdrop-blur-md border border-white/20 transition-all flex items-center justify-center shadow-xl active:scale-90 cursor-pointer"
-            >
-              <ChevronRight size={22} />
-            </button>
-          </>
-        )}
-
         {/* ── BOTTOM SLIDE INDICATORS (Auto-rolling Progress Dots) ── */}
         {heroCards.length > 1 && (
           <div className="absolute bottom-5 sm:bottom-8 right-6 sm:right-12 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/15">
