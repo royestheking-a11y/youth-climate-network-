@@ -336,6 +336,8 @@ export interface BlogPost {
   outboundLinks?: { text: string; url: string; openInNewTab?: boolean }[];
   schemaType?: string;
   customSchema?: string;
+  keyMetrics?: { count: string; label: string; label_bn?: string }[];
+  callout?: { title?: string; title_bn?: string; text?: string; text_bn?: string };
 }
 
 export interface InquiryItem {

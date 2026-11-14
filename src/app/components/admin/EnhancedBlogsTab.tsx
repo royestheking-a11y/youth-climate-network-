@@ -8,7 +8,7 @@ import {
   List, ListOrdered, Indent, Outdent,
   Highlighter, Type, Table, Quote, Minus, Link2,
   Eraser, Replace, Maximize2, Minimize2, Wand2, Zap,
-  Info, Code
+  Info, Code, Lightbulb, BarChart3
 } from 'lucide-react';
 import {
   useBlogs, apiBlog, BlogPost, useAuthors, apiAuthors, useSDGs, uploadFile, uploadMultipleFiles
@@ -361,6 +361,8 @@ export function EnhancedBlogsTab() {
     faqs: [
       { question: 'What is the main goal of this initiative?', answer: 'To build community-level resilience through active youth participation.' }
     ],
+    keyMetrics: [],
+    callout: { title: '', title_bn: '', text: '', text_bn: '' },
     inboundLinks: [],
     outboundLinks: [],
   };
@@ -1799,6 +1801,168 @@ export function EnhancedBlogsTab() {
                       />
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Optional Key Metrics / Impact Statistics */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <BarChart3 size={15} className="text-emerald-700" />
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Custom Impact Numbers / Key Metrics (Optional)</h4>
+                      <p className="text-[11px] text-gray-500">Only displayed on this article if metrics are added. Leave empty to hide.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingPost((prev: any) => ({
+                        ...prev,
+                        keyMetrics: [...(prev.keyMetrics || []), { count: '', label: '', label_bn: '' }]
+                      }));
+                    }}
+                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 cursor-pointer"
+                  >
+                    + Add Metric
+                  </button>
+                </div>
+
+                {(!editingPost.keyMetrics || editingPost.keyMetrics.length === 0) ? (
+                  <p className="text-[11px] text-gray-400 italic bg-gray-50 p-2.5 rounded-lg border border-dashed border-gray-200">
+                    No custom metrics added for this post. The metric card will remain hidden on the article.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {editingPost.keyMetrics.map((metric: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col sm:flex-row items-center gap-2">
+                        <input
+                          type="text"
+                          value={metric.count}
+                          onChange={e => {
+                            const updated = [...editingPost.keyMetrics];
+                            updated[idx].count = e.target.value;
+                            setEditingPost({ ...editingPost, keyMetrics: updated });
+                          }}
+                          placeholder="Number (e.g. 12,500+)"
+                          className="w-full sm:w-1/3 text-xs px-2.5 py-1.5 bg-white rounded-lg border border-gray-200 font-bold text-[#E8521A]"
+                        />
+                        <input
+                          type="text"
+                          value={metric.label}
+                          onChange={e => {
+                            const updated = [...editingPost.keyMetrics];
+                            updated[idx].label = e.target.value;
+                            setEditingPost({ ...editingPost, keyMetrics: updated });
+                          }}
+                          placeholder="Label in English (e.g. Saplings planted)"
+                          className="w-full sm:flex-1 text-xs px-2.5 py-1.5 bg-white rounded-lg border border-gray-200"
+                        />
+                        <input
+                          type="text"
+                          value={metric.label_bn || ''}
+                          onChange={e => {
+                            const updated = [...editingPost.keyMetrics];
+                            updated[idx].label_bn = e.target.value;
+                            setEditingPost({ ...editingPost, keyMetrics: updated });
+                          }}
+                          placeholder="বাংলা লেবেল (ঐচ্ছিক)"
+                          className="w-full sm:flex-1 text-xs px-2.5 py-1.5 bg-white rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = editingPost.keyMetrics.filter((_: any, i: number) => i !== idx);
+                            setEditingPost({ ...editingPost, keyMetrics: updated });
+                          }}
+                          className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-white"
+                          title="Remove metric"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Optional Featured Solution Callout Card */}
+              <div className="bg-[#FFF9F6] p-4 rounded-xl border border-[#FED7C7] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Lightbulb size={15} className="text-[#E8521A]" />
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Featured Solution Highlight Callout (Optional)</h4>
+                      <p className="text-[11px] text-gray-500">Only displayed if text is entered. Leave empty to hide.</p>
+                    </div>
+                  </div>
+                  {(editingPost.callout?.text || editingPost.callout?.title) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPost((prev: any) => ({
+                          ...prev,
+                          callout: { title: '', title_bn: '', text: '', text_bn: '' }
+                        }));
+                      }}
+                      className="text-[11px] font-semibold text-gray-500 hover:text-red-600 cursor-pointer"
+                    >
+                      Clear Callout
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={editingPost.callout?.title || ''}
+                      onChange={e => {
+                        setEditingPost((prev: any) => ({
+                          ...prev,
+                          callout: { ...(prev.callout || {}), title: e.target.value }
+                        }));
+                      }}
+                      placeholder="Callout Title (e.g. A Youth-Led Solution)"
+                      className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7] font-semibold"
+                    />
+                    <input
+                      type="text"
+                      value={editingPost.callout?.title_bn || ''}
+                      onChange={e => {
+                        setEditingPost((prev: any) => ({
+                          ...prev,
+                          callout: { ...(prev.callout || {}), title_bn: e.target.value }
+                        }));
+                      }}
+                      placeholder="কলআউট শিরোনাম (বাংলা)"
+                      className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7]"
+                    />
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={editingPost.callout?.text || ''}
+                    onChange={e => {
+                      setEditingPost((prev: any) => ({
+                        ...prev,
+                        callout: { ...(prev.callout || {}), text: e.target.value }
+                      }));
+                    }}
+                    placeholder="Solution Highlight / Key takeaway statement (English)..."
+                    className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7]"
+                  />
+                  <textarea
+                    rows={2}
+                    value={editingPost.callout?.text_bn || ''}
+                    onChange={e => {
+                      setEditingPost((prev: any) => ({
+                        ...prev,
+                        callout: { ...(prev.callout || {}), text_bn: e.target.value }
+                      }));
+                    }}
+                    placeholder="সমাধান বা বিশেষ সারসংক্ষেপ (বাংলা - ঐচ্ছিক)..."
+                    className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7]"
+                  />
                 </div>
               </div>
             </div>

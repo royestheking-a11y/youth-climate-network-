@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { SEO } from './ui/SEO';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import {
   ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users,
-  CheckCircle2, Handshake, ShieldCheck, Award
+  CheckCircle2, Handshake, ShieldCheck, Award, ChevronLeft, ChevronRight, Clock
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { apiNewsletter, apiProgram } from '../lib/api';
-import { useStats, useNews, useEvents, useCarousel, usePartners } from '../lib/api';
-import type { NewsItem, EventItem, HeroCarouselItem } from '../lib/storage';
+import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs } from '../lib/api';
+import type { NewsItem, EventItem, HeroCarouselItem, BlogPost } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
 import heroBgOrange from '../../imports/image-3.webp';
@@ -159,6 +159,192 @@ function NewsCard({ item }: { item: NewsItem }) {
         </Link>
       </div>
     </motion.div>
+  );
+}
+
+function HomeBlogCard({ blog }: { blog: BlogPost }) {
+  const { t, lang } = useLanguage();
+  const title = (lang === 'bn' && blog.title_bn ? blog.title_bn : blog.title) || '';
+  const excerpt = (lang === 'bn' && blog.excerpt_bn ? blog.excerpt_bn : blog.excerpt) || '';
+  const category = (lang === 'bn' && blog.category_bn ? blog.category_bn : blog.category) || 'Climate Action';
+  const slugOrId = blog.slug || blog.id;
+
+  return (
+    <div className="bg-white rounded-3xl overflow-hidden flex flex-col border border-gray-100 hover:border-emerald-500/30 shadow-xs hover:shadow-xl transition-all duration-300 group h-full select-none">
+      <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100">
+        <img
+          src={blog.image || 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=800&q=80'}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+        <span
+          className="absolute top-3.5 left-3.5 text-xs font-bold px-3 py-1 rounded-full text-white shadow-sm"
+          style={{ backgroundColor: '#E8521A', fontFamily: 'Inter, sans-serif' }}
+        >
+          {category}
+        </span>
+        {blog.readTime && (
+          <span className="absolute bottom-3 right-3 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-black/60 text-white/95 backdrop-blur-xs flex items-center gap-1 font-inter">
+            <Clock size={11} /> {blog.readTime}
+          </span>
+        )}
+      </div>
+      <div className="p-5 sm:p-6 flex flex-col flex-1">
+        <div className="flex items-center gap-2 text-xs text-gray-400 font-inter mb-2.5">
+          <Calendar size={13} className="text-[#E8521A]" />
+          <span>
+            {new Date(blog.date || Date.now()).toLocaleDateString(lang === 'en' ? 'en-GB' : 'bn-BD', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            })}
+          </span>
+          {blog.authorName && (
+            <span className="truncate max-w-[130px] text-gray-500 font-medium">
+              • {blog.authorName}
+            </span>
+          )}
+        </div>
+        <h3 className="font-bold mb-2.5 flex-1 line-clamp-2 text-gray-900 group-hover:text-[#1A6B3C] transition-colors font-poppins text-base leading-snug">
+          {title}
+        </h3>
+        <p className="text-sm mb-5 line-clamp-2 text-gray-600 font-inter leading-relaxed">
+          {excerpt}
+        </p>
+        <Link
+          to={`/blog/${slugOrId}`}
+          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#E8521A] group-hover:text-[#c73e0d] transition-colors mt-auto font-inter"
+        >
+          <span>{t('Read story', 'পড়ুন')}</span>
+          <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function BlogCarousel({ blogs, isLoading }: { blogs: BlogPost[]; isLoading: boolean }) {
+  const { t } = useLanguage();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Smooth auto-cycle interval (rolls horizontally through cards)
+  useEffect(() => {
+    if (isLoading || blogs.length <= 1 || isPaused) return;
+
+    const interval = setInterval(() => {
+      if (!scrollRef.current) return;
+      const el = scrollRef.current;
+      const cardWidth = 350;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+
+      if (el.scrollLeft >= maxScroll - 20) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
+    }, 3800);
+
+    return () => clearInterval(interval);
+  }, [isLoading, blogs.length, isPaused]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const el = scrollRef.current;
+    const cardWidth = 350;
+    if (direction === 'left') {
+      if (el.scrollLeft <= 20) {
+        el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+      }
+    } else {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft >= maxScroll - 20) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-16">
+        {Array(3).fill(0).map((_, i) => <CardSkeleton key={i} />)}
+      </div>
+    );
+  }
+
+  if (blogs.length === 0) {
+    return (
+      <div className="text-center py-12 px-4 rounded-3xl bg-gray-50 border border-gray-100 mb-16">
+        <p className="text-gray-500 font-inter text-sm mb-4">
+          {t('No blog articles published yet.', 'এখনও কোনো ব্লগ প্রকাশিত হয়নি।')}
+        </p>
+        <Link to="/blog" className="px-5 py-2.5 rounded-xl bg-[#1A6B3C] text-white text-xs font-semibold inline-flex items-center gap-2">
+          {t('Visit Blog Section', 'ব্লগ বিভাগ দেখুন')}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="relative mb-16"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Top Controls Bar */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 font-inter">
+          <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`} />
+          <span>{isPaused ? t('Auto-roll paused', 'অটো-রোল সাময়িক স্থগিত') : t('Auto-rolling latest stories', 'সর্বশেষ গল্পসমূহ অটো-রোল হচ্ছে')}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/blog"
+            className="text-xs font-bold text-[#E8521A] hover:text-[#c73e0d] transition-colors inline-flex items-center gap-1.5 mr-1 font-inter"
+          >
+            <span>{t('View all blogs', 'সব ব্লগ দেখুন')}</span>
+            <ArrowRight size={13} />
+          </Link>
+          <button
+            type="button"
+            onClick={() => scroll('left')}
+            aria-label="Previous blogs"
+            className="w-9 h-9 rounded-full bg-white border border-gray-200 hover:border-emerald-600 hover:text-emerald-700 text-gray-700 flex items-center justify-center shadow-xs transition-all active:scale-95 cursor-pointer"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll('right')}
+            aria-label="Next blogs"
+            className="w-9 h-9 rounded-full bg-white border border-gray-200 hover:border-emerald-600 hover:text-emerald-700 text-gray-700 flex items-center justify-center shadow-xs transition-all active:scale-95 cursor-pointer"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Auto-rolling Card Track */}
+      <div
+        ref={scrollRef}
+        className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scroll-smooth snap-x snap-mandatory scrollbar-none"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {blogs.map((blog) => (
+          <div
+            key={blog.id || blog.slug}
+            className="w-[280px] sm:w-[320px] md:w-[350px] flex-shrink-0 snap-start"
+          >
+            <HomeBlogCard blog={blog} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -402,9 +588,14 @@ export function HomePage() {
   const { data: allNews, isLoading: newsLoading } = useNews();
   const { data: allEvents, isLoading: eventsLoading } = useEvents();
   const { data: partnersData = [] } = usePartners();
+  const { data: allBlogs = [], isLoading: blogsLoading } = useBlogs();
   
   const news = allNews ? allNews.filter(n => n.category !== 'Blog').slice(0, 3) : [];
-  const blogs = allNews ? allNews.filter(n => n.category === 'Blog').slice(0, 3) : [];
+  const latestBlogs = useMemo(() => {
+    return [...allBlogs]
+      .filter(b => b.published !== false)
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+  }, [allBlogs]);
   const events = allEvents ? allEvents.slice(0, 4) : [];
   
 
@@ -719,7 +910,7 @@ export function HomePage() {
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
             variants={stagger}
-            className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12"
+            className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6"
           >
             <div>
               <motion.p variants={fadeUp} className="text-xs uppercase tracking-widest mb-2" style={{ color: '#E8521A', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{t('04 — Insights', '০৪ — অন্তর্দৃষ্টি')}</motion.p>
@@ -729,15 +920,12 @@ export function HomePage() {
             </div>
           </motion.div>
 
-          {/* Blogs grid */}
+          {/* Blogs auto-rolling carousel with real blog cards */}
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
             variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-16"
           >
-            {newsLoading ? (
-              Array(3).fill(0).map((_, i) => <CardSkeleton key={i} />)
-            ) : blogs.map((item) => <NewsCard key={item.id} item={item} />)}
+            <BlogCarousel blogs={latestBlogs} isLoading={blogsLoading} />
           </motion.div>
 
           {/* Events */}

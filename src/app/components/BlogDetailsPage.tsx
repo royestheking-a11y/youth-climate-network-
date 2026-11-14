@@ -347,38 +347,38 @@ export function BlogDetailsPage() {
               </div>
             )}
 
-            {/* Key Metrics Grid Matching Design Reference */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm">
-              {[
-                { count: '12,500+', label: t('Mangrove saplings planted by youth', 'ম্যানগ্রোভ চারা রোপণ') },
-                { count: '850+', label: t('Community members reached in sessions', 'সচেতনতা সেশনে অংশগ্রহণকারী') },
-                { count: '12', label: t('Coastal communities engaged in resilience', 'উপকূলীয় সম্প্রদায়') },
-                { count: '30+', label: t('Youth volunteers leading local action', 'সক্রিয় যুব স্বেচ্ছাসেবক') },
-              ].map((metric, i) => (
-                <div key={i} className="text-center p-3">
-                  <div className="text-2xl sm:text-3xl font-black text-[#E8521A] mb-1 font-poppins">{metric.count}</div>
-                  <div className="text-xs text-gray-600 font-inter leading-tight">{metric.label}</div>
-                </div>
-              ))}
-            </div>
+            {/* Key Metrics Grid - Only rendered if custom metrics are added for this article */}
+            {blog.keyMetrics && blog.keyMetrics.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm">
+                {blog.keyMetrics.map((metric, i) => (
+                  <div key={i} className="text-center p-3">
+                    <div className="text-2xl sm:text-3xl font-black text-[#E8521A] mb-1 font-poppins">{metric.count}</div>
+                    <div className="text-xs text-gray-600 font-inter leading-tight">
+                      {lang === 'bn' && metric.label_bn ? metric.label_bn : metric.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
-            {/* Callout Card: A Youth-Led Solution */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#FFF6F2] border border-[#FED7C7] flex items-start gap-5">
-              <div className="w-12 h-12 rounded-2xl bg-[#E8521A] text-white flex items-center justify-center flex-shrink-0 shadow-md">
-                <Lightbulb size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900 text-base mb-1 font-poppins">
-                  {t('A Youth-Led Solution', 'যুব-নেতৃত্বাধীন সমাধান')}
-                </h4>
-                <p className="text-sm text-gray-700 leading-relaxed font-inter">
-                  {t(
-                    'By combining local traditional knowledge with modern climate education, youth volunteers are creating practical, community-driven solutions that work for their unique geographical context.',
-                    'স্থানীয় সনাতন জ্ঞানের সাথে আধুনিক জলবায়ু শিক্ষার সমন্বয় ঘটিয়ে, তরুণ স্বেচ্ছাসেবকরা ব্যবহারিক এবং সম্প্রদায়-ভিত্তিক সমাধান তৈরি করছে যা তাদের নিজস্ব পরিবেশের জন্য উপযোগী।'
+            {/* Callout Card: Solution Highlight - Only rendered if custom callout is added for this article */}
+            {blog.callout && (blog.callout.text || blog.callout.text_bn) && (
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#FFF6F2] border border-[#FED7C7] flex items-start gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-[#E8521A] text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                  <Lightbulb size={24} />
+                </div>
+                <div>
+                  {(blog.callout.title || blog.callout.title_bn) && (
+                    <h4 className="font-bold text-gray-900 text-base mb-1 font-poppins">
+                      {lang === 'bn' && blog.callout.title_bn ? blog.callout.title_bn : blog.callout.title}
+                    </h4>
                   )}
-                </p>
+                  <p className="text-sm text-gray-700 leading-relaxed font-inter">
+                    {lang === 'bn' && blog.callout.text_bn ? blog.callout.text_bn : blog.callout.text}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* SDGs Badges */}
             {blog.sdgs && blog.sdgs.length > 0 && (
