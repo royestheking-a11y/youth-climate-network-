@@ -9,8 +9,9 @@ import {
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { apiNewsletter, apiProgram } from '../lib/api';
-import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs, useFaqs } from '../lib/api';
+import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs, useFaqs, optimizeImageUrl } from '../lib/api';
 import type { NewsItem, EventItem, HeroCarouselItem, BlogPost, FaqItem } from '../lib/storage';
+import { getNews, getEvents } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
 import heroBgOrange from '../../imports/image-3.webp';
@@ -122,14 +123,19 @@ function NewsCard({ item }: { item: NewsItem }) {
   const { t, lang } = useLanguage();
   return (
     <motion.div
-      variants={fadeUp}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.35 }}
       whileHover={{ y: -6 }}
       className="bg-white rounded-2xl overflow-hidden flex flex-col border border-gray-100 hover:border-emerald-500/20 shadow-sm hover:shadow-xl transition-all duration-300 group h-full"
     >
       <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100">
         <img
-          src={item.image}
-          alt={item.title}
+          src={optimizeImageUrl(item.image, { width: 600 })}
+          alt={t(item.title)}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
@@ -174,8 +180,10 @@ function HomeBlogCard({ blog }: { blog: BlogPost }) {
     <div className="bg-white rounded-3xl overflow-hidden flex flex-col border border-gray-100 hover:border-emerald-500/30 shadow-xs hover:shadow-xl transition-all duration-300 group h-full select-none">
       <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100">
         <img
-          src={blog.image || 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=800&q=80'}
+          src={optimizeImageUrl(blog.image || 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=800&q=80', { width: 700 })}
           alt={title}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
@@ -441,30 +449,32 @@ function HomeFaqSection({ faqs }: { faqs: FaqItem[] }) {
             )}
           </motion.p>
 
-          {/* Interactive Search & Filter Bar */}
-          <motion.div variants={fadeUp} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <div className="relative w-full sm:w-80">
-              <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          {/* Interactive Search & Filter Bar (Organized in 2 clean, balanced rows) */}
+          <motion.div variants={fadeUp} className="mt-8 flex flex-col items-center justify-center gap-4 max-w-3xl mx-auto">
+            {/* Row 1: Search Bar - Centered with clear button */}
+            <div className="relative w-full max-w-md">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={t('Search questions or topics...', 'প্রশ্ন বা বিষয় অনুসন্ধান করুন...')}
-                className="w-full pl-10 pr-4 py-2.5 rounded-full text-xs sm:text-sm bg-white border border-gray-200 shadow-xs focus:border-[#1A6B3C] focus:ring-2 focus:ring-[#1A6B3C]/10 outline-none font-inter"
+                className="w-full pl-11 pr-10 py-3 rounded-full text-xs sm:text-sm bg-white border border-gray-200 shadow-xs focus:border-[#1A6B3C] focus:ring-2 focus:ring-[#1A6B3C]/10 outline-none font-inter transition-all placeholder:text-gray-400"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                  aria-label="Clear search"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 w-6 h-6 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors text-xs"
                 >
                   ✕
                 </button>
               )}
             </div>
 
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {/* Row 2: Category Filter Pills - Cleanly centered in a full-width row */}
+            <div className="flex flex-wrap items-center justify-center gap-2 w-full">
               {categories.map(cat => {
                 const isSelected = selectedCat === cat;
                 return (
@@ -472,10 +482,10 @@ function HomeFaqSection({ faqs }: { faqs: FaqItem[] }) {
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCat(cat)}
-                    className={`px-3.5 py-2 rounded-full text-xs font-semibold font-inter transition-all cursor-pointer ${
+                    className={`px-4 py-2 rounded-full text-xs font-semibold font-inter transition-all duration-200 cursor-pointer ${
                       isSelected
-                        ? 'bg-[#0A3320] text-[#F0ECD8] shadow-sm'
-                        : 'bg-white text-gray-600 border border-gray-200/80 hover:border-emerald-500/30 hover:text-gray-900'
+                        ? 'bg-[#0A3320] text-[#F0ECD8] shadow-sm ring-1 ring-[#0A3320]'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:border-emerald-500/30 hover:text-gray-900 shadow-2xs'
                     }`}
                   >
                     {t(cat)}
@@ -779,8 +789,11 @@ function HeroSlider() {
               }`}
             >
               <img
-                src={card.image}
+                src={optimizeImageUrl(card.image, { width: 1920 })}
                 alt={t(card.titleEn, card.titleBn)}
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                decoding={idx === 0 ? "sync" : "async"}
                 className={`w-full h-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
                   isActive ? 'scale-105' : 'scale-100'
                 }`}
@@ -910,13 +923,17 @@ export function HomePage() {
   const { data: allBlogs = [], isLoading: blogsLoading } = useBlogs();
   const { data: faqsData = [] } = useFaqs();
   
-  const news = allNews ? allNews.filter(n => n.category !== 'Blog').slice(0, 3) : [];
+  const news = (allNews && allNews.length > 0)
+    ? allNews.filter(n => n.category !== 'Blog').slice(0, 3)
+    : getNews().filter(n => n.category !== 'Blog').slice(0, 3);
   const latestBlogs = useMemo(() => {
     return [...allBlogs]
       .filter(b => b.published !== false)
       .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   }, [allBlogs]);
-  const events = allEvents ? allEvents.slice(0, 4) : [];
+  const events = (allEvents && allEvents.length > 0)
+    ? allEvents.slice(0, 4)
+    : getEvents().slice(0, 4);
   
 
 
@@ -1216,15 +1233,11 @@ export function HomePage() {
           </motion.div>
 
           {/* News grid */}
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-            variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-16"
-          >
-            {newsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-16">
+            {newsLoading && news.length === 0 ? (
               Array(3).fill(0).map((_, i) => <CardSkeleton key={i} />)
             ) : news.map((item) => <NewsCard key={item.id} item={item} />)}
-          </motion.div>
+          </div>
 
           {/* Blogs section header */}
           <motion.div
@@ -1273,12 +1286,8 @@ export function HomePage() {
               </motion.div>
             </motion.div>
 
-            <motion.div
-              initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
-              variants={stagger}
-              className="lg:col-span-3 space-y-3"
-            >
-              {eventsLoading ? (
+            <div className="lg:col-span-3 space-y-3">
+              {eventsLoading && events.length === 0 ? (
                 Array(3).fill(0).map((_, i) => (
                   <div key={i} className="h-[120px] bg-white rounded-2xl p-4 flex gap-4">
                     <div className="w-[80px] h-full bg-gray-100 rounded-xl animate-pulse" />
@@ -1289,12 +1298,18 @@ export function HomePage() {
                     </div>
                   </div>
                 ))
-              ) : events.map(ev => (
-                <motion.div key={ev.id} variants={fadeUp}>
+              ) : events.map((ev, idx) => (
+                <motion.div
+                  key={ev.id || idx}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{ duration: 0.35, delay: idx * 0.05 }}
+                >
                   <EventRow event={ev} />
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

@@ -1,4 +1,7 @@
 import useSWR from 'swr';
+import {
+  getStats, getNews, getEvents, getPartners, getCarouselItems
+} from './storage';
 import type {
   ImpactStats, NewsItem, EventItem, TeamMember, Partner,
   VolunteerApp, NewsletterSub, ContactMessage, DonationRecord,
@@ -21,27 +24,58 @@ export type {
 
 export const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+/**
+ * Image optimization helper:
+ * Automatically applies Cloudinary transformations (f_auto, q_auto, width limits)
+ * and Unsplash dynamic format & compression parameters.
+ */
+export function optimizeImageUrl(url?: string, options?: { width?: number; quality?: string | number }): string {
+  if (!url) return '';
+  // Check if it's a Cloudinary URL
+  if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+    if (url.includes('/f_auto')) return url; // Already transformed
+    const parts = url.split('/upload/');
+    const w = options?.width ? `,w_${options.width}` : '';
+    const q = options?.quality ? `,q_${options.quality}` : ',q_auto';
+    return `${parts[0]}/upload/f_auto${q}${w}/${parts[1]}`;
+  }
+  // Check if it's an Unsplash URL
+  if (url.includes('images.unsplash.com')) {
+    try {
+      const parsed = new URL(url);
+      if (options?.width) parsed.searchParams.set('w', String(options.width));
+      parsed.searchParams.set('auto', 'format');
+      parsed.searchParams.set('fit', 'crop');
+      if (!parsed.searchParams.has('q')) parsed.searchParams.set('q', '80');
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  }
+  return url;
+}
+
 const fetcher = (url: string) => fetch(url).then(res => {
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   return res.json();
 });
 
-// SWR Hooks
+// SWR Hooks with fallbackData for instant first paint
 export const useAdminUsers = () => useSWR<AdminUser[]>(`${API_URL}/admin-users`, fetcher);
-export const useStats = () => useSWR<ImpactStats>(`${API_URL}/stats`, fetcher);
-export const useNews = () => useSWR<NewsItem[]>(`${API_URL}/news`, fetcher);
-export const useEvents = () => useSWR<EventItem[]>(`${API_URL}/events`, fetcher);
+export const useStats = () => useSWR<ImpactStats>(`${API_URL}/stats`, fetcher, { fallbackData: getStats(), revalidateOnMount: true });
+export const useNews = () => useSWR<NewsItem[]>(`${API_URL}/news`, fetcher, { fallbackData: getNews(), revalidateOnMount: true });
+export const useEvents = () => useSWR<EventItem[]>(`${API_URL}/events`, fetcher, { fallbackData: getEvents(), revalidateOnMount: true });
 export const useTeam = (params?: { type?: string; department?: string }) => {
   const query = new URLSearchParams(params as any).toString();
   return useSWR<TeamMember[]>(`${API_URL}/team${query ? '?' + query : ''}`, fetcher);
 };
-export const usePartners = () => useSWR<Partner[]>(`${API_URL}/partners`, fetcher);
+export const usePartners = () => useSWR<Partner[]>(`${API_URL}/partners`, fetcher, { fallbackData: getPartners(), revalidateOnMount: true });
 export const useVolunteerApps = () => useSWR<VolunteerApp[]>(`${API_URL}/volunteer-apps`, fetcher);
 export const useNewsletter = () => useSWR<NewsletterSub[]>(`${API_URL}/newsletter`, fetcher);
 export const useContactMessages = () => useSWR<ContactMessage[]>(`${API_URL}/contact-messages`, fetcher);
 export const useDonations = () => useSWR<DonationRecord[]>(`${API_URL}/donations`, fetcher);
 export const useDonationRequests = () => useSWR<DonationRequest[]>(`${API_URL}/donation-requests`, fetcher);
-export const useCarousel = () => useSWR<HeroCarouselItem[]>(`${API_URL}/carousel`, fetcher);
+export const useCarousel = () => useSWR<HeroCarouselItem[]>(`${API_URL}/carousel`, fetcher, { fallbackData: getCarouselItems(), revalidateOnMount: true });
 export const useAdvocacy = () => useSWR<AdvocacyItem[]>(`${API_URL}/advocacy`, fetcher);
 export const usePartnershipInquiries = () => useSWR<PartnershipInquiry[]>(`${API_URL}/partnership-inquiries`, fetcher);
 export const useInternshipApps = () => useSWR<InternshipApp[]>(`${API_URL}/internship-apps`, fetcher);

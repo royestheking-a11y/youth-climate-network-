@@ -16,7 +16,10 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     return {
       folder: 'youth_climate',
-      allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'webp'],
+      allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'webp', 'avif'],
+      transformation: [
+        { width: 1920, crop: 'limit', quality: 'auto', fetch_format: 'auto' }
+      ],
     };
   },
 });
