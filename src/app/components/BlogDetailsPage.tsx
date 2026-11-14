@@ -57,32 +57,13 @@ export function BlogDetailsPage() {
     window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(blog?.title || '')}`, '_blank');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-40 pb-20 flex justify-center items-center bg-[#FAF9F5]">
-        <Loader2 size={36} className="animate-spin text-[#1A6B3C]" />
-      </div>
-    );
-  }
-
-  if (!blog) {
-    return (
-      <div className="min-h-screen pt-40 pb-20 flex flex-col justify-center items-center bg-[#FAF9F5] text-center px-4">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-4 font-poppins">{t('Article Not Found', 'নিবন্ধটি পাওয়া যায়নি')}</h2>
-        <p className="text-gray-600 text-sm mb-8 font-inter">{t('The story you are looking for may have been moved or removed.', 'আপনার অনুসন্ধানকৃত গল্পটি হয়তো স্থানান্তরিত বা মুছে ফেলা হয়েছে।')}</p>
-        <Link to="/blog" className="px-6 py-3 rounded-full bg-[#1A6B3C] text-white text-xs font-semibold inline-flex items-center gap-2">
-          <ArrowLeft size={14} /> {t('Back to All Stories', 'সব গল্পে ফিরে যান')}
-        </Link>
-      </div>
-    );
-  }
-
-  const title = lang === 'bn' && blog.title_bn ? blog.title_bn : blog.title;
-  const content = lang === 'bn' && blog.content_bn ? blog.content_bn : blog.content;
-  const excerpt = lang === 'bn' && blog.excerpt_bn ? blog.excerpt_bn : blog.excerpt;
-  const category = lang === 'bn' && blog.category_bn ? blog.category_bn : (blog.category || 'Climate Action');
+  const title = (lang === 'bn' && blog?.title_bn ? blog.title_bn : blog?.title) || '';
+  const content = (lang === 'bn' && blog?.content_bn ? blog.content_bn : blog?.content) || '';
+  const excerpt = (lang === 'bn' && blog?.excerpt_bn ? blog.excerpt_bn : blog?.excerpt) || '';
+  const category = (lang === 'bn' && blog?.category_bn ? blog.category_bn : blog?.category) || 'Climate Action';
 
   // Process and arrange content seamlessly whether raw text, markdown, or HTML
+  // Note: must remain at top level before any conditional returns to obey React Rules of Hooks
   const { processedContent, headings } = useMemo(() => {
     if (!content) return { processedContent: '', headings: [] };
     let raw = content.trim();
@@ -144,6 +125,26 @@ export function BlogDetailsPage() {
 
     return { processedContent: contentWithIds, headings: extractedHeadings };
   }, [content]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-40 pb-20 flex justify-center items-center bg-[#FAF9F5]">
+        <Loader2 size={36} className="animate-spin text-[#1A6B3C]" />
+      </div>
+    );
+  }
+
+  if (!blog) {
+    return (
+      <div className="min-h-screen pt-40 pb-20 flex flex-col justify-center items-center bg-[#FAF9F5] text-center px-4">
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-4 font-poppins">{t('Article Not Found', 'নিবন্ধটি পাওয়া যায়নি')}</h2>
+        <p className="text-gray-600 text-sm mb-8 font-inter">{t('The story you are looking for may have been moved or removed.', 'আপনার অনুসন্ধানকৃত গল্পটি হয়তো স্থানান্তরিত বা মুছে ফেলা হয়েছে।')}</p>
+        <Link to="/blog" className="px-6 py-3 rounded-full bg-[#1A6B3C] text-white text-xs font-semibold inline-flex items-center gap-2">
+          <ArrowLeft size={14} /> {t('Back to All Stories', 'সব গল্পে ফিরে যান')}
+        </Link>
+      </div>
+    );
+  }
 
   const relatedBlogs = allBlogs
     .filter(b => (b.slug || b.id) !== (blog.slug || blog.id))

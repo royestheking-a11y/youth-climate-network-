@@ -375,6 +375,16 @@ export function EnhancedBlogsTab() {
     }
   }, [editingPost?.id, editorLanguageTab]);
 
+  // Calculate live content stats (defined at top level to adhere to Rules of Hooks)
+  const contentStats = useMemo(() => {
+    if (!editingPost?.content) return { words: 0, chars: 0, readTime: '1 min' };
+    const clean = editingPost.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const words = clean ? clean.split(' ').filter(Boolean).length : 0;
+    const chars = clean.length;
+    const readTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
+    return { words, chars, readTime };
+  }, [editingPost?.content]);
+
   // Synchronize visual editor input back to state
   const handleVisualInput = () => {
     if (visualEditorRef.current) {
@@ -740,15 +750,6 @@ export function EnhancedBlogsTab() {
     return p.title.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q) || (p.authorName && p.authorName.toLowerCase().includes(q));
   });
 
-  // Calculate live content stats
-  const contentStats = useMemo(() => {
-    if (!editingPost?.content) return { words: 0, chars: 0, readTime: '1 min' };
-    const clean = editingPost.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const words = clean ? clean.split(' ').filter(Boolean).length : 0;
-    const chars = clean.length;
-    const readTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
-    return { words, chars, readTime };
-  }, [editingPost?.content]);
 
   // Popular topic suggestions
   const popularTopics = [
