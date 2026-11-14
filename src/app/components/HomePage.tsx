@@ -655,201 +655,247 @@ function EventRow({ event }: { event: EventItem }) {
   );
 }
 
-/* ───── HERO ACCORDION ───── */
-function HeroAccordion() {
-  const [hoveredIndex, setHoveredIndex] = useState(0);
+/* ───── FULL IMAGE HERO SLIDER (AUTO-ROLLING & SWIPEABLE) ───── */
+const DEFAULT_FALLBACK_SLIDES: HeroCarouselItem[] = [
+  {
+    id: 'hero-1',
+    titleEn: 'YOUTH CLIMATE ACTION IN BANGLADESH',
+    titleBn: 'বাংলাদেশে যুব জলবায়ু পদক্ষেপ',
+    image: '/youth_climate_action.png',
+    link: '/about'
+  },
+  {
+    id: 'hero-2',
+    titleEn: 'COASTAL MANGROVE & ECOSYSTEM RESTORATION',
+    titleBn: 'উপকূলীয় ম্যানগ্রোভ ও প্রতিবেশ পুনরুদ্ধার',
+    image: '/sustainable_energy.png',
+    link: '/programs'
+  },
+  {
+    id: 'hero-3',
+    titleEn: 'COMMUNITY ADAPTATION & DISASTER RESILIENCE',
+    titleBn: 'সামাজিক অভিযোজন ও দুর্যোগ সহনশীলতা',
+    image: '/disaster_resilience.png',
+    link: '/impact'
+  },
+  {
+    id: 'hero-4',
+    titleEn: 'CLIMATE EDUCATION & YOUTH EMPOWERMENT',
+    titleBn: 'জলবায়ু শিক্ষা ও যুব ক্ষমতায়ন',
+    image: '/education_research.png',
+    link: '/get-involved'
+  }
+];
+
+function HeroSlider() {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [heroCards, setHeroCards] = useState<HeroCarouselItem[]>([]);
+  const [heroCards, setHeroCards] = useState<HeroCarouselItem[]>(DEFAULT_FALLBACK_SLIDES);
   const { t } = useLanguage();
   const { data: carouselData, isLoading } = useCarousel();
 
+  // Touch gesture state for native mobile swipe
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
   useEffect(() => {
-    if (carouselData) setHeroCards(carouselData);
+    if (carouselData && carouselData.length > 0) {
+      setHeroCards(carouselData);
+    }
   }, [carouselData]);
 
-  // Smooth auto-cycle timer
+  // Smooth auto-cycle timer (every 5.5s)
   useEffect(() => {
     if (heroCards.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
-      setHoveredIndex(prev => (prev + 1) % heroCards.length);
-    }, 6500);
+      setCurrentIndex(prev => (prev + 1) % heroCards.length);
+    }, 5500);
     return () => clearInterval(interval);
   }, [heroCards.length, isPaused]);
+
+  const handlePrev = () => {
+    setCurrentIndex(prev => (prev === 0 ? heroCards.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex(prev => (prev + 1) % heroCards.length);
+  };
+
+  // Touch swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    if (distance > 45) {
+      // Swiped Left -> Advance to next
+      handleNext();
+    } else if (distance < -45) {
+      // Swiped Right -> Go to previous
+      handlePrev();
+    }
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
 
   if (isLoading) {
     return <CarouselSkeleton />;
   }
 
+  const activeCard = heroCards[currentIndex] || heroCards[0];
+  if (!activeCard) return null;
+
   return (
     <section
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative w-full h-[85svh] sm:h-[90svh] min-h-[580px] sm:min-h-[640px] flex items-center justify-center bg-[#072416] p-4 sm:p-8 pt-24 sm:pt-32 pb-8 sm:pb-16 overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative w-full h-[85svh] sm:h-[90svh] min-h-[580px] sm:min-h-[660px] flex items-center justify-center bg-[#072416] p-4 sm:p-8 pt-24 sm:pt-32 pb-8 sm:pb-16 overflow-hidden select-none"
     >
-      {/* Background decorations & atmospheric glow */}
+      {/* Background atmospheric glow */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #051C12 0%, #0A3320 50%, #0D3E27 100%)' }} />
       <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#E8521A]/10 blur-3xl pointer-events-none" />
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-      
-      <div className="relative z-10 w-full h-full max-w-[1440px] mx-auto flex flex-col sm:flex-row gap-2.5 sm:gap-4">
-        {heroCards.map((card, index) => {
-          const isActive = hoveredIndex === index;
+
+      {/* Main Hero Card Container (Full Image Display) */}
+      <div className="relative z-10 w-full h-full max-w-[1440px] mx-auto rounded-3xl sm:rounded-[36px] overflow-hidden shadow-2xl border border-white/10 group">
+        {/* Render each slide with full image coverage and smooth transition */}
+        {heroCards.map((card, idx) => {
+          const isActive = idx === currentIndex;
           return (
-            <motion.div
-              key={card.id || index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              viewport={{ once: true }}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onClick={() => {
-                if (isActive && card.link) {
-                  if (card.link.startsWith('http')) {
-                    window.open(card.link, '_blank');
-                  } else {
-                    window.location.href = card.link;
-                  }
-                } else if (!isActive) {
-                  setHoveredIndex(index);
-                }
-              }}
-              className={`relative rounded-3xl overflow-hidden cursor-pointer shadow-2xl ${
-                isActive ? 'min-h-0 sm:min-w-0' : 'min-h-[52px] sm:min-h-0 min-w-0 sm:min-w-[clamp(44px,8vw,72px)]'
+            <div
+              key={card.id || idx}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
               }`}
-              style={{
-                flex: isActive ? 12 : 1,
-                transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
-                border: isActive ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(255,255,255,0.06)'
-              }}
             >
-              {/* Background Image */}
               <img
                 src={card.image}
                 alt={t(card.titleEn, card.titleBn)}
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{
-                  filter: isActive ? 'brightness(0.92) saturate(1.15)' : 'brightness(0.45) grayscale(25%)',
-                  transform: isActive ? 'scale(1.04)' : 'scale(1)',
-                  transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)'
-                }}
+                className={`w-full h-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
+                  isActive ? 'scale-105' : 'scale-100'
+                }`}
               />
-              
-              {/* Gradient Overlay for active card */}
-              <div 
-                className="absolute inset-0 pointer-events-none" 
-                style={{ 
-                  background: isActive 
-                    ? 'linear-gradient(to top, rgba(5,28,18,0.95) 0%, rgba(5,28,18,0.6) 40%, rgba(5,28,18,0.1) 75%, transparent 100%)'
-                    : 'linear-gradient(to top, rgba(10,51,32,0.92) 0%, transparent 100%)',
-                  transition: 'background 0.8s ease'
-                }} 
-              />
-
-              {/* ── ACTIVE CARD RICH CONTENT OVERLAY ── */}
-              <div
-                className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 z-20 pointer-events-none"
-                style={{
-                  opacity: isActive ? 1 : 0,
-                  transform: isActive ? 'translateY(0)' : 'translateY(16px)',
-                  transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
-                  pointerEvents: isActive ? 'auto' : 'none'
-                }}
-              >
-                <div className="max-w-2xl space-y-3 sm:space-y-4">
-                  {/* Category Pill */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-emerald-300 text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
-                    <span className="w-2 h-2 rounded-full bg-[#E8521A] animate-pulse" />
-                    <span>{t('Climate Action', 'জলবায়ু পদক্ষেপ')} · {String(index + 1).padStart(2, '0')}/{String(heroCards.length).padStart(2, '0')}</span>
-                  </div>
-
-                  {/* Title */}
-                  <h2
-                    className="text-2xl sm:text-4xl md:text-5xl font-black text-[#F0ECD8] leading-tight tracking-tight drop-shadow-md font-poppins"
-                    style={{ letterSpacing: '-0.02em' }}
-                  >
-                    {t(card.titleEn, card.titleBn)}
-                  </h2>
-
-                  {/* Subtitle / mission snippet */}
-                  <p className="text-xs sm:text-sm text-gray-200/90 leading-relaxed max-w-xl font-inter line-clamp-2 drop-shadow">
-                    {t(
-                      'Empowering youth across frontline coastal and vulnerable communities to drive sustainable grassroots climate action and resilience.',
-                      'উপকূলীয় ও ঝুঁকিপূর্ণ সম্প্রদায়ের তরুণদের টেকসই তৃণমূল জলবায়ু পদক্ষেপ এবং সহনশীলতা গড়ে তুলতে ক্ষমতায়ন।'
-                    )}
-                  </p>
-
-                  {/* Action CTA */}
-                  <div className="pt-2 flex items-center gap-3">
-                    {card.link && (
-                      <span
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-bold text-white bg-[#E8521A] hover:bg-[#d0420f] transition-all hover:scale-105 active:scale-95 shadow-lg group/btn cursor-pointer"
-                      >
-                        <span>{t('Explore Initiative', 'বিস্তারিত দেখুন')}</span>
-                        <ArrowRight size={15} className="group-hover/btn:translate-x-1 transition-transform" />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Collapsed State Text */}
-              <div
-                className="absolute inset-0 flex items-center justify-center sm:items-end sm:justify-center sm:pb-8"
-                style={{
-                  opacity: isActive ? 0 : 1,
-                  transition: 'opacity 0.4s ease',
-                  pointerEvents: isActive ? 'none' : 'auto'
-                }}
-              >
-                {/* Desktop Vertical Text */}
-                <span
-                  className="hidden sm:block text-white font-bold tracking-widest uppercase whitespace-nowrap"
-                  style={{
-                    writingMode: 'vertical-rl',
-                    textOrientation: 'mixed',
-                    transform: 'rotate(180deg)',
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: 'clamp(0.75rem, 1vw, 0.95rem)',
-                    letterSpacing: '0.15em'
-                  }}
-                >
-                  {t(card.titleEn, card.titleBn)}
-                </span>
-                {/* Mobile Horizontal Text */}
-                <span
-                  className="sm:hidden text-white font-bold tracking-widest uppercase whitespace-nowrap"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '0.85rem'
-                  }}
-                >
-                  {t(card.titleEn, card.titleBn)}
-                </span>
-              </div>
-
-            </motion.div>
+            </div>
           );
         })}
-      </div>
 
-      {/* Slide Navigation Indicator Dots */}
-      {heroCards.length > 1 && (
-        <div className="absolute bottom-3 sm:bottom-4 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-          {heroCards.map((_, dotIdx) => (
-            <button
-              key={dotIdx}
-              onClick={() => setHoveredIndex(dotIdx)}
-              className={`transition-all duration-300 rounded-full ${
-                hoveredIndex === dotIdx
-                  ? 'w-7 h-2 bg-[#E8521A]'
-                  : 'w-2 h-2 bg-white/40 hover:bg-white/80'
-              }`}
-              title={`Slide ${dotIdx + 1}`}
-            />
-          ))}
+        {/* High-Contrast Cinematic Gradient Overlays */}
+        <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-[#04190F]/95 via-[#04190F]/55 to-[#04190F]/15" />
+        <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-r from-[#04190F]/85 via-[#04190F]/40 to-transparent sm:w-3/4" />
+
+        {/* ── ACTIVE CARD RICH CONTENT OVERLAY ── */}
+        <div className="absolute inset-0 z-30 flex flex-col justify-end p-6 sm:p-12 md:p-16">
+          <div className="max-w-3xl space-y-4 sm:space-y-5">
+            {/* Category / Badge Pill */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-[#E8521A] animate-pulse" />
+              <span>
+                {t('Climate Action & Youth Leadership', 'জলবায়ু পদক্ষেপ ও যুব নেতৃত্ব')} · {String(currentIndex + 1).padStart(2, '0')}/{String(heroCards.length).padStart(2, '0')}
+              </span>
+            </div>
+
+            {/* Title with smooth entrance */}
+            <h1
+              key={`title-${currentIndex}`}
+              className="text-3xl sm:text-5xl md:text-6xl font-black text-[#F0ECD8] leading-[1.12] tracking-tight drop-shadow-xl font-poppins"
+              style={{ letterSpacing: '-0.02em' }}
+            >
+              {t(activeCard.titleEn, activeCard.titleBn)}
+            </h1>
+
+            {/* Mission Subtitle */}
+            <p
+              key={`desc-${currentIndex}`}
+              className="text-xs sm:text-base text-gray-200/95 leading-relaxed max-w-2xl font-inter drop-shadow"
+            >
+              {t(
+                'Empowering youth across frontline coastal and vulnerable communities to drive sustainable grassroots climate action, ecological restoration, and resilience.',
+                'উপকূলীয় ও ঝুঁকিপূর্ণ সম্প্রদায়ের তরুণদের টেকসই তৃণমূল জলবায়ু পদক্ষেপ, প্রতিবেশ পুনরুদ্ধার এবং সহনশীলতা গড়ে তুলতে ক্ষমতায়ন।'
+              )}
+            </p>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-wrap items-center gap-3.5">
+              {activeCard.link && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeCard.link.startsWith('http')) {
+                      window.open(activeCard.link, '_blank');
+                    } else {
+                      window.location.href = activeCard.link;
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#E8521A] to-[#D97706] hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl transition-all group/btn cursor-pointer font-inter"
+                >
+                  <span>{t('Explore Initiative', 'বিস্তারিত দেখুন')}</span>
+                  <ArrowRight size={15} className="group-hover/btn:translate-x-1 transition-transform" />
+                </button>
+              )}
+              <Link
+                to="/programs"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-xs sm:text-sm font-bold text-[#F0ECD8] bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/25 hover:border-white/50 transition-all hover:scale-105 font-inter"
+              >
+                <span>{t('Our 20 Pillars', '২০টি পিলার')}</span>
+              </Link>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* ── ARROW NAVIGATION CONTROLS (Left & Right) ── */}
+        {heroCards.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="Previous slide"
+              className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/40 hover:bg-[#E8521A] text-white backdrop-blur-md border border-white/20 transition-all flex items-center justify-center shadow-xl active:scale-90 cursor-pointer"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Next slide"
+              className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/40 hover:bg-[#E8521A] text-white backdrop-blur-md border border-white/20 transition-all flex items-center justify-center shadow-xl active:scale-90 cursor-pointer"
+            >
+              <ChevronRight size={22} />
+            </button>
+          </>
+        )}
+
+        {/* ── BOTTOM SLIDE INDICATORS (Auto-rolling Progress Dots) ── */}
+        {heroCards.length > 1 && (
+          <div className="absolute bottom-5 sm:bottom-8 right-6 sm:right-12 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/15">
+            {heroCards.map((_, dotIdx) => {
+              const isDotActive = currentIndex === dotIdx;
+              return (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  onClick={() => setCurrentIndex(dotIdx)}
+                  className={`transition-all duration-300 rounded-full cursor-pointer ${
+                    isDotActive
+                      ? 'w-8 sm:w-10 h-2 bg-[#E8521A]'
+                      : 'w-2 h-2 bg-white/40 hover:bg-white/80'
+                  }`}
+                  aria-label={`Go to slide ${dotIdx + 1}`}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -915,9 +961,9 @@ export function HomePage() {
       />
 
       {/* ══════════════════════════════════════════
-          HERO
+          HERO (FULL IMAGE AUTO-ROLLING SLIDER)
       ══════════════════════════════════════════ */}
-      <HeroAccordion />
+      <HeroSlider />
 
       {/* ══════════════════════════════════════════
           MARQUEE PARTNERS STRIP

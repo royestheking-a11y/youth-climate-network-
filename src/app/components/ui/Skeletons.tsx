@@ -2,14 +2,16 @@ import { Skeleton } from './skeleton';
 
 export function CarouselSkeleton() {
   return (
-    <section className="relative w-full h-[80svh] sm:h-[90svh] min-h-[480px] sm:min-h-[600px] flex items-center justify-center bg-[#0A3320] p-4 sm:p-8 pt-24 sm:pt-32 pb-8 sm:pb-16 overflow-hidden">
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #082819 0%, #0A3320 50%, #0D3E27 100%)' }} />
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-      <div className="relative z-10 w-full h-full max-w-[1400px] mx-auto flex gap-2 sm:gap-4">
-        <Skeleton className="h-full rounded-2xl flex-[12]" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
-        <Skeleton className="h-full rounded-2xl flex-1 hidden sm:block" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
-        <Skeleton className="h-full rounded-2xl flex-1 hidden sm:block" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
-        <Skeleton className="h-full rounded-2xl flex-1 hidden md:block" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+    <section className="relative w-full h-[85svh] sm:h-[90svh] min-h-[580px] sm:min-h-[640px] flex items-center justify-center bg-[#072416] p-4 sm:p-8 pt-24 sm:pt-32 pb-8 sm:pb-16 overflow-hidden">
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #051C12 0%, #0A3320 50%, #0D3E27 100%)' }} />
+      <div className="relative z-10 w-full h-full max-w-[1440px] mx-auto rounded-3xl overflow-hidden bg-white/5 border border-white/10 animate-pulse flex flex-col justify-end p-8 sm:p-14">
+        <Skeleton className="h-6 w-48 rounded-full bg-white/10 mb-4" />
+        <Skeleton className="h-12 sm:h-16 w-3/4 max-w-2xl rounded-2xl bg-white/10 mb-4" />
+        <Skeleton className="h-6 w-1/2 max-w-xl rounded-xl bg-white/10 mb-6" />
+        <div className="flex gap-4">
+          <Skeleton className="h-12 w-40 rounded-full bg-white/10" />
+          <Skeleton className="h-12 w-36 rounded-full bg-white/10" />
+        </div>
       </div>
     </section>
   );
