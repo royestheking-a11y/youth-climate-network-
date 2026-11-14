@@ -538,6 +538,18 @@ export const SiteSettings = mongoose.model('SiteSettings', siteSettingsSchema);
 export const ImpactReport = mongoose.model('ImpactReport', impactReportSchema);
 export const CaseStudy = mongoose.model('CaseStudy', caseStudySchema);
 export const VolunteerTrack = mongoose.model('VolunteerTrack', volunteerTrackSchema);
+const faqSchema = new mongoose.Schema({
+  question: { type: String, required: true },
+  question_bn: String,
+  answer: { type: String, required: true },
+  answer_bn: String,
+  category: { type: String, default: 'General' },
+  category_bn: String,
+  order: { type: Number, default: 0 },
+  active: { type: Boolean, default: true },
+}, { timestamps: true });
+
+export const Faq = mongoose.model('Faq', faqSchema);
 export const CopHistory = mongoose.model('CopHistory', copHistorySchema);
 export const PolicyPosition = mongoose.model('PolicyPosition', policyPositionSchema);
 

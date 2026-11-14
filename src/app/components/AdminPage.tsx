@@ -5,7 +5,7 @@ import {
   Mail, Heart, LogOut, Plus, Trash2, Edit3, Save, X, CheckCircle,
   Eye, EyeOff, TrendingUp, MessageSquare, Bell,
   Activity, ArrowUpRight, ArrowDownRight, Globe, TreePine, MapPin, Briefcase, Image as ImageIcon, Menu, Camera, Upload, FileText, Layers,
-  Inbox, Award, Compass, Download, Sparkles, Settings, Scale
+  Inbox, Award, Compass, Download, Sparkles, Settings, Scale, HelpCircle
 } from 'lucide-react';
 import {
   checkAdminAuth, adminLogin, adminLogout,
@@ -90,6 +90,7 @@ type AdminTab =
   | 'advocacy'
   | 'navigation'
   | 'blogs'
+  | 'faqs'
   | 'seo'
   | 'newsletter'
   | 'stats'
@@ -302,6 +303,7 @@ import { SiteSettingsTab } from './admin/SiteSettingsTab';
 import { ImpactReportsTab } from './admin/ImpactReportsTab';
 import { VolunteerTracksTab } from './admin/VolunteerTracksTab';
 import { AdvocacyTab } from './admin/AdvocacyTab';
+import { FaqTab } from './admin/FaqTab';
 
 const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; style?: React.CSSProperties }> }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -313,6 +315,7 @@ const tabs: { key: AdminTab; label: string; icon: React.FC<{ size?: number; styl
   { key: 'advocacy', label: 'Advocacy & Policy', icon: Scale },
   { key: 'navigation', label: 'Navigation Menu', icon: Compass },
   { key: 'blogs', label: 'Blogs & SDGs', icon: FileText },
+  { key: 'faqs', label: 'Homepage FAQs', icon: HelpCircle },
   { key: 'seo', label: 'SEO, Robots & Schema', icon: Globe },
   { key: 'newsletter', label: 'Newsletter', icon: Mail },
   { key: 'stats', label: 'Impact Stats', icon: BarChart2 },
@@ -663,6 +666,7 @@ export function AdminPage() {
             {activeTab === 'advocacy' && <AdvocacyTab />}
             {activeTab === 'navigation' && <NavigationTab />}
             {activeTab === 'blogs' && <EnhancedBlogsTab />}
+            {activeTab === 'faqs' && <FaqTab />}
             {activeTab === 'seo' && <SeoTab />}
             {activeTab === 'newsletter' && <NewsletterTab />}
             {activeTab === 'stats' && <StatsTab />}

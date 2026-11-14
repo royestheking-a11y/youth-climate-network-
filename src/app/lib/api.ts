@@ -6,7 +6,7 @@ import type {
   PartnershipInquiry, InternshipApp, InternshipPost, MediaItem, AdminUser,
   NavigationItem, FounderBriefData, AuthorItem, SDGItem, BlogPost, InquiryItem,
   OurWorkItem, AboutContent, SiteSettings, ImpactReport, CaseStudy, VolunteerTrack,
-  CopHistoryItem, PolicyPositionItem
+  CopHistoryItem, PolicyPositionItem, FaqItem
 } from './storage';
 
 export type {
@@ -16,7 +16,7 @@ export type {
   PartnershipInquiry, InternshipApp, InternshipPost, MediaItem, AdminUser,
   NavigationItem, FounderBriefData, AuthorItem, SDGItem, BlogPost, InquiryItem,
   OurWorkItem, AboutContent, SiteSettings, ImpactReport, CaseStudy, VolunteerTrack,
-  CopHistoryItem, PolicyPositionItem
+  CopHistoryItem, PolicyPositionItem, FaqItem
 };
 
 export const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -72,6 +72,7 @@ export const useCaseStudies = () => useSWR<CaseStudy[]>(`${API_URL}/case-studies
 export const useVolunteerTracks = () => useSWR<VolunteerTrack[]>(`${API_URL}/volunteer-tracks`, fetcher);
 export const useCopHistory = () => useSWR<CopHistoryItem[]>(`${API_URL}/cop-history`, fetcher);
 export const usePolicyPositions = () => useSWR<PolicyPositionItem[]>(`${API_URL}/policy-positions`, fetcher);
+export const useFaqs = () => useSWR<FaqItem[]>(`${API_URL}/faqs`, fetcher);
 
 
 // Generic factory for simple entities
@@ -150,6 +151,7 @@ export const apiCaseStudies = createApiClient<CaseStudy>('case-studies');
 export const apiVolunteerTracks = createApiClient<VolunteerTrack>('volunteer-tracks');
 export const apiCopHistory = createApiClient<CopHistoryItem>('cop-history');
 export const apiPolicyPositions = createApiClient<PolicyPositionItem>('policy-positions');
+export const apiFaqs = createApiClient<FaqItem>('faqs');
 
 
 // Blog Specific API Client

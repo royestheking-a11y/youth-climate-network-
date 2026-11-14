@@ -340,6 +340,21 @@ export interface BlogPost {
   callout?: { title?: string; title_bn?: string; text?: string; text_bn?: string };
 }
 
+export interface FaqItem {
+  id?: string;
+  _id?: string;
+  question: string;
+  question_bn?: string;
+  answer: string;
+  answer_bn?: string;
+  category: string;
+  category_bn?: string;
+  order?: number;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface InquiryItem {
   id: string;
   originalId?: string;

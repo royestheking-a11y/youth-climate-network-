@@ -11,7 +11,7 @@ import {
   NavigationItem, RobotsConfig, PageSchema, SDG,
   OurWorkItem, AboutContent,
   SiteSettings, ImpactReport, CaseStudy, VolunteerTrack,
-  CopHistory, PolicyPosition
+  CopHistory, PolicyPosition, Faq
 } from '../models';
 
 const router = express.Router();
@@ -2207,6 +2207,137 @@ router.post('/migrate-all', async (req, res) => {
 
     invalidateCache();
     res.json({ success: true, message: 'Migration completed successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ──────────────────────────────────────────────────────────────
+   HOMEPAGE FAQs (Frequently Asked Questions & Answers)
+   ────────────────────────────────────────────────────────────── */
+const DEFAULT_FAQS = [
+  {
+    question: 'What is Youth Climate Network (YCN) Bangladesh?',
+    question_bn: 'ইয়ুথ ক্লাইমেট নেটওয়ার্ক (YCN) বাংলাদেশ কী?',
+    answer: 'Youth Climate Network (YCN) Bangladesh is a youth-led climate advocacy and community action organization established in 2023. We empower young leaders, students, and coastal communities across Bangladesh to build climate resilience, restore fragile ecosystems, and champion environmental justice.',
+    answer_bn: 'ইয়ুথ ক্লাইমেট নেটওয়ার্ক (YCN) বাংলাদেশ ২০২৩ সালে প্রতিষ্ঠিত একটি যুব-নেতৃত্বাধীন জলবায়ু অ্যাডভোকেসি ও সামাজিক উন্নয়ন সংস্থা। আমরা বাংলাদেশের উপকূলীয় অঞ্চলসহ দেশজুড়ে তরুণদের নেতৃত্ব বিকাশ, পরিবেশ সুরক্ষা, ম্যানগ্রোভ বনায়ন ও জলবায়ু নীতি সংস্কারে কাজ করছি।',
+    category: 'About YCN',
+    category_bn: 'ওয়াইসিএন পরিচিতি',
+    order: 1,
+    active: true,
+  },
+  {
+    question: 'How can I join YCN as a volunteer or district chapter leader?',
+    question_bn: 'আমি কীভাবে ওয়াইসিএন-এ স্বেচ্ছাসেবক বা জেলা চ্যাপ্টার লিডার হিসেবে যোগ দিতে পারি?',
+    answer: 'Anyone aged 15–35 passionate about environmental sustainability can register through our "Get Involved" page. We offer hands-on volunteer roles in coastal mangrove planting, WASH campaigns, climate education, policy advocacy, and digital storytelling across 12+ districts.',
+    answer_bn: 'পরিবেশ ও জলবায়ু সুরক্ষায় আগ্রহী ১৫ থেকে ৩৫ বছর বয়সী যেকোনো তরুণ-তরুণী আমাদের "Get Involved" পৃষ্ঠার মাধ্যমে যুক্ত হতে পারেন। উপকূলীয় বনায়ন, পানি ও স্বাস্থ্যবিধি, জলবায়ু শিক্ষা এবং নীতি সংস্কার কার্যক্রমে অংশগ্রহণের সুযোগ রয়েছে।',
+    category: 'Volunteering',
+    category_bn: 'স্বেচ্ছাসেবা',
+    order: 2,
+    active: true,
+  },
+  {
+    question: 'What are YCN\'s core thematic programs and initiatives?',
+    question_bn: 'ওয়াইসিএন-এর মূল কাজের ক্ষেত্র ও কর্মসূচিগুলো কী কী?',
+    answer: 'Our work is structured across 20 thematic pillars, focusing on Coastal Resilience, Mangrove Restoration, Clean Water (WASH), Climate Justice, Loss & Damage advocacy, and Eco-Anxiety mental health support through our flagship platform Mind Shantara.',
+    answer_bn: 'আমাদের কর্মসূচিগুলো ২০টি মূল স্তম্ভে বিভক্ত—যার মধ্যে উপকূলীয় সুরক্ষা, সুন্দরবন ও ম্যানগ্রোভ পুনরুদ্ধার, সুপেয় পানি ও স্যানিটেশন (WASH), জলবায়ু নীতি অ্যাডভোকেসি এবং মানসিক স্বাস্থ্য প্ল্যাটফর্ম "মাইন্ড শান্তারা" উল্লেখযোগ্য।',
+    category: 'Programs',
+    category_bn: 'কর্মসূচি',
+    order: 3,
+    active: true,
+  },
+  {
+    question: 'Is YCN an officially registered non-profit organization in Bangladesh?',
+    question_bn: 'ওয়াইসিএন কি একটি সরকারিভাবে নিবন্ধিত অলাভজনক সংস্থা?',
+    answer: 'Yes. YCN is registered under the Societies Registration Act XXI of 1860 (Registration No. S-13962/2023) by the Registrar of Joint Stock Companies and Firms (RJSC), Government of the People\'s Republic of Bangladesh.',
+    answer_bn: 'হ্যাঁ, ওয়াইসিএন গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের যৌথ মূলধন কোম্পানি ও ফার্মসমূহের পরিদপ্তর (RJSC) কর্তৃক সোসাইটি রেজিস্ট্রেশন অ্যাক্ট ১৮৬০-এর অধীনে নিবন্ধিত (নিবন্ধন নং: S-13962/2023)।',
+    category: 'About YCN',
+    category_bn: 'ওয়াইসিএন পরিচিতি',
+    order: 4,
+    active: true,
+  },
+  {
+    question: 'How does YCN ensure transparency in donations and funds?',
+    question_bn: 'ওয়াইসিএন অনুদান এবং আর্থিক তহবিলে স্বচ্ছতা কীভাবে নিশ্চিত করে?',
+    answer: '100% of public donations directly fund frontline operations—such as sapling distribution, emergency cyclone response, and community water filters. Our accounts are audited annually, and financial summaries are publicly available in our Annual Impact Reports.',
+    answer_bn: 'অনুদান সরাসরি মাঠপর্যায়ের প্রকল্পে ব্যয় হয়—যেমন চারা রোপণ, উপকূলীয় দুর্যোগে খাদ্য ও বিশুদ্ধ পানি সহায়তা। প্রতি বছর চার্টার্ড অ্যাকাউন্ট্যান্ট দ্বারা অডিট সম্পন্ন করে বার্ষিক প্রতিবেদনে প্রকাশ করা হয়।',
+    category: 'Impact & Funding',
+    category_bn: 'তহবিল ও অনুদান',
+    order: 5,
+    active: true,
+  },
+  {
+    question: 'Can academic institutions, NGOs, or corporations partner with YCN?',
+    question_bn: 'শিক্ষাপ্রতিষ্ঠান, এনজিও বা করপোরেট প্রতিষ্ঠান কীভাবে অংশীদার হতে পারে?',
+    answer: 'We warmly welcome institutional collaborations! Schools, universities, local NGOs, and global partners can submit a formal inquiry via our Partner page or email us directly at youthclimatenetworkbd@gmail.com.',
+    answer_bn: 'আমরা যেকোনো শিক্ষাপ্রতিষ্ঠান, দেশি-বিদেশি এনজিও এবং সহযোগী সংস্থার সাথে যৌথভাবে কাজ করতে আগ্রহী। আমাদের পার্টনার পেজে গিয়ে বা সরাসরি ইমেইলে যোগাযোগ করতে পারেন।',
+    category: 'Partnership',
+    category_bn: 'অংশীদারিত্ব',
+    order: 6,
+    active: true,
+  }
+];
+
+router.get('/faqs', async (req, res) => {
+  try {
+    let items = await Faq.find().sort({ order: 1, createdAt: 1 }).lean();
+    if (items.length === 0) {
+      await Faq.insertMany(DEFAULT_FAQS);
+      items = await Faq.find().sort({ order: 1, createdAt: 1 }).lean();
+    }
+    const mapped = items.map((i: any) => { i.id = i._id; return i; });
+    res.json(mapped);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/faqs', async (req, res) => {
+  try {
+    const item = new Faq(req.body);
+    await item.save();
+    const obj = item.toObject() as any;
+    obj.id = obj._id;
+    invalidateCache('faqs');
+    res.status(201).json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/faqs/:id', async (req, res) => {
+  try {
+    const updated = await Faq.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ error: 'FAQ not found' });
+    const obj = updated.toObject() as any;
+    obj.id = obj._id;
+    invalidateCache('faqs');
+    res.json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/faqs/:id', async (req, res) => {
+  try {
+    await Faq.findByIdAndDelete(req.params.id);
+    invalidateCache('faqs');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/faqs/reorder', async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        await Faq.findByIdAndUpdate(item.id, { order: item.order });
+      }
+    }
+    invalidateCache('faqs');
+    res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

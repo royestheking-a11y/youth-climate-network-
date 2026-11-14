@@ -4,12 +4,13 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import {
   ArrowRight, Calendar, MapPin, TreePine, Globe, Heart, Users,
-  CheckCircle2, Handshake, ShieldCheck, Award, ChevronLeft, ChevronRight, Clock
+  CheckCircle2, Handshake, ShieldCheck, Award, ChevronLeft, ChevronRight, Clock,
+  ChevronDown, MessageCircle, Search, Sparkles
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { apiNewsletter, apiProgram } from '../lib/api';
-import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs } from '../lib/api';
-import type { NewsItem, EventItem, HeroCarouselItem, BlogPost } from '../lib/storage';
+import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs, useFaqs } from '../lib/api';
+import type { NewsItem, EventItem, HeroCarouselItem, BlogPost, FaqItem } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
 import heroBgOrange from '../../imports/image-3.webp';
@@ -297,11 +298,7 @@ function BlogCarousel({ blogs, isLoading }: { blogs: BlogPost[]; isLoading: bool
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Top Controls Bar */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 font-inter">
-          <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`} />
-          <span>{isPaused ? t('Auto-roll paused', 'অটো-রোল সাময়িক স্থগিত') : t('Auto-rolling latest stories', 'সর্বশেষ গল্পসমূহ অটো-রোল হচ্ছে')}</span>
-        </div>
+      <div className="flex items-center justify-end mb-6">
         <div className="flex items-center gap-3">
           <Link
             to="/blog"
@@ -345,6 +342,282 @@ function BlogCarousel({ blogs, isLoading }: { blogs: BlogPost[]; isLoading: bool
         ))}
       </div>
     </div>
+  );
+}
+
+function HomeFaqSection({ faqs }: { faqs: FaqItem[] }) {
+  const { t, lang } = useLanguage();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedCat, setSelectedCat] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Extract categories dynamically
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    faqs.forEach(f => { if (f.category) set.add(f.category); });
+    return ['All', ...Array.from(set)];
+  }, [faqs]);
+
+  // Filter FAQs
+  const displayFaqs = useMemo(() => {
+    return faqs
+      .filter(f => f.active !== false)
+      .filter(f => {
+        if (selectedCat !== 'All' && f.category !== selectedCat) return false;
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase().trim();
+        return (
+          f.question.toLowerCase().includes(q) ||
+          (f.question_bn && f.question_bn.toLowerCase().includes(q)) ||
+          f.answer.toLowerCase().includes(q) ||
+          (f.answer_bn && f.answer_bn.toLowerCase().includes(q)) ||
+          f.category.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [faqs, selectedCat, searchQuery]);
+
+  // Set first item open by default
+  useEffect(() => {
+    if (displayFaqs.length > 0 && !activeId) {
+      setActiveId(displayFaqs[0].id || displayFaqs[0]._id || '0');
+    }
+  }, [displayFaqs, activeId]);
+
+  // Structured Data Schema for Google FAQPage
+  const faqSchema = useMemo(() => {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: displayFaqs.slice(0, 10).map(f => ({
+        '@type': 'Question',
+        name: lang === 'bn' && f.question_bn ? f.question_bn : f.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: lang === 'bn' && f.answer_bn ? f.answer_bn : f.answer,
+        }
+      }))
+    };
+  }, [displayFaqs, lang]);
+
+  if (faqs.length === 0) return null;
+
+  return (
+    <section className="py-20 lg:py-28 bg-[#FAF9F5] relative overflow-hidden">
+      {/* Schema Injection */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+
+      {/* Decorative ambient background blur */}
+      <div className="absolute top-1/4 -right-20 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -left-20 w-96 h-96 rounded-full bg-[#E8521A]/5 blur-3xl pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
+        <motion.div
+          initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
+          variants={stagger}
+          className="text-center max-w-3xl mx-auto mb-14"
+        >
+          <motion.p
+            variants={fadeUp}
+            className="text-xs uppercase tracking-widest mb-3 font-inter font-bold"
+            style={{ color: '#E8521A' }}
+          >
+            {t('06 — Knowledge & Answers', '০৬ — সাধারণ জিজ্ঞাসা')}
+          </motion.p>
+          <motion.h2
+            variants={fadeUp}
+            style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem, 3.5vw, 2.6rem)', color: '#111827', letterSpacing: '-0.02em' }}
+          >
+            {t('Frequently Asked Questions', 'প্রচলিত প্রশ্ন ও উত্তর')}
+          </motion.h2>
+          <motion.p
+            variants={fadeUp}
+            className="mt-4 text-gray-600 font-inter text-sm sm:text-base leading-relaxed"
+          >
+            {t(
+              'Everything you need to know about our youth-led climate initiatives, volunteer opportunities, programs, governance, and community impact.',
+              'আমাদের যুব-নেতৃত্বাধীন জলবায়ু উদ্যোগ, স্বেচ্ছাসেবক হওয়ার উপায়, কর্মসূচি, স্বচ্ছতা এবং কাজের প্রভাব সম্পর্কে আপনার প্রয়োজনীয় সকল তথ্য।'
+            )}
+          </motion.p>
+
+          {/* Interactive Search & Filter Bar */}
+          <motion.div variants={fadeUp} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder={t('Search questions or topics...', 'প্রশ্ন বা বিষয় অনুসন্ধান করুন...')}
+                className="w-full pl-10 pr-4 py-2.5 rounded-full text-xs sm:text-sm bg-white border border-gray-200 shadow-xs focus:border-[#1A6B3C] focus:ring-2 focus:ring-[#1A6B3C]/10 outline-none font-inter"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {categories.map(cat => {
+                const isSelected = selectedCat === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCat(cat)}
+                    className={`px-3.5 py-2 rounded-full text-xs font-semibold font-inter transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#0A3320] text-[#F0ECD8] shadow-sm'
+                        : 'bg-white text-gray-600 border border-gray-200/80 hover:border-emerald-500/30 hover:text-gray-900'
+                    }`}
+                  >
+                    {t(cat)}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* FAQs Accordion Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Accordion List */}
+          <div className="lg:col-span-8 space-y-3.5">
+            {displayFaqs.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-3xl border border-gray-200">
+                <p className="text-sm text-gray-500 font-inter">
+                  {t('No questions found matching your filter.', 'আপনার অনুসন্ধানের সাথে মিল রেখে কোনো প্রশ্ন পাওয়া যায়নি।')}
+                </p>
+              </div>
+            ) : (
+              displayFaqs.map((faq, idx) => {
+                const id = faq.id || faq._id || String(idx);
+                const isOpen = activeId === id;
+                const question = lang === 'bn' && faq.question_bn ? faq.question_bn : faq.question;
+                const answer = lang === 'bn' && faq.answer_bn ? faq.answer_bn : faq.answer;
+                const category = lang === 'bn' && faq.category_bn ? faq.category_bn : faq.category;
+
+                return (
+                  <motion.div
+                    key={id}
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: idx * 0.04 }}
+                    className={`rounded-2xl transition-all duration-300 overflow-hidden border ${
+                      isOpen
+                        ? 'bg-white border-[#1A6B3C]/30 shadow-lg ring-1 ring-[#1A6B3C]/10'
+                        : 'bg-white/80 hover:bg-white border-gray-200/80 shadow-2xs hover:border-gray-300'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setActiveId(isOpen ? null : id)}
+                      className="w-full text-left p-5 sm:p-6 flex items-start justify-between gap-4 cursor-pointer"
+                    >
+                      <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                        <span
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors ${
+                            isOpen
+                              ? 'bg-[#E8521A] text-white shadow-xs'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          {category && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8521A] block mb-1 font-inter">
+                              {category}
+                            </span>
+                          )}
+                          <h3
+                            className={`font-poppins font-bold text-sm sm:text-base leading-snug transition-colors ${
+                              isOpen ? 'text-[#0A3320]' : 'text-gray-900 hover:text-[#1A6B3C]'
+                            }`}
+                          >
+                            {question}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-300 ${
+                          isOpen ? 'rotate-180 bg-emerald-50 text-[#1A6B3C]' : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        <ChevronDown size={17} />
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-5 sm:px-6 pb-6 pt-1 text-sm sm:text-[15px] text-gray-600 font-inter leading-relaxed border-t border-gray-100/80">
+                        <p className="whitespace-pre-line pl-10 text-gray-700">
+                          {answer}
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Right Help Card / Contact CTA */}
+          <div className="lg:col-span-4 space-y-5">
+            <div className="bg-gradient-to-br from-[#0A3320] via-[#0E422B] to-[#1A6B3C] rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-emerald-500/20 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 text-[#E8521A] flex items-center justify-center mb-5 border border-white/10 shadow-inner">
+                <MessageCircle size={24} />
+              </div>
+              <h3 className="font-poppins font-bold text-xl text-[#F0ECD8] mb-2">
+                {t('Have More Questions?', 'আরও কিছু জানার আছে?')}
+              </h3>
+              <p className="text-xs sm:text-sm text-emerald-100/85 leading-relaxed font-inter mb-6">
+                {t(
+                  "Can't find what you're looking for? Our dedicated team and community coordinators are here to assist you with inquiries, partnerships, or school programs.",
+                  'আপনার প্রশ্নের উত্তর খুঁজে পাচ্ছেন না? অংশীদারিত্ব, শিক্ষামূলক কার্যক্রম বা যেকোনো তথ্যের জন্য সরাসরি আমাদের টিমের সাথে যোগাযোগ করুন।'
+                )}
+              </p>
+              <div className="space-y-3">
+                <Link
+                  to="/contact"
+                  className="w-full py-3 px-5 rounded-xl bg-[#E8521A] hover:bg-[#d44814] text-white text-xs sm:text-sm font-bold text-center block transition-all shadow-md hover:shadow-lg font-inter"
+                >
+                  {t('Contact Community Team', 'যোগাযোগ করুন')}
+                </Link>
+                <Link
+                  to="/get-involved"
+                  className="w-full py-3 px-5 rounded-xl bg-white/10 hover:bg-white/15 text-[#F0ECD8] text-xs sm:text-sm font-semibold text-center block transition-colors border border-white/15 font-inter"
+                >
+                  {t('Explore Volunteer Roles', 'স্বেচ্ছাসেবক হিসেবে যোগ দিন')}
+                </Link>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-white border border-gray-100 shadow-2xs flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#E8521A]/10 text-[#E8521A] flex items-center justify-center flex-shrink-0 font-bold">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-gray-900 font-poppins">
+                  {t('Official Registration', 'সরকারি নিবন্ধন')}
+                </h4>
+                <p className="text-[11px] text-gray-500 font-inter">
+                  {t('RJSC Reg. S-13962/2023 · Govt. of Bangladesh', 'আরজেএসসি নিবন্ধন: S-13962/2023 · বাংলাদেশ সরকার')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -589,6 +862,7 @@ export function HomePage() {
   const { data: allEvents, isLoading: eventsLoading } = useEvents();
   const { data: partnersData = [] } = usePartners();
   const { data: allBlogs = [], isLoading: blogsLoading } = useBlogs();
+  const { data: faqsData = [] } = useFaqs();
   
   const news = allNews ? allNews.filter(n => n.category !== 'Blog').slice(0, 3) : [];
   const latestBlogs = useMemo(() => {
@@ -1062,6 +1336,11 @@ export function HomePage() {
         <img src={heroBgOrange} alt="" className="w-full h-full object-cover object-center" />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(10,51,32,0.3) 0%, transparent 50%, rgba(10,51,32,0.3) 100%)' }} />
       </div>
+
+      {/* ══════════════════════════════════════════
+          06 — FREQUENTLY ASKED QUESTIONS (FAQ)
+      ══════════════════════════════════════════ */}
+      <HomeFaqSection faqs={faqsData} />
 
       {/* ══════════════════════════════════════════
           NEWSLETTER (STAY INFORMED)
