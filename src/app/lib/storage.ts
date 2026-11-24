@@ -523,30 +523,30 @@ const DEFAULT_STATS: ImpactStats = {
 const DEFAULT_CAROUSEL: HeroCarouselItem[] = [
   {
     id: '1',
-    titleEn: 'YOUTH CLIMATE ACTION',
-    titleBn: 'যুব জলবায়ু পদক্ষেপ',
-    image: '/youth_climate_action.png',
+    titleEn: 'YOUTH CLIMATE ACTION IN BANGLADESH',
+    titleBn: 'বাংলাদেশে যুব জলবায়ু পদক্ষেপ',
+    image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1920&q=80',
     link: '/about'
   },
   {
     id: '2',
-    titleEn: 'SUSTAINABLE ENERGY',
-    titleBn: 'টেকসই শক্তি',
-    image: '/sustainable_energy.png',
-    link: '/impact'
-  },
-  {
-    id: '3',
-    titleEn: 'DISASTER RESILIENCE',
-    titleBn: 'দুর্যোগ সহনশীলতা',
-    image: '/disaster_resilience.png',
+    titleEn: 'COASTAL MANGROVE & ECOSYSTEM RESTORATION',
+    titleBn: 'উপকূলীয় ম্যানগ্রোভ ও প্রতিবেশ পুনরুদ্ধার',
+    image: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=1920&q=80',
     link: '/programs'
   },
   {
+    id: '3',
+    titleEn: 'COMMUNITY ADAPTATION & DISASTER RESILIENCE',
+    titleBn: 'সামাজিক অভিযোজন ও দুর্যোগ সহনশীলতা',
+    image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1920&q=80',
+    link: '/impact'
+  },
+  {
     id: '4',
-    titleEn: 'EDUCATION & RESEARCH',
-    titleBn: 'শিক্ষা ও গবেষণা',
-    image: '/education_research.png',
+    titleEn: 'CLIMATE EDUCATION & YOUTH EMPOWERMENT',
+    titleBn: 'জলবায়ু শিক্ষা ও যুব ক্ষমতায়ন',
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80',
     link: '/get-involved'
   }
 ];

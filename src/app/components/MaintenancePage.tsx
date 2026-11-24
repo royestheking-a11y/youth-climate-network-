@@ -68,7 +68,7 @@ export function MaintenancePage({ settings, isPreview = false }: MaintenancePage
               <span>{t('ADMIN PREVIEW: Maintenance Mode is active for public visitors.', 'অ্যাডমিন প্রিভিউ: সাধারণ দর্শনার্থীদের জন্য রক্ষণাবেক্ষণ পেজটি প্রদর্শিত হচ্ছে।')}</span>
             </span>
             <a
-              href="/admin/settings"
+              href="/admin/siteSettings"
               className="px-3.5 py-1 rounded-full bg-white text-gray-900 hover:bg-gray-100 transition-all font-semibold flex items-center gap-1 shadow-sm"
             >
               <span>{t('Return to Settings', 'সেটিংসে ফিরে যান')}</span>

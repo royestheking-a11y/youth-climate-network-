@@ -529,7 +529,18 @@ export function AdminPage() {
   const { tab } = useParams();
   const navigate = useNavigate();
   
-  const activeTab: AdminTab = (tab as AdminTab) && tabs.find(t => t.key === tab) ? (tab as AdminTab) : 'dashboard';
+  const tabAliases: Record<string, AdminTab> = {
+    settings: 'siteSettings',
+    sitesettings: 'siteSettings',
+    faq: 'faqs',
+    faqs: 'faqs',
+    hero: 'carousel',
+    carousel: 'carousel',
+    partner: 'partners',
+    partners: 'partners',
+  };
+  const resolvedTab = tab ? (tabAliases[tab.toLowerCase()] || tab) : 'dashboard';
+  const activeTab: AdminTab = tabs.find(t => t.key === resolvedTab) ? (resolvedTab as AdminTab) : 'dashboard';
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

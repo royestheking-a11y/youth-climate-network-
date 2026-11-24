@@ -84,7 +84,7 @@ export function Layout() {
                 <Eye size={12} /> Preview
               </a>
               <Link
-                to="/admin/settings"
+                to="/admin/siteSettings"
                 className="px-2.5 py-1 rounded-md bg-gray-900 text-white hover:bg-black font-semibold flex items-center gap-1 transition-all"
               >
                 <Settings size={12} /> Manage in Settings
