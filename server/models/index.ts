@@ -322,7 +322,8 @@ const heroCarouselSchema = new mongoose.Schema({
   titleBn: String,
   image: String,
   link: String,
-});
+  order: { type: Number, default: 0 },
+}, { timestamps: true });
 
 const advocacySchema = new mongoose.Schema({
   title: String,
@@ -461,6 +462,14 @@ const siteSettingsSchema = new mongoose.Schema({
   privacyLastUpdated_bn: { type: String, default: "২০ মে, ২০২৬" },
   termsLastUpdated: { type: String, default: "May 20, 2026" },
   termsLastUpdated_bn: { type: String, default: "২০ মে, ২০২৬" },
+  maintenanceMode: { type: Boolean, default: false },
+  maintenanceTitle: { type: String, default: "We're Upgrading Our Platform for Climate Impact" },
+  maintenanceTitle_bn: { type: String, default: 'জলবায়ু কার্যক্রমে আরও গতি আনতে প্ল্যাটফর্ম উন্নয়নের কাজ চলছে' },
+  maintenanceMessage: { type: String, default: "Youth Climate Network is currently undergoing scheduled platform upgrades to bring you an improved experience with new grassroots tools and resources. We will be back online shortly." },
+  maintenanceMessage_bn: { type: String, default: 'ইয়ুথ ক্লাইমেট নেটওয়ার্কের নতুন ফিচার এবং তৃণমূল জলবায়ু উদ্যোগের তথ্য আরও সুন্দরভাবে পৌঁছে দিতে প্ল্যাটফর্মটি সাময়িকভাবে রক্ষণাবেক্ষণে রয়েছে। শীঘ্রই আমরা আবার সক্রিয় হব।' },
+  maintenanceEndTime: { type: String, default: "" },
+  maintenanceNotice: { type: String, default: "Scheduled System Maintenance in Progress" },
+  maintenanceNotice_bn: { type: String, default: "পরিকল্পিত সিস্টেম রক্ষণাবেক্ষণ চলমান রয়েছে" },
 });
 
 

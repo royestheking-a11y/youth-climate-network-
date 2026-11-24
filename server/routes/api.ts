@@ -1976,7 +1976,129 @@ createCrudRoutes(NewsletterSub, 'newsletter', { date: -1 });
 createCrudRoutes(ContactMessage, 'contact-messages', { date: -1 });
 createCrudRoutes(Donation, 'donations', { date: -1 });
 createCrudRoutes(DonationRequest, 'donation-requests', { date: -1 });
-createCrudRoutes(HeroCarousel, 'carousel', { order: 1 });
+// Hero Carousel Custom Resilient Routes (Auto-seed and safe ID handling)
+const DEFAULT_CAROUSEL_ITEMS = [
+  {
+    titleEn: 'YOUTH CLIMATE ACTION IN BANGLADESH',
+    titleBn: 'বাংলাদেশে যুব জলবায়ু পদক্ষেপ',
+    image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1920&q=80',
+    link: '/about',
+    order: 1
+  },
+  {
+    titleEn: 'COASTAL MANGROVE & ECOSYSTEM RESTORATION',
+    titleBn: 'উপকূলীয় ম্যানগ্রোভ ও প্রতিবেশ পুনরুদ্ধার',
+    image: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=1920&q=80',
+    link: '/programs',
+    order: 2
+  },
+  {
+    titleEn: 'COMMUNITY ADAPTATION & DISASTER RESILIENCE',
+    titleBn: 'সামাজিক অভিযোজন ও দুর্যোগ সহনশীলতা',
+    image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1920&q=80',
+    link: '/impact',
+    order: 3
+  },
+  {
+    titleEn: 'CLIMATE EDUCATION & YOUTH EMPOWERMENT',
+    titleBn: 'জলবায়ু শিক্ষা ও যুব ক্ষমতায়ন',
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80',
+    link: '/get-involved',
+    order: 4
+  }
+];
+
+router.get('/carousel', async (req, res) => {
+  try {
+    let items = await HeroCarousel.find().sort({ order: 1, createdAt: 1 }).lean();
+    if (items.length === 0) {
+      await HeroCarousel.insertMany(DEFAULT_CAROUSEL_ITEMS);
+      items = await HeroCarousel.find().sort({ order: 1, createdAt: 1 }).lean();
+    }
+    const mapped = items.map((i: any) => {
+      i.id = i._id.toString();
+      return i;
+    });
+    res.json(mapped);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/carousel', async (req, res) => {
+  try {
+    const newItem = new HeroCarousel(req.body);
+    await newItem.save();
+    const obj: any = newItem.toObject();
+    obj.id = obj._id.toString();
+    invalidateCache('carousel');
+    res.status(201).json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/carousel/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    let updated = null;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      updated = await HeroCarousel.findByIdAndUpdate(id, req.body, { new: true });
+    }
+    if (!updated) {
+      updated = await HeroCarousel.findOne({ titleEn: req.body.titleEn });
+      if (updated) {
+        Object.assign(updated, req.body);
+        await updated.save();
+      } else {
+        updated = await HeroCarousel.create(req.body);
+      }
+    }
+    const obj: any = updated.toObject ? updated.toObject() : updated;
+    obj.id = obj._id.toString();
+    invalidateCache('carousel');
+    res.json(obj);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/carousel/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      await HeroCarousel.findByIdAndDelete(id);
+    } else {
+      const numericOrder = parseInt(id, 10);
+      if (!isNaN(numericOrder)) {
+        await HeroCarousel.findOneAndDelete({ order: numericOrder });
+      } else {
+        await HeroCarousel.findOneAndDelete({ titleEn: req.body?.titleEn });
+      }
+    }
+    invalidateCache('carousel');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/carousel/reorder', async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        if (item.id && item.id.match(/^[0-9a-fA-F]{24}$/)) {
+          await HeroCarousel.findByIdAndUpdate(item.id, { order: item.order });
+        }
+      }
+    }
+    invalidateCache('carousel');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 createCrudRoutes(PartnershipInquiry, 'partnership-inquiries', { date: -1 });
 createCrudRoutes(InternshipApp, 'internship-apps', { date: -1 });
 createCrudRoutes(InternshipPost, 'internship-posts');

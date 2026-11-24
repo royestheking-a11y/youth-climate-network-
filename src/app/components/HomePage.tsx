@@ -10,8 +10,8 @@ import {
 import * as Icons from 'lucide-react';
 import { apiNewsletter, apiProgram } from '../lib/api';
 import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs, useFaqs, optimizeImageUrl } from '../lib/api';
-import type { NewsItem, EventItem, HeroCarouselItem, BlogPost, FaqItem } from '../lib/storage';
-import { getNews, getEvents } from '../lib/storage';
+import type { NewsItem, EventItem, BlogPost, FaqItem } from '../lib/storage';
+import { getNews, getEvents, getCarouselItems } from '../lib/storage';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
 import heroBgOrange from '../../imports/image-3.webp';
@@ -666,53 +666,20 @@ function EventRow({ event }: { event: EventItem }) {
 }
 
 /* ───── FULL IMAGE HERO SLIDER (AUTO-ROLLING & SWIPEABLE) ───── */
-const DEFAULT_FALLBACK_SLIDES: HeroCarouselItem[] = [
-  {
-    id: 'hero-1',
-    titleEn: 'YOUTH CLIMATE ACTION IN BANGLADESH',
-    titleBn: 'বাংলাদেশে যুব জলবায়ু পদক্ষেপ',
-    image: '/youth_climate_action.png',
-    link: '/about'
-  },
-  {
-    id: 'hero-2',
-    titleEn: 'COASTAL MANGROVE & ECOSYSTEM RESTORATION',
-    titleBn: 'উপকূলীয় ম্যানগ্রোভ ও প্রতিবেশ পুনরুদ্ধার',
-    image: '/sustainable_energy.png',
-    link: '/programs'
-  },
-  {
-    id: 'hero-3',
-    titleEn: 'COMMUNITY ADAPTATION & DISASTER RESILIENCE',
-    titleBn: 'সামাজিক অভিযোজন ও দুর্যোগ সহনশীলতা',
-    image: '/disaster_resilience.png',
-    link: '/impact'
-  },
-  {
-    id: 'hero-4',
-    titleEn: 'CLIMATE EDUCATION & YOUTH EMPOWERMENT',
-    titleBn: 'জলবায়ু শিক্ষা ও যুব ক্ষমতায়ন',
-    image: '/education_research.png',
-    link: '/get-involved'
-  }
-];
-
 function HeroSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [heroCards, setHeroCards] = useState<HeroCarouselItem[]>(DEFAULT_FALLBACK_SLIDES);
   const { t } = useLanguage();
   const { data: carouselData, isLoading } = useCarousel();
+
+  // Dynamic slides: prefer carouselData from API/SWR, fall back to stored items
+  const heroCards = useMemo(() => {
+    return (carouselData && carouselData.length > 0) ? carouselData : getCarouselItems();
+  }, [carouselData]);
 
   // Touch gesture state for native mobile swipe
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (carouselData && carouselData.length > 0) {
-      setHeroCards(carouselData);
-    }
-  }, [carouselData]);
 
   // Smooth auto-cycle timer (every 5.5s)
   useEffect(() => {
@@ -758,7 +725,7 @@ function HeroSlider() {
     return <CarouselSkeleton />;
   }
 
-  const activeCard = heroCards[currentIndex] || heroCards[0];
+  const activeCard = heroCards[currentIndex % (heroCards.length || 1)] || heroCards[0];
   if (!activeCard) return null;
 
   return (

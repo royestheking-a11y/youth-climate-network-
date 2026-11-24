@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation, ScrollRestoration } from 'react-router';
+import { Outlet, useLocation, ScrollRestoration, Link } from 'react-router';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, AlertTriangle, Eye, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSiteSettings } from '../lib/api';
+import { checkAdminAuth } from '../lib/storage';
+import { MaintenancePage } from './MaintenancePage';
 
 export function Layout() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const isPreview = location.search.includes('preview_maintenance=true');
+  const { data: siteSettings } = useSiteSettings();
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  const isAuthenticatedAdmin = checkAdminAuth();
+  const isMaintenanceActive = siteSettings?.maintenanceMode === true || isPreview;
+
   // Hard force scroll to top on route change to guarantee it works even with smooth scrolling
   useEffect(() => {
     const forceScroll = () => {
@@ -31,13 +40,13 @@ export function Layout() {
     
     return () => clearTimeout(id);
   }, [location.pathname]);
+
   // Back to top visibility listener
   useEffect(() => {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 300);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Call once to set initial state if page is loaded while scrolled down
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -46,8 +55,45 @@ export function Layout() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ── MAINTENANCE MODE HANDLING ──
+  // 1. If viewing the admin panel, always allow through
+  // 2. If previewing or maintenance is active for non-admin visitors, show MaintenancePage
+  if (!isAdmin && (isPreview || (isMaintenanceActive && !isAuthenticatedAdmin))) {
+    return <MaintenancePage settings={siteSettings} isPreview={isPreview} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden w-full" style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#F3F4F6' }}>
+      {/* Admin Sticky Notice if Maintenance Mode is active while admin browses */}
+      {!isAdmin && siteSettings?.maintenanceMode && isAuthenticatedAdmin && (
+        <div className="bg-amber-500 text-gray-950 px-4 py-2 text-xs font-bold font-inter flex items-center justify-between z-[999] shadow-md sticky top-0">
+          <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <AlertTriangle size={15} className="text-gray-950" />
+              <span>
+                <strong>Maintenance Mode Active:</strong> Public visitors currently see the maintenance screen. You have admin bypass.
+              </span>
+            </span>
+            <div className="flex items-center gap-2">
+              <a
+                href="/?preview_maintenance=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1 rounded-md bg-black/15 hover:bg-black/25 text-gray-950 font-semibold flex items-center gap-1 transition-all"
+              >
+                <Eye size={12} /> Preview
+              </a>
+              <Link
+                to="/admin/settings"
+                className="px-2.5 py-1 rounded-md bg-gray-900 text-white hover:bg-black font-semibold flex items-center gap-1 transition-all"
+              >
+                <Settings size={12} /> Manage in Settings
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!isAdmin && <Navbar />}
       <ScrollRestoration />
       <main className="flex-1 w-full overflow-x-hidden">
@@ -76,10 +122,7 @@ export function Layout() {
             }}
             aria-label="Back to top"
           >
-            {/* Inner glow effect on hover */}
             <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-15 transition-opacity duration-300"></div>
-            
-            {/* Animated Arrow */}
             <ArrowUp 
               size={28} 
               className="text-[#E8521A] group-hover:-translate-y-1 transition-transform duration-300" 

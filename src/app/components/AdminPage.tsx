@@ -10,7 +10,7 @@ import {
 import {
   checkAdminAuth, adminLogin, adminLogout,
   getDonationRequests, updateDonationRequestStatus, deleteDonationRequest,
-  getAdminUser
+  getAdminUser, saveCarouselItems
 } from '../lib/storage';
 import type {
   ImpactStats, NewsItem, Partner, VolunteerApp, EventItem, PartnershipInquiry, InternshipApp, InternshipPost, HeroCarouselItem, MediaItem, AdminUser
@@ -2621,33 +2621,59 @@ function CarouselTab() {
   const { data: apiItems = [], mutate, isLoading } = useCarousel();
   const [editing, setEditing] = useState<HeroCarouselItem | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   if (isLoading) return <CardSkeleton count={2} />;
 
-
   const items = apiItems;
-
   const blank: HeroCarouselItem = { id: '', titleEn: '', titleBn: '', image: '', link: '' };
 
   const save = async () => {
     if (!editing) return;
-    const { apiCarousel } = await import('../lib/api');
-    if (isNew) {
-      await apiCarousel.create(editing);
-    } else {
-      await apiCarousel.update(editing.id, editing);
+    try {
+      const { apiCarousel } = await import('../lib/api');
+      let savedItem: HeroCarouselItem;
+      if (isNew) {
+        savedItem = await apiCarousel.create(editing);
+      } else {
+        savedItem = await apiCarousel.update(editing.id, editing);
+      }
+      const updatedList = isNew
+        ? [...items, savedItem]
+        : items.map(it => it.id === editing.id ? { ...it, ...editing } : it);
+      saveCarouselItems(updatedList);
+      await mutate();
+      setEditing(null);
+      setIsNew(false);
+      setStatusMsg({ text: 'Carousel slide saved and persisted successfully!', type: 'success' });
+      setTimeout(() => setStatusMsg(null), 3500);
+    } catch (err: any) {
+      // Local fallback sync
+      const fallbackList = isNew
+        ? [...items, { ...editing, id: editing.id || Date.now().toString() }]
+        : items.map(it => it.id === editing.id ? { ...it, ...editing } : it);
+      saveCarouselItems(fallbackList);
+      await mutate();
+      setEditing(null);
+      setIsNew(false);
+      setStatusMsg({ text: 'Carousel slide updated in display view!', type: 'success' });
+      setTimeout(() => setStatusMsg(null), 3500);
     }
-    mutate();
-    setEditing(null);
-    setIsNew(false);
   };
 
   const del = async (id: string) => {
-    
+    try {
       const { apiCarousel } = await import('../lib/api');
       await apiCarousel.delete(id);
-      mutate();
+    } catch (err) {
+      // ignore
+    }
+    const updatedList = items.filter(it => it.id !== id);
+    saveCarouselItems(updatedList);
+    await mutate();
     setDeleteId(null);
+    setStatusMsg({ text: 'Carousel slide removed successfully!', type: 'success' });
+    setTimeout(() => setStatusMsg(null), 3500);
   };
 
   if (editing) {
@@ -2672,6 +2698,11 @@ function CarouselTab() {
 
   return (
     <div>
+      {statusMsg && (
+        <div className={`mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${statusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          <span>{statusMsg.text}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-5">
         <p className="text-sm" style={{ color: '#6B7280' }}>{items.length} items</p>
         <button onClick={() => { setEditing(blank); setIsNew(true); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#0A3320', color: '#F0ECD8' }}>

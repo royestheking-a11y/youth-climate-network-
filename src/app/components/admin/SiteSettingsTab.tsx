@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   Settings, Phone, Mail, MapPin, MessageCircle,
   ShieldCheck, CreditCard, Building2, Save, Eye, CheckCircle2,
-  Share2, AlertCircle, FileText, Brain, Upload, Loader2
+  Share2, AlertCircle, FileText, Brain, Upload, Loader2,
+  Wrench, AlertTriangle, Power, Clock
 } from 'lucide-react';
 import { useSiteSettings, updateSiteSettings, uploadFile, type SiteSettings } from '../../lib/api';
 
@@ -11,7 +12,7 @@ export function SiteSettingsTab() {
   const [formData, setFormData] = useState<Partial<SiteSettings>>({});
   const [saving, setSaving] = useState(false);
   const [uploadingPlan, setUploadingPlan] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'contact' | 'socials' | 'donations' | 'registration' | 'mindShantaraLegal'>('contact');
+  const [activeSubTab, setActiveSubTab] = useState<'maintenance' | 'contact' | 'socials' | 'donations' | 'registration' | 'mindShantaraLegal'>('maintenance');
   const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -55,16 +56,24 @@ export function SiteSettingsTab() {
         privacyLastUpdated_bn: settings.privacyLastUpdated_bn || '২০ মে, ২০২৬',
         termsLastUpdated: settings.termsLastUpdated || 'May 20, 2026',
         termsLastUpdated_bn: settings.termsLastUpdated_bn || '২০ মে, ২০২৬',
+        maintenanceMode: settings.maintenanceMode ?? false,
+        maintenanceTitle: settings.maintenanceTitle || "We're Upgrading Our Platform for Climate Impact",
+        maintenanceTitle_bn: settings.maintenanceTitle_bn || "জলবায়ু কার্যক্রমে আরও গতি আনতে প্ল্যাটফর্ম উন্নয়নের কাজ চলছে",
+        maintenanceMessage: settings.maintenanceMessage || "Youth Climate Network is currently undergoing scheduled platform upgrades to bring you an improved experience with new grassroots tools, enhanced data security, and interactive resources. We will be back online shortly.",
+        maintenanceMessage_bn: settings.maintenanceMessage_bn || "ইয়ুথ ক্লাইমেট নেটওয়ার্কের নতুন ফিচার এবং তৃণমূল জলবায়ু উদ্যোগের তথ্য আরও সুন্দরভাবে পৌঁছে দিতে প্ল্যাটফর্মটি সাময়িকভাবে রক্ষণাবেক্ষণে রয়েছে। শীঘ্রই আমরা আবার সক্রিয় হব।",
+        maintenanceEndTime: settings.maintenanceEndTime || '',
+        maintenanceNotice: settings.maintenanceNotice || 'Scheduled System Maintenance in Progress',
+        maintenanceNotice_bn: settings.maintenanceNotice_bn || 'পরিকল্পিত সিস্টেম রক্ষণাবেক্ষণ চলমান রয়েছে',
       });
     }
   }, [settings]);
 
-  const handleChange = (field: keyof SiteSettings, value: string) => {
+  const handleChange = (field: keyof SiteSettings, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSaving(true);
     setStatusMsg(null);
     try {
@@ -138,9 +147,55 @@ export function SiteSettingsTab() {
         </div>
       )}
 
+      {/* Maintenance Mode Alert Banner */}
+      {formData.maintenanceMode && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-500/40 text-amber-950 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm animate-pulse">
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <p className="font-extrabold text-sm text-amber-950 font-poppins flex items-center gap-2">
+                <span>Public Maintenance Mode is ACTIVE</span>
+                <span className="w-2 h-2 rounded-full bg-amber-600 animate-ping" />
+              </p>
+              <p className="text-xs text-amber-900 font-inter mt-0.5">
+                All public visitors are redirected to the Maintenance Page. Logged-in admins have full access with a preview toggle.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <a
+              href="/?preview_maintenance=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-white border border-amber-300 text-amber-900 hover:bg-amber-50 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all"
+            >
+              <Eye size={13} /> Preview Page
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                handleChange('maintenanceMode', false);
+                handleSave();
+              }}
+              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            >
+              Disable Maintenance Mode
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sub Tabs */}
       <div className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto">
         {[
+          {
+            key: 'maintenance',
+            label: 'Maintenance Mode',
+            icon: Wrench,
+            badge: formData.maintenanceMode ? 'ACTIVE' : undefined
+          },
           { key: 'contact', label: 'Contact & Addresses', icon: MapPin },
           { key: 'socials', label: 'Social Channels', icon: Share2 },
           { key: 'donations', label: 'Donation & Bank Details', icon: CreditCard },
@@ -151,7 +206,7 @@ export function SiteSettingsTab() {
             key={tab.key}
             type="button"
             onClick={() => setActiveSubTab(tab.key as any)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeSubTab === tab.key
                 ? 'bg-[#0A3320] text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -159,12 +214,205 @@ export function SiteSettingsTab() {
           >
             <tab.icon size={15} />
             <span>{tab.label}</span>
+            {tab.badge && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-gray-950 animate-pulse">
+                {tab.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* Form Content */}
       <form onSubmit={handleSave} className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
+        {/* SUBTAB 0: MAINTENANCE MODE */}
+        {activeSubTab === 'maintenance' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 font-poppins flex items-center gap-2">
+                  <Wrench size={16} className="text-[#1A6B3C]" /> Website Maintenance Mode Control
+                </h3>
+                <p className="text-xs text-gray-500 font-inter mt-1">
+                  When enabled, visitors will see a high-grade, branded maintenance screen with emergency contacts and social channels.
+                </p>
+              </div>
+
+              <a
+                href="/?preview_maintenance=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-2xs self-start sm:self-auto"
+              >
+                <Eye size={13} /> Preview Maintenance Page
+              </a>
+            </div>
+
+            {/* Big Interactive Toggle Card */}
+            <div
+              onClick={() => handleChange('maintenanceMode', !formData.maintenanceMode)}
+              className={`p-5 rounded-2xl border-2 transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 ${
+                formData.maintenanceMode
+                  ? 'bg-amber-500/10 border-amber-500/60 shadow-md ring-2 ring-amber-500/20'
+                  : 'bg-gray-50/70 hover:bg-gray-50 border-gray-200'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                    formData.maintenanceMode
+                      ? 'bg-amber-500 text-white shadow-md'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  <Power size={22} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 font-poppins flex items-center gap-2">
+                    <span>Website Maintenance Mode</span>
+                    {formData.maintenanceMode ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white uppercase tracking-wider">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                        Site Live
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-600 font-inter mt-0.5">
+                    {formData.maintenanceMode
+                      ? 'Website is locked. Public visitors see the Maintenance Page.'
+                      : 'Website is public and live. All visitors can browse all pages normally.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* iOS style toggle switch */}
+              <div
+                className={`relative w-14 h-8 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                  formData.maintenanceMode ? 'bg-[#E8521A]' : 'bg-gray-300'
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+                    formData.maintenanceMode ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Customization Fields */}
+            <div className="space-y-5 pt-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 font-inter">
+                Maintenance Page Display Content
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                    Maintenance Headline (English)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.maintenanceTitle || ''}
+                    onChange={e => handleChange('maintenanceTitle', e.target.value)}
+                    placeholder="We're Upgrading Our Platform for Climate Impact"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                    Maintenance Headline (বাংলা)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.maintenanceTitle_bn || ''}
+                    onChange={e => handleChange('maintenanceTitle_bn', e.target.value)}
+                    placeholder="জলবায়ু কার্যক্রমে আরও গতি আনতে প্ল্যাটফর্ম উন্নয়নের কাজ চলছে"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                    Detailed Explanation Message (English)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.maintenanceMessage || ''}
+                    onChange={e => handleChange('maintenanceMessage', e.target.value)}
+                    placeholder="Youth Climate Network is currently undergoing scheduled platform upgrades..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none resize-none leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                    Detailed Explanation Message (বাংলা)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.maintenanceMessage_bn || ''}
+                    onChange={e => handleChange('maintenanceMessage_bn', e.target.value)}
+                    placeholder="ইয়ুথ ক্লাইমেট নেটওয়ার্কের নতুন ফিচার এবং তৃণমূল জলবায়ু উদ্যোগের তথ্য আরও সুন্দরভাবে পৌঁছে দিতে..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none resize-none leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                    Status Notice Badge (English)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.maintenanceNotice || ''}
+                    onChange={e => handleChange('maintenanceNotice', e.target.value)}
+                    placeholder="Scheduled System Maintenance in Progress"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                    Status Notice Badge (বাংলা)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.maintenanceNotice_bn || ''}
+                    onChange={e => handleChange('maintenanceNotice_bn', e.target.value)}
+                    placeholder="পরিকল্পিত সিস্টেম রক্ষণাবেক্ষণ চলমান রয়েছে"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                  Estimated Completion / Return Time (Optional)
+                </label>
+                <div className="relative max-w-md">
+                  <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={formData.maintenanceEndTime || ''}
+                    onChange={e => handleChange('maintenanceEndTime', e.target.value)}
+                    placeholder="e.g. Today, 6:00 PM BST / 2 Hours"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1 font-inter">
+                  Leave blank if completion time is open-ended.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* SUBTAB 1: CONTACT */}
         {activeSubTab === 'contact' && (
           <div className="space-y-6">

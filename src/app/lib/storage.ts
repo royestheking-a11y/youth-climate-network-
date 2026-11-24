@@ -196,6 +196,14 @@ export interface SiteSettings {
   privacyLastUpdated_bn?: string;
   termsLastUpdated?: string;
   termsLastUpdated_bn?: string;
+  maintenanceMode?: boolean;
+  maintenanceTitle?: string;
+  maintenanceTitle_bn?: string;
+  maintenanceMessage?: string;
+  maintenanceMessage_bn?: string;
+  maintenanceEndTime?: string;
+  maintenanceNotice?: string;
+  maintenanceNotice_bn?: string;
 }
 
 export interface CopHistoryItem {
