@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Mail, Phone, MessageCircle, ExternalLink,
-  Sparkles, Lock, ArrowRight, Clock, Check
+  Sparkles, ArrowRight, Clock, Check
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import type { SiteSettings } from '../lib/storage';
-import logo from '../../imports/Asset_1.webp';
 
 interface MaintenancePageProps {
   settings?: SiteSettings | null;
@@ -81,18 +80,12 @@ export function MaintenancePage({ settings, isPreview = false }: MaintenancePage
 
       {/* ── TOP HEADER / BRAND & LANGUAGE TOGGLE ── */}
       <header className="relative z-20 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/15 backdrop-blur-md p-2 border border-white/20 shadow-lg flex items-center justify-center">
-            <img src={logo} alt="Youth Climate Network" className="w-full h-full object-contain drop-shadow" />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-sm sm:text-base tracking-tight font-poppins text-[#F0ECD8] leading-none drop-shadow">
-              Youth Climate Network
-            </h1>
-            <p className="text-[10px] sm:text-xs text-emerald-300 font-inter font-medium tracking-wide mt-0.5 drop-shadow">
-              Bangladesh
-            </p>
-          </div>
+        <div className="flex items-center">
+          <img
+            src="/ycnmain.png"
+            alt="Youth Climate Network Bangladesh"
+            className="h-10 sm:h-12 w-auto object-contain drop-shadow-lg"
+          />
         </div>
 
         {/* Language Switcher Pill */}
@@ -137,8 +130,12 @@ export function MaintenancePage({ settings, isPreview = false }: MaintenancePage
           {/* Card Top Icon & Status Pill */}
           <div className="relative z-10 flex flex-col items-center">
             {/* Logo Emblem */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md p-3.5 border border-white/30 shadow-2xl flex items-center justify-center mb-5 ring-4 ring-emerald-500/20">
-              <img src={logo} alt="YCN" className="w-full h-full object-contain filter drop-shadow-md" />
+            <div className="mb-6 flex justify-center">
+              <img
+                src="/ycnmain.png"
+                alt="Youth Climate Network"
+                className="h-16 sm:h-20 w-auto object-contain filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:scale-105"
+              />
             </div>
 
             {/* Live Status Badge */}
@@ -227,21 +224,11 @@ export function MaintenancePage({ settings, isPreview = false }: MaintenancePage
         </motion.div>
       </main>
 
-      {/* ── FOOTER / COPYRIGHT & STAFF LOGIN ── */}
-      <footer className="relative z-20 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-300/80 font-inter">
-        <p className="text-center sm:text-left drop-shadow">
+      {/* ── FOOTER / COPYRIGHT ── */}
+      <footer className="relative z-20 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex items-center justify-center text-xs text-gray-300/80 font-inter">
+        <p className="text-center drop-shadow">
           © {new Date().getFullYear()} Youth Climate Network (YCN) • Reg. No. S-13962/2023
         </p>
-
-        {/* Discreet Staff / Admin Access */}
-        <a
-          href="/admin"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-gray-300 hover:text-white transition-all text-[11px] font-semibold drop-shadow"
-        >
-          <Lock size={11} className="text-emerald-400" />
-          <span>{t('Staff & Admin Portal', 'টিম লগইন')}</span>
-          <ArrowRight size={11} />
-        </a>
       </footer>
     </div>
   );
