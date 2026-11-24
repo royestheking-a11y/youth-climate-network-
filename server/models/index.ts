@@ -84,6 +84,7 @@ const blogSchema = new mongoose.Schema({
   excerpt_bn: String,
   image: String,
   galleryImages: { type: [String], default: [] },
+  gallery: { type: [String], default: [] },
   category: { type: String, default: 'Climate Action' },
   category_bn: String,
   tags: [String],

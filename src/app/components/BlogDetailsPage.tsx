@@ -4,7 +4,7 @@ import { SEO } from './ui/SEO';
 import {
   Calendar, Clock, MapPin, Linkedin, Facebook, Twitter, Link as LinkIcon,
   ArrowRight, ArrowLeft, Lightbulb, Sprout, HelpCircle,
-  ChevronDown, Check, Loader2, ExternalLink
+  ChevronDown, Check, Loader2, ExternalLink, Image as ImageIcon
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { apiBlog, useBlogs } from '../lib/api';
@@ -333,19 +333,53 @@ export function BlogDetailsPage() {
               dangerouslySetInnerHTML={{ __html: processedContent }}
             />
 
-            {/* Multiple Gallery Images if available */}
-            {blog.galleryImages && blog.galleryImages.length > 0 && (
-              <div className="pt-6">
-                <h4 className="font-bold text-gray-900 text-lg mb-4 font-poppins">Field Gallery</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {blog.galleryImages.map((img, idx) => (
-                    <div key={idx} className="aspect-square rounded-2xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <img src={img} alt={`Field photo ${idx + 1}`} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
+            {/* Multiple Gallery Images if available (up to 4 images) */}
+            {(() => {
+              const gallery = (blog.galleryImages && blog.galleryImages.length > 0)
+                ? blog.galleryImages
+                : (blog.gallery && blog.gallery.length > 0 ? blog.gallery : []);
+              if (!gallery || gallery.length === 0) return null;
+              const displayList = gallery.slice(0, 4);
+              return (
+                <div className="pt-8 border-t border-gray-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <ImageIcon size={20} className="text-[#1A6B3C]" />
+                    <h4 className="font-bold text-gray-900 text-lg font-poppins">
+                      {lang === 'bn' ? 'আর্টিকেল ফটো গ্যালারি' : 'Article Photo Gallery'}
+                    </h4>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-semibold font-inter">
+                      {displayList.length} {displayList.length === 1 ? 'photo' : 'photos'}
+                    </span>
+                  </div>
+                  <div className={`grid gap-4 ${
+                    displayList.length === 1
+                      ? 'grid-cols-1'
+                      : displayList.length === 2
+                      ? 'grid-cols-1 sm:grid-cols-2'
+                      : displayList.length === 3
+                      ? 'grid-cols-1 sm:grid-cols-3'
+                      : 'grid-cols-2 sm:grid-cols-4'
+                  }`}>
+                    {displayList.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="group relative aspect-video sm:aspect-square rounded-2xl overflow-hidden bg-gray-100 shadow-xs hover:shadow-xl transition-all duration-300 border border-gray-100"
+                      >
+                        <img
+                          src={img}
+                          alt={`Article photo ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                          <span className="text-xs text-white font-medium drop-shadow">Photo {idx + 1}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Key Metrics Grid - Only rendered if custom metrics are added for this article */}
             {blog.keyMetrics && blog.keyMetrics.length > 0 && (

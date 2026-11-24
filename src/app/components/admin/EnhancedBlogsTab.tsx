@@ -1,17 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   FileText, Plus, Edit3, Trash2, Eye, X, Search,
-  User, HelpCircle, Image as ImageIcon, Upload, Globe,
+  HelpCircle, Upload, Globe, User,
   Sparkles, RefreshCw, Check, AlertCircle,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Bold, Italic, Underline, Strikethrough,
-  List, ListOrdered, Indent, Outdent,
-  Highlighter, Type, Table, Quote, Minus, Link2,
-  Eraser, Replace, Maximize2, Minimize2, Wand2, Zap,
-  Info, Code, Lightbulb, BarChart3
+  Bold, Italic, Underline,
+  List, ListOrdered, Link2,
+  Wand2, Camera, ChevronDown, ChevronUp
 } from 'lucide-react';
 import {
-  useBlogs, apiBlog, BlogPost, useAuthors, apiAuthors, useSDGs, uploadFile, uploadMultipleFiles
+  useBlogs, apiBlog, BlogPost, useAuthors, useSDGs, uploadFile, uploadMultipleFiles
 } from '../../lib/api';
 import { AuthorsTab } from './AuthorsTab';
 
@@ -291,33 +288,24 @@ function generateAutoSEO(post: any) {
 export function EnhancedBlogsTab() {
   const [subTab, setSubTab] = useState<'posts' | 'authors' | 'sdgs'>('posts');
   const { data: posts = [], mutate: mutatePosts } = useBlogs();
-  const { data: authors = [], mutate: mutateAuthors } = useAuthors();
+  const { data: authors = [] } = useAuthors();
   const { data: sdgs = [] } = useSDGs();
 
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadingAuthorAvatar, setUploadingAuthorAvatar] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [slugChecking, setSlugChecking] = useState(false);
   const [slugStatus, setSlugStatus] = useState<{ available?: boolean; message?: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Rich Article Editor States
-  const [editorMode, setEditorMode] = useState<'visual' | 'code' | 'preview'>('visual');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [autoArrangeOnPaste, setAutoArrangeOnPaste] = useState(true);
+  const [editorMode, setEditorMode] = useState<'visual' | 'preview'>('visual');
   const [newTagInput, setNewTagInput] = useState('');
   const [editorLanguageTab, setEditorLanguageTab] = useState<'en' | 'bn'>('en');
-  const [authorSaveStatus, setAuthorSaveStatus] = useState<string | null>(null);
-  const [savingAuthorToSystem, setSavingAuthorToSystem] = useState(false);
   const [autoGenFeedback, setAutoGenFeedback] = useState<string | null>(null);
-
-  // Find & Replace
-  const [showFindReplace, setShowFindReplace] = useState(false);
-  const [findText, setFindText] = useState('');
-  const [replaceText, setReplaceText] = useState('');
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // Link Dialog
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -459,9 +447,8 @@ export function EnhancedBlogsTab() {
 
   // Paste handler in Word document
   const handleWordPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    if (!autoArrangeOnPaste) return;
     const html = e.clipboardData.getData('text/html');
-    const text = e.clipboardData.getData('text/plain');
+    const plain = e.clipboardData.getData('text/plain');
 
     if (html) {
       e.preventDefault();
@@ -469,9 +456,9 @@ export function EnhancedBlogsTab() {
       insertHtmlSnippet(cleaned);
       setAutoGenFeedback('Pasted Word content cleaned and formatted!');
       setTimeout(() => setAutoGenFeedback(null), 3500);
-    } else if (text) {
+    } else if (plain) {
       e.preventDefault();
-      const arranged = smartArrangeContent(text);
+      const arranged = smartArrangeContent(plain);
       insertHtmlSnippet(arranged.replace(/\n\n/g, '<p></p>'));
       setAutoGenFeedback('Pasted text auto-spaced into paragraphs!');
       setTimeout(() => setAutoGenFeedback(null), 3500);
@@ -490,58 +477,7 @@ export function EnhancedBlogsTab() {
     setTimeout(() => setAutoGenFeedback(null), 3500);
   };
 
-  // Find and replace all
-  const handleFindReplaceAll = () => {
-    if (!findText) return;
-    const activeKey = editorLanguageTab === 'bn' ? 'content_bn' : 'content';
-    const current = editingPost[activeKey] || '';
-    const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    const count = (current.match(regex) || []).length;
-    if (count === 0) {
-      alert(`No matches found for "${findText}"`);
-      return;
-    }
-    const updated = current.replace(regex, replaceText);
-    setEditingPost((prev: any) => ({ ...prev, [activeKey]: updated }));
-    if (visualEditorRef.current) {
-      visualEditorRef.current.innerHTML = updated;
-    }
-    setAutoGenFeedback(`Replaced ${count} instance(s) of "${findText}"`);
-    setTimeout(() => setAutoGenFeedback(null), 3500);
-  };
 
-  // Insert Table
-  const handleInsertTable = (rows: number = 3, cols: number = 3) => {
-    let tableHtml = '<table class="w-full my-4 border-collapse border border-gray-300 text-sm"><thead><tr class="bg-gray-100">';
-    for (let c = 1; c <= cols; c++) {
-      tableHtml += `<th class="border border-gray-300 p-2.5 font-bold text-left">Header ${c}</th>`;
-    }
-    tableHtml += '</tr></thead><tbody>';
-    for (let r = 1; r <= rows; r++) {
-      tableHtml += '<tr>';
-      for (let c = 1; c <= cols; c++) {
-        tableHtml += `<td class="border border-gray-300 p-2.5">Row ${r} Col ${c}</td>`;
-      }
-      tableHtml += '</tr>';
-    }
-    tableHtml += '</tbody></table><p></p>';
-    insertHtmlSnippet(tableHtml);
-  };
-
-  // Insert Callout Box
-  const handleInsertCallout = (type: 'info' | 'climate' | 'warning' | 'quote') => {
-    let calloutHtml = '';
-    if (type === 'info') {
-      calloutHtml = '<div class="my-5 p-4 rounded-xl bg-blue-50 border-l-4 border-blue-600 text-blue-950 font-inter"><p class="font-bold text-sm mb-1">Key Context & Information</p><p class="text-xs text-blue-900 leading-relaxed">Provide background research, policy context, or community statistics here...</p></div><p></p>';
-    } else if (type === 'climate') {
-      calloutHtml = '<div class="my-5 p-4 rounded-xl bg-emerald-50 border-l-4 border-[#1A6B3C] text-emerald-950 font-inter"><p class="font-bold text-sm mb-1">Climate Action Impact</p><p class="text-xs text-emerald-900 leading-relaxed">Over 15,000 mangrove seedlings planted across coastal embankment sites in Satkhira.</p></div><p></p>';
-    } else if (type === 'warning') {
-      calloutHtml = '<div class="my-5 p-4 rounded-xl bg-amber-50 border-l-4 border-amber-600 text-amber-950 font-inter"><p class="font-bold text-sm mb-1">Urgent Alert</p><p class="text-xs text-amber-900 leading-relaxed">Rising salinity levels threatening freshwater supplies in vulnerable delta villages.</p></div><p></p>';
-    } else if (type === 'quote') {
-      calloutHtml = '<blockquote class="my-6 pl-6 py-3 border-l-4 border-[#E8521A] bg-orange-50/50 rounded-r-2xl italic text-gray-900 font-poppins text-lg"><p>"Empowering youth is not just an alternative — it is our primary survival strategy against accelerating climate emergencies."</p><cite class="block text-xs font-bold text-gray-500 mt-2 not-italic">— Youth Climate Network Bangladesh</cite></blockquote><p></p>';
-    }
-    insertHtmlSnippet(calloutHtml);
-  };
 
 
   // Link Insertion
@@ -612,88 +548,94 @@ export function EnhancedBlogsTab() {
     }
   };
 
-  const handleSaveAuthorToSystem = async () => {
-    if (!editingPost?.authorName) {
-      alert('Please enter an Author Name first.');
-      return;
-    }
-    try {
-      setSavingAuthorToSystem(true);
-      const newAuthor = await apiAuthors.create({
-        name: editingPost.authorName,
-        role: editingPost.authorRole || 'YCN Contributor',
-        avatar: editingPost.authorImage || '',
-        image: editingPost.authorImage || '',
-      });
-      await mutateAuthors();
-      setEditingPost((prev: any) => ({ ...prev, authorId: newAuthor.id }));
-      setAuthorSaveStatus('Author profile saved to system!');
-      setTimeout(() => setAuthorSaveStatus(null), 3500);
-    } catch (err: any) {
-      alert(err.message || 'Failed to save author to system');
-    } finally {
-      setSavingAuthorToSystem(false);
-    }
-  };
 
-  // Image Uploads
-  const handleSingleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      try {
-        setUploadingImage(true);
-        const url = await uploadFile(e.target.files[0]);
-        setEditingPost((prev: any) => ({
-          ...prev,
-          image: url,
-          ogImage: prev.ogImage || url
-        }));
-      } catch {
-        alert('Image upload failed');
-      } finally {
-        setUploadingImage(false);
+
+  // Extract up to 4 article images (slot 0 = main cover, slots 1-3 = gallery photos)
+  const getArticleImages = (post: any): string[] => {
+    if (!post) return ['', '', '', ''];
+    const list: string[] = [];
+    if (post.image && typeof post.image === 'string' && post.image.trim()) {
+      list.push(post.image.trim());
+    }
+    const gallery = post.galleryImages?.length ? post.galleryImages : (post.gallery?.length ? post.gallery : []);
+    for (const img of gallery) {
+      if (img && typeof img === 'string' && img.trim() && !list.includes(img.trim()) && list.length < 4) {
+        list.push(img.trim());
       }
     }
-  };
-
-  const handleAuthorAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      try {
-        setUploadingAuthorAvatar(true);
-        const url = await uploadFile(e.target.files[0]);
-        setEditingPost((prev: any) => ({ ...prev, authorImage: url }));
-      } catch {
-        alert('Avatar upload failed');
-      } finally {
-        setUploadingAuthorAvatar(false);
-      }
+    while (list.length < 4) {
+      list.push('');
     }
+    return list.slice(0, 4);
   };
 
-  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      try {
-        setUploadingGallery(true);
-        const urls = await uploadMultipleFiles(e.target.files);
-        setEditingPost((prev: any) => ({
-          ...prev,
-          gallery: [...(prev.gallery || []), ...urls],
-          galleryImages: [...(prev.galleryImages || []), ...urls],
-        }));
-      } catch {
-        alert('Multiple images upload failed');
-      } finally {
-        setUploadingGallery(false);
-      }
-    }
-  };
-
-  const handleRemoveGalleryImage = (indexToRemove: number) => {
+  const handleUpdateImageSlot = (slotIdx: number, newUrl: string) => {
+    const slots = getArticleImages(editingPost);
+    slots[slotIdx] = newUrl.trim();
+    const valid = slots.filter(Boolean).slice(0, 4);
     setEditingPost((prev: any) => ({
       ...prev,
-      gallery: (prev.gallery || []).filter((_: any, idx: number) => idx !== indexToRemove),
-      galleryImages: (prev.galleryImages || []).filter((_: any, idx: number) => idx !== indexToRemove),
+      image: valid[0] || '',
+      gallery: valid,
+      galleryImages: valid,
+      ogImage: prev.ogImage || valid[0] || '',
     }));
   };
+
+  const handleRemoveImageSlot = (slotIdx: number) => {
+    const slots = getArticleImages(editingPost);
+    slots.splice(slotIdx, 1);
+    const valid = slots.filter(Boolean).slice(0, 4);
+    setEditingPost((prev: any) => ({
+      ...prev,
+      image: valid[0] || '',
+      gallery: valid,
+      galleryImages: valid,
+      ogImage: valid[0] || '',
+    }));
+  };
+
+  const handleUploadToSlot = async (slotIdx: number, file: File) => {
+    try {
+      setUploadingImage(true);
+      const url = await uploadFile(file);
+      handleUpdateImageSlot(slotIdx, url);
+    } catch {
+      alert('Photo upload failed. Please try a different image or enter image URL.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleBulkUploadImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    try {
+      setUploadingGallery(true);
+      const currentValid = getArticleImages(editingPost).filter(Boolean);
+      const remainingSlots = 4 - currentValid.length;
+      if (remainingSlots <= 0) {
+        alert('Maximum 4 photos allowed. Please remove a photo first if you want to replace it.');
+        return;
+      }
+      const filesToUpload = Array.from(e.target.files).slice(0, remainingSlots);
+      const urls = await uploadMultipleFiles(filesToUpload);
+      const combined = [...currentValid, ...urls].slice(0, 4);
+      setEditingPost((prev: any) => ({
+        ...prev,
+        image: combined[0] || prev.image || '',
+        gallery: combined,
+        galleryImages: combined,
+        ogImage: prev.ogImage || combined[0] || '',
+      }));
+    } catch {
+      alert('Photos upload failed. Please check file format and try again.');
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = '';
+    }
+  };
+
+
 
   const toggleSdg = (sdgNum: number) => {
     const current = editingPost?.sdgIds || editingPost?.sdgs || [];
@@ -710,14 +652,29 @@ export function EnhancedBlogsTab() {
     e.preventDefault();
     if (!editingPost) return;
 
+    if (!editingPost.title || !editingPost.title.trim()) {
+      alert('Please enter an Article Title before saving.');
+      return;
+    }
+
     try {
       setSaving(true);
+      const validPhotos = getArticleImages(editingPost).filter(Boolean).slice(0, 4);
+      const computedSlug = editingPost.slug && editingPost.slug.trim()
+        ? formatSlug(editingPost.slug)
+        : formatSlug(editingPost.title);
+
       const payload = {
         ...editingPost,
+        slug: computedSlug,
+        image: validPhotos[0] || editingPost.image || '',
+        gallery: validPhotos,
+        galleryImages: validPhotos,
         seoTitle: editingPost.seoTitle || editingPost.metaTitle || editingPost.title,
         metaTitle: editingPost.metaTitle || editingPost.seoTitle || editingPost.title,
-        ogImage: editingPost.ogImage || editingPost.image,
-        galleryImages: editingPost.gallery || editingPost.galleryImages || [],
+        metaDescription: editingPost.metaDescription || editingPost.excerpt || '',
+        ogImage: editingPost.ogImage || validPhotos[0] || editingPost.image || '',
+        canonicalUrl: editingPost.canonicalUrl || `https://youthclimatenetwork.org/blog/${computedSlug}`,
         sdgs: editingPost.sdgIds || editingPost.sdgs || [13],
       };
 
@@ -960,168 +917,182 @@ export function EnhancedBlogsTab() {
       )}
 
       {/* ──────────────────────────────────────────────────────────────
-          FULL-FEATURED ARTICLE EDITOR FORM
+          EASY & INTUITIVE ARTICLE EDITOR (Simple for Non-Technical Users)
          ────────────────────────────────────────────────────────────── */}
-      {subTab === 'posts' && editingPost && (
-        <form onSubmit={handleSave} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-6">
-          {/* Editor Header */}
-          <div className="flex items-center justify-between border-b pb-4 flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <FileText size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
-                  {isNew ? 'Create New Article' : 'Edit Article, Author & SEO'}
-                </h2>
-                <p className="text-xs text-gray-500">
-                  Rich WYSIWYG article editor, automated topic tags, one-click SEO & social sharing
-                </p>
-              </div>
-            </div>
+      {subTab === 'posts' && editingPost && (() => {
+        const currentPhotos = getArticleImages(editingPost);
+        const validPhotosCount = currentPhotos.filter(Boolean).length;
+        const activeTitle = (editorLanguageTab === 'bn' ? editingPost.title_bn : editingPost.title) || '';
+        const activeExcerpt = (editorLanguageTab === 'bn' ? editingPost.excerpt_bn : editingPost.excerpt) || '';
 
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setEditorLanguageTab('en')}
-                  className={`px-3 py-1 rounded-md transition-all ${
-                    editorLanguageTab === 'en' ? 'bg-white shadow text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditorLanguageTab('bn')}
-                  className={`px-3 py-1 rounded-md transition-all ${
-                    editorLanguageTab === 'bn' ? 'bg-white shadow text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  বাংলা (Bengali)
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingPost(null);
-                  setIsNew(false);
-                }}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                title="Close editor"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* ── LEFT COLUMN (Main Content Area) ── */}
-            <div className="md:col-span-8 space-y-5">
-              
-              {/* Title & Auto Slug Section */}
-              <div className="space-y-3 bg-gray-50/70 p-4 rounded-xl border border-gray-200">
+        return (
+          <form onSubmit={handleSave} className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-gray-200 space-y-6">
+            
+            {/* ── TOP HEADER & QUICK ACTIONS ── */}
+            <div className="flex items-center justify-between border-b border-gray-100 pb-5 flex-wrap gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#1A6B3C] border border-emerald-200 flex items-center justify-center shadow-xs">
+                  <FileText size={22} />
+                </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-gray-800">
-                      Article Title {editorLanguageTab === 'bn' ? '(বাংলা)' : '(English)'}
-                    </label>
-                    <span className="text-[11px] text-gray-400">
-                      {(editingPost[editorLanguageTab === 'bn' ? 'title_bn' : 'title'] || '').length} characters
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={editorLanguageTab === 'bn' ? (editingPost.title_bn || '') : editingPost.title}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (editorLanguageTab === 'bn') {
-                        setEditingPost({ ...editingPost, title_bn: val });
-                      } else {
-                        setEditingPost((prev: any) => ({
-                          ...prev,
-                          title: val,
-                          slug: isNew && (!prev.slug || prev.slug === formatSlug(prev.title)) ? formatSlug(val) : prev.slug,
-                          canonicalUrl: isNew && (!prev.canonicalUrl || prev.canonicalUrl.includes('/blog/'))
-                            ? `https://youthclimatenetwork.org/blog/${formatSlug(val)}`
-                            : prev.canonicalUrl
-                        }));
-                      }
-                    }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1A6B3C]/20 focus:border-[#1A6B3C]"
-                    placeholder={editorLanguageTab === 'bn' ? 'নিবন্ধের শিরোনাম লিখুন...' : 'E.g., Coastal Youth Mobilize for Climate Resilience & Mangrove Defense'}
-                    required={editorLanguageTab === 'en'}
-                  />
-                </div>
-
-                {/* URL Slug with Auto-generate & Live Check */}
-                <div className="bg-white p-3 rounded-lg border border-emerald-200 shadow-sm space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5">
-                      <Globe size={13} className="text-emerald-700" />
-                      <span>URL Slug (Unique shareable address)</span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleSyncSlugFromTitle}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer"
-                        title="Re-generate slug directly from article title"
-                      >
-                        <RefreshCw size={11} />
-                        <span>Sync from Title</span>
-                      </button>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        type="button"
-                        onClick={checkSlugAvailability}
-                        disabled={slugChecking || !editingPost.slug}
-                        className="text-[11px] font-semibold text-emerald-800 hover:underline disabled:opacity-50"
-                      >
-                        {slugChecking ? 'Checking...' : 'Check Availability'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1.5 rounded border border-gray-200">
-                      https://youthclimatenetwork.org/blog/
-                    </span>
-                    <input
-                      type="text"
-                      value={editingPost.slug || ''}
-                      onChange={e => handleSlugChange(e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs font-mono bg-emerald-50/40 border border-emerald-300 rounded focus:bg-white focus:outline-none"
-                      placeholder="youth-climate-action"
-                      required
-                    />
-                  </div>
-
-                  {slugStatus && (
-                    <div className={`flex items-center gap-1.5 text-[11px] font-semibold pt-1 ${
-                      slugStatus.available ? 'text-emerald-700' : 'text-red-600'
-                    }`}>
-                      {slugStatus.available ? <Check size={13} /> : <AlertCircle size={13} />}
-                      <span>{slugStatus.message || (slugStatus.available ? 'Slug is available!' : 'Slug is taken')}</span>
-                    </div>
-                  )}
+                  <h2 className="text-xl font-black text-gray-900 font-poppins">
+                    {isNew ? 'Create New Article' : 'Edit Article'}
+                  </h2>
+                  <p className="text-xs text-gray-500 font-inter">
+                    Simple 4-step editor. Just add your title, upload photos (up to 4), and write your story.
+                  </p>
                 </div>
               </div>
 
-              {/* Excerpt Section */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-gray-700">
-                    Article Excerpt / Summary {editorLanguageTab === 'bn' ? '(বাংলা)' : '(English)'}
-                  </label>
-                  <span className="text-[11px] text-gray-400">
-                    {(editingPost[editorLanguageTab === 'bn' ? 'excerpt_bn' : 'excerpt'] || '').length} characters
-                  </span>
+              {/* Language Switcher & Quick Save Buttons */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Language Tab */}
+                <div className="flex rounded-xl bg-gray-100 p-1 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setEditorLanguageTab('en')}
+                    className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-inter ${
+                      editorLanguageTab === 'en'
+                        ? 'bg-white text-gray-900 font-bold shadow-xs'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorLanguageTab('bn')}
+                    className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-inter ${
+                      editorLanguageTab === 'bn'
+                        ? 'bg-white text-gray-900 font-bold shadow-xs'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    বাংলা (Bengali)
+                  </button>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingPost(null);
+                    setIsNew(false);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-[#0A3320] hover:bg-[#1A6B3C] text-[#F0ECD8] shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Check size={14} />
+                  <span>{saving ? 'Saving...' : (isNew ? 'Publish Article' : 'Save Changes')}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Auto-gen / feedback banner if any */}
+            {autoGenFeedback && (
+              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center gap-2 border border-emerald-200">
+                <Sparkles size={14} className="text-emerald-600" />
+                <span>{autoGenFeedback}</span>
+              </div>
+            )}
+
+            {/* ── STEP 1: ARTICLE BASICS (TITLE, CATEGORY, SUMMARY) ── */}
+            <div className="bg-[#FAF9F5] p-5 sm:p-6 rounded-2xl border border-gray-200/80 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#1A6B3C] text-white text-xs font-bold flex items-center justify-center font-mono">1</span>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider font-inter">
+                  Article Basics {editorLanguageTab === 'bn' ? '(প্রাথমিক তথ্য - বাংলা)' : '(Basic Info)'}
+                </h3>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1.5 font-inter">
+                  Article Headline / Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={activeTitle}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (editorLanguageTab === 'bn') {
+                      setEditingPost({ ...editingPost, title_bn: val });
+                    } else {
+                      setEditingPost((prev: any) => ({
+                        ...prev,
+                        title: val,
+                        slug: isNew && (!prev.slug || prev.slug === formatSlug(prev.title)) ? formatSlug(val) : prev.slug,
+                        canonicalUrl: isNew && (!prev.canonicalUrl || prev.canonicalUrl.includes('/blog/'))
+                          ? `https://youthclimatenetwork.org/blog/${formatSlug(val)}`
+                          : prev.canonicalUrl
+                      }));
+                    }
+                  }}
+                  className="w-full px-4 py-3 text-sm sm:text-base font-bold bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1A6B3C]/20 focus:border-[#1A6B3C] text-gray-900"
+                  placeholder={editorLanguageTab === 'bn' ? 'নিবন্ধের শিরোনাম লিখুন (যেমন: উপকূলীয় যুবদের ম্যানগ্রোভ পুনরুজ্জীবন উদ্যোগ)' : 'e.g. Coastal Youth Lead Mangrove Reforestation in Khulna'}
+                  required={editorLanguageTab === 'en'}
+                />
+              </div>
+
+              {/* Category, Status & Feature toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1">
+                <div className="sm:col-span-6">
+                  <label className="block text-xs font-bold text-gray-700 mb-1 font-inter">
+                    Article Category
+                  </label>
+                  <select
+                    value={editingPost.category || 'Climate Action'}
+                    onChange={e => setEditingPost({ ...editingPost, category: e.target.value })}
+                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-white border border-gray-300 rounded-xl focus:border-[#1A6B3C]"
+                  >
+                    <option value="Climate Action">🌱 Climate Action (জলবায়ু পদক্ষেপ)</option>
+                    <option value="Youth Leadership">✊ Youth Leadership (যুব নেতৃত্ব)</option>
+                    <option value="Coastal Resilience">🌊 Coastal Resilience (উপকূলীয় সহনশীলতা)</option>
+                    <option value="Policy & Advocacy">📢 Policy & Advocacy (নীতি ও অ্যাডভোকেসি)</option>
+                    <option value="Loss and Damage">⚖️ Loss and Damage (ক্ষয়ক্ষতি তহবিল)</option>
+                    <option value="Renewable Energy">⚡ Renewable Energy (নবায়নযোগ্য শক্তি)</option>
+                    <option value="Field Action">🌾 Field Action (মাঠ পর্যায়ের কাজ)</option>
+                    <option value="Community Voices">🗣️ Community Voices (তৃণমূলের কথা)</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-6 flex items-center gap-5 sm:pt-6">
+                  <label className="flex items-center gap-2 text-xs font-bold text-gray-800 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={editingPost.published !== false}
+                      onChange={e => setEditingPost({ ...editingPost, published: e.target.checked })}
+                      className="w-4 h-4 rounded text-[#1A6B3C] accent-[#1A6B3C]"
+                    />
+                    <span>Publish Immediately</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-bold text-gray-800 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={editingPost.featured || false}
+                      onChange={e => setEditingPost({ ...editingPost, featured: e.target.checked })}
+                      className="w-4 h-4 rounded text-[#E8521A] accent-[#E8521A]"
+                    />
+                    <span>Highlight as Featured Article</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Short Summary (Excerpt) */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1 font-inter">
+                  Short Article Summary / Excerpt (1-2 sentences)
+                </label>
                 <textarea
                   rows={2}
-                  value={editorLanguageTab === 'bn' ? (editingPost.excerpt_bn || '') : editingPost.excerpt}
+                  value={activeExcerpt}
                   onChange={e => {
                     const val = e.target.value;
                     if (editorLanguageTab === 'bn') {
@@ -1130,78 +1101,203 @@ export function EnhancedBlogsTab() {
                       setEditingPost({ ...editingPost, excerpt: val });
                     }
                   }}
-                  className="w-full px-4 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white"
-                  placeholder="Short engaging introductory paragraph shown on blog cards and search snippets..."
-                  required={editorLanguageTab === 'en'}
+                  className="w-full px-4 py-2.5 text-xs bg-white border border-gray-300 rounded-xl focus:bg-white focus:border-[#1A6B3C] leading-relaxed"
+                  placeholder={editorLanguageTab === 'bn' ? 'সংক্ষিপ্ত ১-২ লাইনের বিবরণ যা কার্ডে ও সোশ্যাল মিডিয়ায় প্রদর্শিত হবে...' : 'Short engaging introductory summary displayed on the blog card and social previews...'}
                 />
               </div>
+            </div>
 
-              {/* ──────────────────────────────────────────────────────────────
-                  RICH ARTICLE CONTENT EDITOR (Modern CMS Style)
-                 ────────────────────────────────────────────────────────────── */}
-              <div className={`space-y-0 border border-gray-200 rounded-2xl overflow-hidden shadow-xs bg-white transition-all ${
-                isFullscreen ? 'fixed inset-4 z-50 flex flex-col shadow-2xl' : 'relative'
-              }`}>
-                {/* Editor Top Bar: Title, Stats & View Mode Tabs */}
-                <div className="bg-gray-50/90 border-b border-gray-200 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-bold text-gray-900 font-inter">
-                      Article Content {editorLanguageTab === 'bn' ? '(বাংলা)' : '(English)'}
-                    </span>
-                    <span className="text-[11px] text-gray-500 font-mono bg-white px-2.5 py-0.5 rounded-full border border-gray-200">
-                      {contentStats.words} words · ~{contentStats.readTime}
-                    </span>
-                  </div>
-
+            {/* ── STEP 2: ARTICLE PHOTOS (MAXIMUM 4 PHOTOS) ── */}
+            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
                   <div className="flex items-center gap-2">
-                    {/* View Mode Switcher */}
-                    <div className="flex rounded-lg bg-gray-200/80 p-0.5 text-xs font-semibold">
-                      <button
-                        type="button"
-                        onClick={() => setEditorMode('visual')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
-                          editorMode === 'visual' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <Edit3 size={13} className="text-emerald-700" />
-                        <span>Visual Editor</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditorMode('code')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
-                          editorMode === 'code' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <Code size={13} />
-                        <span>HTML / Markdown</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditorMode('preview')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
-                          editorMode === 'preview' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <Eye size={13} />
-                        <span>Live Preview</span>
-                      </button>
-                    </div>
-
-                    {/* Fullscreen Focus Toggle */}
-                    <button
-                      type="button"
-                      onClick={() => setIsFullscreen(!isFullscreen)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors cursor-pointer"
-                      title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Writing Mode'}
-                    >
-                      {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-                    </button>
+                    <span className="w-6 h-6 rounded-full bg-[#1A6B3C] text-white text-xs font-bold flex items-center justify-center font-mono">2</span>
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider font-inter">
+                      Article Photos (Maximum 4 Photos)
+                    </h3>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 font-mono">
+                      {validPhotosCount} / 4 Added
+                    </span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1 font-inter">
+                    Photo 1 is the <strong>Main Cover Photo</strong> shown at the top of the article. Additional photos automatically create a photo gallery in the article.
+                  </p>
                 </div>
 
-                {/* Unified Modern Toolbar */}
-                <div className="bg-white px-3 py-2 border-b border-gray-200 flex items-center justify-between flex-wrap gap-1.5 text-xs">
+                {/* Bulk Upload Button */}
+                {validPhotosCount < 4 && (
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#1A6B3C] hover:bg-[#14532D] text-white shadow-xs transition-all">
+                    <Upload size={14} />
+                    <span>{uploadingGallery ? 'Uploading...' : '+ Upload Multiple Photos'}</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleBulkUploadImages}
+                      className="hidden"
+                      disabled={uploadingGallery}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* 4 Photo Slots Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+                {[0, 1, 2, 3].map((slotIdx) => {
+                  const imgUrl = currentPhotos[slotIdx] || '';
+                  const isCover = slotIdx === 0;
+
+                  return (
+                    <div
+                      key={slotIdx}
+                      className={`relative rounded-2xl border-2 transition-all p-3.5 flex flex-col justify-between ${
+                        imgUrl
+                          ? 'border-emerald-500/40 bg-emerald-50/20 shadow-xs'
+                          : 'border-dashed border-gray-200 hover:border-emerald-400 bg-gray-50/50'
+                      }`}
+                    >
+                      {/* Slot Header */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full font-inter ${
+                          isCover
+                            ? 'bg-[#E8521A] text-white shadow-2xs'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}>
+                          {isCover ? '⭐ Photo 1 (Main Cover)' : `Photo ${slotIdx + 1} (Gallery)`}
+                        </span>
+                        {imgUrl && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImageSlot(slotIdx)}
+                            className="p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Remove photo"
+                          >
+                            <X size={15} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Slot Body: Image Preview OR Upload Dropzone */}
+                      {imgUrl ? (
+                        <div className="space-y-2">
+                          <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 border border-gray-200 relative group shadow-inner">
+                            <img
+                              src={imgUrl}
+                              alt={`Slot ${slotIdx + 1}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <input
+                              type="text"
+                              value={imgUrl}
+                              onChange={(e) => handleUpdateImageSlot(slotIdx, e.target.value)}
+                              placeholder="Image URL..."
+                              className="flex-1 text-[11px] px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 truncate"
+                            />
+                            <label className="cursor-pointer px-2 py-1 text-[11px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors whitespace-nowrap">
+                              <span>Replace</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleUploadToSlot(slotIdx, e.target.files[0]);
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-6 flex flex-col items-center justify-center text-center">
+                          <div className="w-10 h-10 rounded-full bg-emerald-50 text-[#1A6B3C] flex items-center justify-center mb-2">
+                            <Camera size={18} />
+                          </div>
+                          <p className="text-xs font-bold text-gray-700 mb-0.5">
+                            {isCover ? 'Add Cover Photo' : `Add Photo ${slotIdx + 1}`}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mb-3">JPG, PNG, or WebP</p>
+                          <div className="flex flex-col w-full gap-1.5">
+                            <label className="cursor-pointer w-full py-1.5 px-2 rounded-lg bg-white border border-gray-300 hover:border-emerald-600 text-[11px] font-bold text-gray-800 hover:text-emerald-700 shadow-2xs transition-all flex items-center justify-center gap-1">
+                              <Upload size={12} />
+                              <span>{uploadingImage ? 'Uploading...' : 'Upload File'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleUploadToSlot(slotIdx, e.target.files[0]);
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Or paste image URL"
+                              onBlur={(e) => {
+                                if (e.target.value.trim()) handleUpdateImageSlot(slotIdx, e.target.value.trim());
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if ((e.target as HTMLInputElement).value.trim()) {
+                                    handleUpdateImageSlot(slotIdx, (e.target as HTMLInputElement).value.trim());
+                                  }
+                                }
+                              }}
+                              className="w-full text-[10px] px-2 py-1 bg-white border border-gray-200 rounded text-center text-gray-600 focus:outline-none focus:border-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── STEP 3: ARTICLE STORY & WRITING CANVAS ── */}
+            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#1A6B3C] text-white text-xs font-bold flex items-center justify-center font-mono">3</span>
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider font-inter">
+                    Article Story / Content {editorLanguageTab === 'bn' ? '(নিবন্ধের বিস্তারিত বিষয়বস্তু)' : ''}
+                  </h3>
+                  <span className="text-[11px] text-gray-500 font-mono bg-gray-50 px-2.5 py-0.5 rounded-full border border-gray-200">
+                    {contentStats.words} words · ~{contentStats.readTime}
+                  </span>
+                </div>
+
+                {/* View Mode Toggle: Visual vs Live Preview */}
+                <div className="flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('visual')}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                      editorMode === 'visual' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Edit3 size={13} className="text-emerald-700" />
+                    <span>Visual Writer</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('preview')}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                      editorMode === 'preview' ? 'bg-white text-emerald-950 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Eye size={13} />
+                    <span>Live Preview</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Writing Canvas Container */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
+                {/* Clean, Non-Technical Toolbar */}
+                <div className="bg-gray-50/90 px-3 py-2 border-b border-gray-200 flex items-center justify-between flex-wrap gap-1.5 text-xs">
                   <div className="flex items-center gap-1 flex-wrap">
                     {/* Style selector */}
                     <select
@@ -1211,121 +1307,42 @@ export function EnhancedBlogsTab() {
                         else if (val === 'h2') executeWordCmd('formatBlock', '<h2>');
                         else if (val === 'h3') executeWordCmd('formatBlock', '<h3>');
                         else if (val === 'blockquote') executeWordCmd('formatBlock', '<blockquote>');
-                        else if (val === 'pre') executeWordCmd('formatBlock', '<pre>');
                       }}
-                      className="px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded-md font-semibold text-gray-800 focus:outline-none"
+                      className="px-2.5 py-1 text-xs bg-white border border-gray-200 rounded-lg font-semibold text-gray-800 focus:outline-none"
                       defaultValue="p"
                     >
-                      <option value="p">Paragraph</option>
-                      <option value="h2">Heading 2 (Section)</option>
-                      <option value="h3">Heading 3 (Subsection)</option>
-                      <option value="blockquote">Quote Block</option>
-                      <option value="pre">Code Block</option>
+                      <option value="p">Paragraph (সাধারণ লেখা)</option>
+                      <option value="h2">Section Heading (মূল শিরোনাম)</option>
+                      <option value="h3">Subsection (উপ-শিরোনাম)</option>
+                      <option value="blockquote">Quote Block (উদ্ধৃতি)</option>
                     </select>
 
                     <div className="h-4 w-px bg-gray-200 mx-1" />
 
-                    {/* Basic Formatting: B, I, U, S */}
+                    {/* Standard B, I, U */}
                     <button
                       type="button"
                       onClick={() => executeWordCmd('bold')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 font-bold cursor-pointer"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-700 font-bold cursor-pointer"
                       title="Bold (Ctrl+B)"
                     >
-                      <Bold size={14} />
+                      <Bold size={15} />
                     </button>
                     <button
                       type="button"
                       onClick={() => executeWordCmd('italic')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-700 cursor-pointer"
                       title="Italic (Ctrl+I)"
                     >
-                      <Italic size={14} />
+                      <Italic size={15} />
                     </button>
                     <button
                       type="button"
                       onClick={() => executeWordCmd('underline')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-700 cursor-pointer"
                       title="Underline (Ctrl+U)"
                     >
-                      <Underline size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('strikeThrough')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Strikethrough"
-                    >
-                      <Strikethrough size={14} />
-                    </button>
-
-                    <div className="h-4 w-px bg-gray-200 mx-1" />
-
-                    {/* Colors */}
-                    <div className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
-                      <Type size={12} className="text-gray-500" />
-                      <select
-                        onChange={e => executeWordCmd('foreColor', e.target.value)}
-                        className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
-                        defaultValue="#111827"
-                      >
-                        <option value="#111827">Dark</option>
-                        <option value="#1A6B3C">Green</option>
-                        <option value="#E8521A">Orange</option>
-                        <option value="#DC2626">Red</option>
-                        <option value="#2563EB">Blue</option>
-                      </select>
-                    </div>
-
-                    <div className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
-                      <Highlighter size={12} className="text-amber-500" />
-                      <select
-                        onChange={e => executeWordCmd('hiliteColor', e.target.value)}
-                        className="text-[11px] font-semibold bg-transparent border-0 focus:outline-none"
-                        defaultValue="transparent"
-                      >
-                        <option value="transparent">None</option>
-                        <option value="#FEF08A">Yellow</option>
-                        <option value="#A7F3D0">Green</option>
-                        <option value="#BAE6FD">Cyan</option>
-                        <option value="#FED7AA">Orange</option>
-                      </select>
-                    </div>
-
-                    <div className="h-4 w-px bg-gray-200 mx-1" />
-
-                    {/* Alignment */}
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('justifyLeft')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Align Left"
-                    >
-                      <AlignLeft size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('justifyCenter')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Align Center"
-                    >
-                      <AlignCenter size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('justifyRight')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Align Right"
-                    >
-                      <AlignRight size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('justifyFull')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Justify"
-                    >
-                      <AlignJustify size={14} />
+                      <Underline size={15} />
                     </button>
 
                     <div className="h-4 w-px bg-gray-200 mx-1" />
@@ -1334,100 +1351,43 @@ export function EnhancedBlogsTab() {
                     <button
                       type="button"
                       onClick={() => executeWordCmd('insertUnorderedList')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Bulleted List"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-700 cursor-pointer"
+                      title="Bullet List"
                     >
-                      <List size={14} />
+                      <List size={15} />
                     </button>
                     <button
                       type="button"
                       onClick={() => executeWordCmd('insertOrderedList')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-700 cursor-pointer"
                       title="Numbered List"
                     >
-                      <ListOrdered size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('outdent')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Decrease Indent"
-                    >
-                      <Outdent size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('indent')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Increase Indent"
-                    >
-                      <Indent size={14} />
+                      <ListOrdered size={15} />
                     </button>
 
-                    <div className="h-4 w-px bg-gray-200 mx-1" />
-
-                    {/* Insert Elements */}
+                    {/* Link */}
                     <button
                       type="button"
                       onClick={() => setShowLinkDialog(!showLinkDialog)}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Insert Link"
+                      className="p-1.5 hover:bg-gray-200 rounded text-gray-700 cursor-pointer"
+                      title="Insert Website Link"
                     >
-                      <Link2 size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInsertTable(3, 3)}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Insert Table (3x3)"
-                    >
-                      <Table size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInsertCallout('climate')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Insert Climate Box"
-                    >
-                      <Info size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInsertCallout('quote')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Insert Pullquote"
-                    >
-                      <Quote size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertHtmlSnippet('<hr class="my-6 border-t border-gray-200" /><p></p>')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-700 cursor-pointer"
-                      title="Horizontal Divider"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => executeWordCmd('removeFormat')}
-                      className="p-1.5 hover:bg-gray-100 rounded text-red-600 cursor-pointer"
-                      title="Clear Formatting"
-                    >
-                      <Eraser size={14} />
+                      <Link2 size={15} />
                     </button>
                   </div>
 
-                  {/* Right side helper actions */}
+                  {/* Helpers: Space Formatting & Clean Word */}
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={handleAutoArrangeContent}
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-                      title="Automatically arrange lines & paragraphs with proper spacing"
+                      title="Automatically clean up line spacing between paragraphs"
                     >
                       <Sparkles size={12} className="text-emerald-700" />
-                      <span>Format & Space</span>
+                      <span>Clean Spacing</span>
                     </button>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -1435,107 +1395,58 @@ export function EnhancedBlogsTab() {
                           const cleaned = cleanWordPasteHtml(visualEditorRef.current.innerHTML);
                           visualEditorRef.current.innerHTML = cleaned;
                           handleVisualInput();
-                          setAutoGenFeedback('Pasted Word styles cleaned into neat HTML!');
+                          setAutoGenFeedback('Word styles cleaned!');
                           setTimeout(() => setAutoGenFeedback(null), 3000);
                         }
                       }}
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
-                      title="Strip messy Word formatting"
+                      title="Remove weird Word or Docs formatting"
                     >
                       <Wand2 size={12} />
-                      <span>Clean Word Junk</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowFindReplace(!showFindReplace)}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-600 cursor-pointer"
-                      title="Find & Replace"
-                    >
-                      <Replace size={14} />
+                      <span>Clean Word Text</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Find & Replace bar */}
-                {showFindReplace && (
-                  <div className="bg-amber-50/80 border-b border-amber-200 px-3 py-2 flex items-center gap-2 flex-wrap text-xs">
-                    <span className="font-bold text-amber-950 flex items-center gap-1">
-                      <Search size={13} /> Find:
-                    </span>
-                    <input
-                      type="text"
-                      value={findText}
-                      onChange={e => setFindText(e.target.value)}
-                      placeholder="Find text..."
-                      className="px-2 py-0.5 text-xs bg-white border border-amber-300 rounded focus:outline-none"
-                    />
-                    <span className="font-bold text-amber-950 flex items-center gap-1">
-                      <Replace size={13} /> Replace:
-                    </span>
-                    <input
-                      type="text"
-                      value={replaceText}
-                      onChange={e => setReplaceText(e.target.value)}
-                      placeholder="Replace with..."
-                      className="px-2 py-0.5 text-xs bg-white border border-amber-300 rounded focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleFindReplaceAll}
-                      className="px-2.5 py-0.5 rounded bg-emerald-800 text-white font-bold hover:bg-emerald-900 cursor-pointer text-[11px]"
-                    >
-                      Replace All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowFindReplace(false)}
-                      className="p-1 rounded text-gray-500 hover:text-gray-800"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Hyperlink input bar */}
+                {/* Hyperlink Dialog */}
                 {showLinkDialog && (
                   <div className="bg-emerald-50 border-b border-emerald-200 px-3 py-2 flex items-center gap-2 flex-wrap text-xs">
                     <span className="font-bold text-emerald-950 flex items-center gap-1">
-                      <Link2 size={13} /> Link URL:
+                      <Link2 size={13} /> Link:
                     </span>
                     <input
                       type="url"
                       value={linkUrl}
                       onChange={e => setLinkUrl(e.target.value)}
                       placeholder="https://..."
-                      className="px-2 py-0.5 text-xs bg-white border border-emerald-300 rounded focus:outline-none flex-1 max-w-xs"
+                      className="px-2 py-1 text-xs bg-white border border-emerald-300 rounded focus:outline-none flex-1 max-w-xs"
                     />
                     <input
                       type="text"
                       value={linkText}
                       onChange={e => setLinkText(e.target.value)}
                       placeholder="Link display text"
-                      className="px-2 py-0.5 text-xs bg-white border border-emerald-300 rounded focus:outline-none max-w-xs"
+                      className="px-2 py-1 text-xs bg-white border border-emerald-300 rounded focus:outline-none max-w-xs"
                     />
                     <button
                       type="button"
                       onClick={handleConfirmLink}
-                      className="px-2.5 py-0.5 rounded bg-[#1A6B3C] text-white font-bold hover:bg-[#14532D] cursor-pointer text-[11px]"
+                      className="px-2.5 py-1 rounded bg-[#1A6B3C] text-white font-bold hover:bg-[#14532D] cursor-pointer text-[11px]"
                     >
-                      Insert Link
+                      Add Link
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowLinkDialog(false)}
-                      className="p-1 rounded text-gray-500 hover:text-gray-800"
+                      className="p-1 rounded text-gray-500 hover:text-gray-800 cursor-pointer"
                     >
                       <X size={13} />
                     </button>
                   </div>
                 )}
 
-                {/* Main Typing Canvas */}
-                <div className={`overflow-y-auto ${isFullscreen ? 'flex-1' : 'max-h-[600px]'}`}>
-                  {/* Visual Editor (Direct writing canvas, no gray background or fake margins) */}
+                {/* Writing Body */}
+                <div className="max-h-[550px] overflow-y-auto">
                   {editorMode === 'visual' && (
                     <div
                       ref={visualEditorRef}
@@ -1543,491 +1454,51 @@ export function EnhancedBlogsTab() {
                       onInput={handleVisualInput}
                       onPaste={handleWordPaste}
                       spellCheck={true}
-                      className="w-full min-h-[440px] bg-white p-6 sm:p-8 focus:outline-none font-inter text-gray-900 leading-relaxed text-[15px] space-y-4 [&>h1]:text-2xl [&>h1]:font-black [&>h1]:text-gray-950 [&>h1]:font-poppins [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-emerald-950 [&>h2]:font-poppins [&>h2]:mt-6 [&>h2]:mb-2.5 [&>h3]:text-lg sm:[&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-5 [&>h3]:mb-2 [&>p]:mb-4 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-600 [&>blockquote]:pl-4 [&>blockquote]:py-2 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/60 [&>blockquote]:rounded-r-xl [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-1.5 [&>ul]:my-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-1.5 [&>ol]:my-4 [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 [&>table]:border [&>table]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:p-2.5 [&_th]:bg-gray-100 [&_th]:font-bold [&_td]:border [&_td]:border-gray-300 [&_td]:p-2.5"
+                      className="w-full min-h-[380px] bg-white p-6 sm:p-8 focus:outline-none font-inter text-gray-900 leading-relaxed text-[15px] space-y-4 [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-emerald-950 [&>h2]:font-poppins [&>h2]:mt-6 [&>h2]:mb-2.5 [&>h3]:text-lg sm:[&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>h3]:font-poppins [&>h3]:mt-5 [&>h3]:mb-2 [&>p]:mb-4 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-600 [&>blockquote]:pl-4 [&>blockquote]:py-2 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/60 [&>blockquote]:rounded-r-xl [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-1.5 [&>ul]:my-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-1.5 [&>ol]:my-4"
                     />
                   )}
 
-                  {/* Code Editor */}
-                  {editorMode === 'code' && (
-                    <textarea
-                      rows={18}
-                      value={editorLanguageTab === 'bn' ? (editingPost.content_bn || '') : (editingPost.content || '')}
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (editorLanguageTab === 'bn') {
-                          setEditingPost({ ...editingPost, content_bn: val });
-                        } else {
-                          setEditingPost({ ...editingPost, content: val });
-                        }
-                        if (visualEditorRef.current) {
-                          visualEditorRef.current.innerHTML = val;
-                        }
-                      }}
-                      className="w-full h-full min-h-[440px] p-5 text-xs bg-gray-900 text-emerald-400 font-mono leading-relaxed focus:outline-none"
-                      placeholder="Write or edit raw HTML / Markdown here..."
-                    />
-                  )}
-
-                  {/* Reader Live Preview */}
                   {editorMode === 'preview' && (
-                    <div className="w-full min-h-[440px] p-6 sm:p-8 bg-[#FAF9F5] overflow-y-auto">
+                    <div className="w-full min-h-[380px] p-6 sm:p-8 bg-[#FAF9F5] overflow-y-auto">
                       <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4 pb-2 border-b flex items-center justify-between">
                         <span>Live Reader Preview</span>
-                        <span className="text-emerald-800 font-mono">/blog/{editingPost.slug || 'slug'}</span>
+                        <span className="text-emerald-800 font-mono">/blog/{editingPost.slug || 'article'}</span>
                       </div>
                       {editingPost.content ? (
                         <div
-                          className="prose prose-lg max-w-none text-gray-800 font-inter space-y-4 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-950 [&>h2]:font-poppins [&>h2]:mt-6 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-gray-900 [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-2.5 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl"
+                          className="prose prose-lg max-w-none text-gray-800 font-inter space-y-4 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-950 [&>h2]:font-poppins [&>p]:leading-relaxed [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A6B3C] [&>blockquote]:pl-6 [&>blockquote]:py-2.5 [&>blockquote]:italic [&>blockquote]:bg-emerald-50/50 [&>blockquote]:rounded-r-2xl"
                           dangerouslySetInnerHTML={{ __html: smartArrangeContent(editingPost.content) }}
                         />
                       ) : (
-                        <p className="text-gray-400 italic text-center py-16">No content entered yet. Switch to Visual Editor to start writing.</p>
+                        <p className="text-gray-400 italic text-center py-16">No content written yet. Switch to Visual Writer to begin.</p>
                       )}
                     </div>
                   )}
                 </div>
-
-                {/* Minimalist Bottom Bar */}
-                <div className="bg-gray-50 border-t border-gray-200 px-4 py-2 flex items-center justify-between flex-wrap text-[11px] text-gray-500">
-                  <div className="flex items-center gap-3 font-mono">
-                    <span>{contentStats.words} words</span>
-                    <span>·</span>
-                    <span>{contentStats.chars} chars</span>
-                    <span>·</span>
-                    <span>{contentStats.readTime}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 text-gray-600 cursor-pointer">
-                      <Zap size={12} className="text-emerald-700" />
-                      <input
-                        type="checkbox"
-                        checked={autoArrangeOnPaste}
-                        onChange={e => setAutoArrangeOnPaste(e.target.checked)}
-                        className="w-3 h-3 rounded text-emerald-600"
-                      />
-                      <span>Auto-clean on paste</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* ──────────────────────────────────────────────────────────────
-                  SMART TOPIC TAGS & CATEGORIZATION
-                 ────────────────────────────────────────────────────────────── */}
-              <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-200/80 space-y-3">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Globe size={15} className="text-emerald-700" />
-                    <h4 className="text-xs font-bold text-emerald-950">Article Tags & Topic Categorization</h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAutoGenerateTags}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold bg-[#1A6B3C] text-white hover:bg-[#14532D] shadow-sm cursor-pointer transition-all"
-                  >
-                    <Sparkles size={12} className="text-amber-300" />
-                    <span>Auto-Generate Tags</span>
-                  </button>
-                </div>
-
-                {/* Current Active Tags */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {(editingPost.tags || []).map((tag: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white text-emerald-900 border border-emerald-300 shadow-2xs"
-                    >
-                      <span>#{tag}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="text-gray-400 hover:text-red-600 rounded-full"
-                        title="Remove tag"
-                      >
-                        <X size={12} />
-                      </button>
-                    </span>
-                  ))}
-                  {(editingPost.tags || []).length === 0 && (
-                    <span className="text-xs text-gray-400 italic">No tags added yet. Click &apos;Auto-Generate Tags&apos; or add below.</span>
-                  )}
-                </div>
-
-                {/* Add Tag Input & Suggested Pills */}
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="text"
-                    value={newTagInput}
-                    onChange={e => setNewTagInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag(newTagInput);
-                      }
-                    }}
-                    placeholder="+ Type custom tag and press Enter..."
-                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddTag(newTagInput)}
-                    className="px-3 py-1.5 text-xs font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg"
-                  >
-                    Add Tag
-                  </button>
-                </div>
-
-                {/* Suggested Quick Add Chips */}
-                <div className="space-y-1 pt-1">
-                  <p className="text-[11px] font-semibold text-gray-500">Quick Suggested Topics (Click to add):</p>
-                  <div className="flex flex-wrap gap-1">
-                    {popularTopics.map(pt => {
-                      const isAdded = (editingPost.tags || []).includes(pt);
-                      return (
-                        <button
-                          key={pt}
-                          type="button"
-                          onClick={() => isAdded ? handleRemoveTag(pt) : handleAddTag(pt)}
-                          className={`text-[10px] px-2 py-0.5 rounded-md font-medium transition-colors ${
-                            isAdded
-                              ? 'bg-emerald-700 text-white font-bold'
-                              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                          }`}
-                        >
-                          {isAdded ? `✓ ${pt}` : `+ ${pt}`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Multiple Image Gallery Management */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                      <ImageIcon size={14} className="text-emerald-700" />
-                      <span>Article Image Gallery (Field Carousel)</span>
-                    </h4>
-                    <p className="text-[11px] text-gray-500">Upload multiple photos from the field for the story carousel</p>
-                  </div>
-                  <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1A6B3C] text-white hover:bg-[#14532D]">
-                    <Upload size={13} />
-                    <span>{uploadingGallery ? 'Uploading...' : 'Add Images'}</span>
-                    <input type="file" multiple accept="image/*" onChange={handleGalleryUpload} className="hidden" />
-                  </label>
-                </div>
-
-                {editingPost.gallery && editingPost.gallery.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                    {editingPost.gallery.map((imgUrl: string, idx: number) => (
-                      <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-video bg-white">
-                        <img src={imgUrl} alt="" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGalleryImage(idx)}
-                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-80 hover:opacity-100"
-                          title="Remove image"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400 italic">No gallery images uploaded yet.</p>
-                )}
-              </div>
-
-              {/* AEO: Answer Engine FAQs */}
-              <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <HelpCircle size={15} className="text-amber-700" />
-                    <h4 className="text-xs font-bold text-amber-900">AEO: Question & Answer FAQs (Featured Snippets)</h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingPost((prev: any) => ({
-                        ...prev,
-                        faqs: [...(prev.faqs || []), { question: '', answer: '' }]
-                      }));
-                    }}
-                    className="text-[11px] font-semibold text-amber-800 hover:underline cursor-pointer"
-                  >
-                    + Add Q&A Pair
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {(editingPost.faqs || []).map((faq: any, idx: number) => (
-                    <div key={idx} className="p-3 bg-white rounded-lg border border-amber-200 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <input
-                          type="text"
-                          value={faq.question}
-                          onChange={e => {
-                            const updated = [...editingPost.faqs];
-                            updated[idx].question = e.target.value;
-                            setEditingPost({ ...editingPost, faqs: updated });
-                          }}
-                          placeholder="Question (e.g., How can youth join coastal mangrove restoration?)"
-                          className="w-full text-xs font-semibold px-2 py-1 border-b focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = editingPost.faqs.filter((_: any, i: number) => i !== idx);
-                            setEditingPost({ ...editingPost, faqs: updated });
-                          }}
-                          className="text-gray-400 hover:text-red-600 ml-2"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <textarea
-                        rows={2}
-                        value={faq.answer}
-                        onChange={e => {
-                          const updated = [...editingPost.faqs];
-                          updated[idx].answer = e.target.value;
-                          setEditingPost({ ...editingPost, faqs: updated });
-                        }}
-                        placeholder="Concise, authoritative answer optimized for search engine featured snippets..."
-                        className="w-full text-xs px-2 py-1 bg-gray-50 rounded border border-gray-100"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Optional Key Metrics / Impact Statistics */}
-              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <BarChart3 size={15} className="text-emerald-700" />
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900">Custom Impact Numbers / Key Metrics (Optional)</h4>
-                      <p className="text-[11px] text-gray-500">Only displayed on this article if metrics are added. Leave empty to hide.</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingPost((prev: any) => ({
-                        ...prev,
-                        keyMetrics: [...(prev.keyMetrics || []), { count: '', label: '', label_bn: '' }]
-                      }));
-                    }}
-                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 cursor-pointer"
-                  >
-                    + Add Metric
-                  </button>
-                </div>
-
-                {(!editingPost.keyMetrics || editingPost.keyMetrics.length === 0) ? (
-                  <p className="text-[11px] text-gray-400 italic bg-gray-50 p-2.5 rounded-lg border border-dashed border-gray-200">
-                    No custom metrics added for this post. The metric card will remain hidden on the article.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {editingPost.keyMetrics.map((metric: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col sm:flex-row items-center gap-2">
-                        <input
-                          type="text"
-                          value={metric.count}
-                          onChange={e => {
-                            const updated = [...editingPost.keyMetrics];
-                            updated[idx].count = e.target.value;
-                            setEditingPost({ ...editingPost, keyMetrics: updated });
-                          }}
-                          placeholder="Number (e.g. 12,500+)"
-                          className="w-full sm:w-1/3 text-xs px-2.5 py-1.5 bg-white rounded-lg border border-gray-200 font-bold text-[#E8521A]"
-                        />
-                        <input
-                          type="text"
-                          value={metric.label}
-                          onChange={e => {
-                            const updated = [...editingPost.keyMetrics];
-                            updated[idx].label = e.target.value;
-                            setEditingPost({ ...editingPost, keyMetrics: updated });
-                          }}
-                          placeholder="Label in English (e.g. Saplings planted)"
-                          className="w-full sm:flex-1 text-xs px-2.5 py-1.5 bg-white rounded-lg border border-gray-200"
-                        />
-                        <input
-                          type="text"
-                          value={metric.label_bn || ''}
-                          onChange={e => {
-                            const updated = [...editingPost.keyMetrics];
-                            updated[idx].label_bn = e.target.value;
-                            setEditingPost({ ...editingPost, keyMetrics: updated });
-                          }}
-                          placeholder="বাংলা লেবেল (ঐচ্ছিক)"
-                          className="w-full sm:flex-1 text-xs px-2.5 py-1.5 bg-white rounded-lg border border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = editingPost.keyMetrics.filter((_: any, i: number) => i !== idx);
-                            setEditingPost({ ...editingPost, keyMetrics: updated });
-                          }}
-                          className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-white"
-                          title="Remove metric"
-                        >
-                          <X size={15} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Optional Featured Solution Callout Card */}
-              <div className="bg-[#FFF9F6] p-4 rounded-xl border border-[#FED7C7] space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Lightbulb size={15} className="text-[#E8521A]" />
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900">Featured Solution Highlight Callout (Optional)</h4>
-                      <p className="text-[11px] text-gray-500">Only displayed if text is entered. Leave empty to hide.</p>
-                    </div>
-                  </div>
-                  {(editingPost.callout?.text || editingPost.callout?.title) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingPost((prev: any) => ({
-                          ...prev,
-                          callout: { title: '', title_bn: '', text: '', text_bn: '' }
-                        }));
-                      }}
-                      className="text-[11px] font-semibold text-gray-500 hover:text-red-600 cursor-pointer"
-                    >
-                      Clear Callout
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={editingPost.callout?.title || ''}
-                      onChange={e => {
-                        setEditingPost((prev: any) => ({
-                          ...prev,
-                          callout: { ...(prev.callout || {}), title: e.target.value }
-                        }));
-                      }}
-                      placeholder="Callout Title (e.g. A Youth-Led Solution)"
-                      className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7] font-semibold"
-                    />
-                    <input
-                      type="text"
-                      value={editingPost.callout?.title_bn || ''}
-                      onChange={e => {
-                        setEditingPost((prev: any) => ({
-                          ...prev,
-                          callout: { ...(prev.callout || {}), title_bn: e.target.value }
-                        }));
-                      }}
-                      placeholder="কলআউট শিরোনাম (বাংলা)"
-                      className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7]"
-                    />
-                  </div>
-                  <textarea
-                    rows={2}
-                    value={editingPost.callout?.text || ''}
-                    onChange={e => {
-                      setEditingPost((prev: any) => ({
-                        ...prev,
-                        callout: { ...(prev.callout || {}), text: e.target.value }
-                      }));
-                    }}
-                    placeholder="Solution Highlight / Key takeaway statement (English)..."
-                    className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7]"
-                  />
-                  <textarea
-                    rows={2}
-                    value={editingPost.callout?.text_bn || ''}
-                    onChange={e => {
-                      setEditingPost((prev: any) => ({
-                        ...prev,
-                        callout: { ...(prev.callout || {}), text_bn: e.target.value }
-                      }));
-                    }}
-                    placeholder="সমাধান বা বিশেষ সারসংক্ষেপ (বাংলা - ঐচ্ছিক)..."
-                    className="w-full text-xs px-2.5 py-1.5 bg-white rounded-lg border border-[#FED7C7]"
-                  />
-                </div>
               </div>
             </div>
 
-            {/* ── RIGHT COLUMN (Sidebar Controls: Author, SEO, SDGs, Cover) ── */}
-            <div className="md:col-span-4 space-y-4">
-              
-              {/* Featured Cover Image */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
-                <label className="block text-xs font-bold text-gray-700">Featured Cover Image</label>
-                {editingPost.image && (
-                  <div className="aspect-video rounded-lg overflow-hidden border border-gray-200 bg-white">
-                    <img src={editingPost.image} alt="" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={editingPost.image || ''}
-                    onChange={e => {
-                      const img = e.target.value;
-                      setEditingPost((prev: any) => ({
-                        ...prev,
-                        image: img,
-                        ogImage: prev.ogImage || img
-                      }));
-                    }}
-                    placeholder="Image URL..."
-                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg"
-                    required
-                  />
-                  <label className="cursor-pointer px-2.5 py-1.5 text-xs font-semibold bg-gray-200 hover:bg-gray-300 rounded-lg whitespace-nowrap">
-                    <span>{uploadingImage ? '...' : 'Upload'}</span>
-                    <input type="file" accept="image/*" onChange={handleSingleImageUpload} className="hidden" />
-                  </label>
-                </div>
-              </div>
-
-              {/* ──────────────────────────────────────────────────────────────
-                  ASSIGNED AUTHOR SYSTEM (Editable, Selectable, Addable)
-                 ────────────────────────────────────────────────────────────── */}
-              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <User size={15} className="text-emerald-700" />
-                    <label className="text-xs font-bold text-gray-900">Assigned Author</label>
-                  </div>
-                  {authorSaveStatus && (
-                    <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
-                      <Check size={11} /> {authorSaveStatus}
-                    </span>
-                  )}
+            {/* ── STEP 4: AUTHOR & UN SDGS ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Author Card */}
+              <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-full bg-[#1A6B3C] text-white text-xs font-bold flex items-center justify-center font-mono">4</span>
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider font-inter">
+                    Author Details
+                  </h3>
                 </div>
 
-                {/* Quick select from existing authors */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-500 mb-1">
-                    Select From System Profiles
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                    Select From System Authors
                   </label>
                   <select
                     value={editingPost.authorId || ''}
                     onChange={e => handleSelectAuthor(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white"
+                    className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white"
                   >
-                    <option value="">-- Choose Existing Author Profile --</option>
+                    <option value="">-- Choose Existing Team Author --</option>
                     {authors.map(a => (
                       <option key={a.id} value={a.id}>
                         {a.name} — {a.role}
@@ -2036,276 +1507,49 @@ export function EnhancedBlogsTab() {
                   </select>
                 </div>
 
-                {/* Author Details - Direct Editing on the Post */}
-                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2.5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-300">
-                      {editingPost.authorImage ? (
-                        <img src={editingPost.authorImage} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <User size={20} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase">Author Photo</label>
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="text"
-                          value={editingPost.authorImage || ''}
-                          onChange={e => setEditingPost({ ...editingPost, authorImage: e.target.value })}
-                          placeholder="Avatar URL..."
-                          className="flex-1 px-2 py-1 text-[11px] bg-white border border-gray-200 rounded"
-                        />
-                        <label className="cursor-pointer px-2 py-1 text-[11px] font-semibold bg-gray-200 hover:bg-gray-300 rounded whitespace-nowrap">
-                          <span>{uploadingAuthorAvatar ? '...' : 'Upload'}</span>
-                          <input type="file" accept="image/*" onChange={handleAuthorAvatarUpload} className="hidden" />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Author Full Name</label>
+                    <label className="block text-[11px] font-semibold text-gray-600 mb-1">Author Name</label>
                     <input
                       type="text"
                       value={editingPost.authorName || ''}
                       onChange={e => setEditingPost({ ...editingPost, authorName: e.target.value })}
-                      placeholder="e.g. Sadia Islam or Dr. Monirul Islam"
-                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg"
-                      required
+                      placeholder="e.g. Sadia Islam"
+                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Author Role / Designation</label>
+                    <label className="block text-[11px] font-semibold text-gray-600 mb-1">Author Role</label>
                     <input
                       type="text"
                       value={editingPost.authorRole || ''}
                       onChange={e => setEditingPost({ ...editingPost, authorRole: e.target.value })}
-                      placeholder="e.g. Program Officer, YCN Bangladesh"
-                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg"
+                      placeholder="e.g. Program Officer"
+                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl"
                     />
-                  </div>
-
-                  {/* Save as new author profile in system */}
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={handleSaveAuthorToSystem}
-                      disabled={savingAuthorToSystem || !editingPost.authorName}
-                      className="w-full py-1.5 px-3 text-[11px] font-semibold rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 transition-colors disabled:opacity-50"
-                    >
-                      {savingAuthorToSystem ? 'Saving...' : '+ Save as New Author in System'}
-                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* ──────────────────────────────────────────────────────────────
-                  SEO & SOCIAL SHARING METADATA (Auto-generate & Full Edit)
-                 ────────────────────────────────────────────────────────────── */}
-              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900">
-                    <Globe size={15} className="text-emerald-700" />
-                    <span>SEO & Social Sharing</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAutoGenerateSEO}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#1A6B3C] text-white hover:bg-[#14532D] shadow-2xs transition-all cursor-pointer"
-                    title="Auto generate SEO Title, Meta Description, Keywords, and Canonical URL from article content"
-                  >
-                    <Sparkles size={11} className="text-amber-300" />
-                    <span>Auto-Generate SEO</span>
-                  </button>
-                </div>
-
-                {/* SEO Title Tag */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-semibold text-gray-700">SEO / Meta Title</label>
-                    <span className={`text-[10px] font-mono ${
-                      (editingPost.metaTitle || editingPost.seoTitle || '').length > 60
-                        ? 'text-amber-600 font-bold'
-                        : 'text-gray-400'
-                    }`}>
-                      {(editingPost.metaTitle || editingPost.seoTitle || '').length}/60 chars
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={editingPost.metaTitle || editingPost.seoTitle || ''}
-                    onChange={e => setEditingPost({
-                      ...editingPost,
-                      metaTitle: e.target.value,
-                      seoTitle: e.target.value
-                    })}
-                    placeholder="Custom SEO Title (defaults to article title)"
-                    className="w-full px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white"
-                  />
-                </div>
-
-                {/* Meta Description */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-semibold text-gray-700">Meta Description</label>
-                    <span className={`text-[10px] font-mono ${
-                      (editingPost.metaDescription || '').length > 160
-                        ? 'text-amber-600 font-bold'
-                        : 'text-gray-400'
-                    }`}>
-                      {(editingPost.metaDescription || '').length}/160 chars
-                    </span>
-                  </div>
-                  <textarea
-                    rows={2}
-                    value={editingPost.metaDescription || ''}
-                    onChange={e => setEditingPost({ ...editingPost, metaDescription: e.target.value })}
-                    placeholder="140-160 characters summary displayed on Google search results..."
-                    className="w-full px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white"
-                  />
-                </div>
-
-                {/* Meta Keywords */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-700 mb-1">Search Keywords (Comma-separated)</label>
-                  <input
-                    type="text"
-                    value={editingPost.metaKeywords || ''}
-                    onChange={e => setEditingPost({ ...editingPost, metaKeywords: e.target.value })}
-                    placeholder="climate change, coastal resilience, youth leadership..."
-                    className="w-full px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white"
-                  />
-                </div>
-
-                {/* Social Sharing Image (OG Image) */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-700 mb-1">Social Sharing Image (OG Image)</label>
+              {/* UN SDGs Card */}
+              <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editingPost.ogImage || ''}
-                      onChange={e => setEditingPost({ ...editingPost, ogImage: e.target.value })}
-                      placeholder="https://... cover for Facebook / LinkedIn"
-                      className="flex-1 px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setEditingPost((prev: any) => ({ ...prev, ogImage: prev.image }))}
-                      className="px-2 py-1.5 text-[10px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded whitespace-nowrap cursor-pointer"
-                      title="Use featured cover image as social share image"
-                    >
-                      Use Cover
-                    </button>
+                    <span className="w-6 h-6 rounded-full bg-[#1A6B3C] text-white text-xs font-bold flex items-center justify-center font-mono">5</span>
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider font-inter">
+                      UN SDGs (Click to Select)
+                    </h3>
                   </div>
-                </div>
-
-                {/* Canonical URL */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-700 mb-1">Canonical URL</label>
-                  <input
-                    type="url"
-                    value={editingPost.canonicalUrl || ''}
-                    onChange={e => setEditingPost({ ...editingPost, canonicalUrl: e.target.value })}
-                    placeholder="https://youthclimatenetwork.org/blog/..."
-                    className="w-full px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white"
-                  />
-                </div>
-
-                {/* NoIndex & Read Time row */}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="noIndex"
-                      checked={editingPost.noIndex || false}
-                      onChange={e => setEditingPost({ ...editingPost, noIndex: e.target.checked })}
-                      className="w-3.5 h-3.5 rounded text-red-600"
-                    />
-                    <label htmlFor="noIndex" className="text-[11px] text-gray-700 cursor-pointer">
-                      NoIndex (Hide from Google)
-                    </label>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-gray-400">Read Time:</span>
-                    <input
-                      type="text"
-                      value={editingPost.readTime || '5 min read'}
-                      onChange={e => setEditingPost({ ...editingPost, readTime: e.target.value })}
-                      className="w-20 px-1.5 py-0.5 text-[11px] text-center bg-gray-50 border border-gray-200 rounded"
-                    />
-                  </div>
-                </div>
-
-                {/* SERP Search Preview Box */}
-                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                    Google Search Preview
+                  <span className="text-[11px] text-gray-400">
+                    {(editingPost.sdgIds || editingPost.sdgs || []).length} selected
                   </span>
-                  <div className="text-[11px] text-emerald-800 font-mono truncate">
-                    youthclimatenetwork.org › blog › {editingPost.slug || 'article-slug'}
-                  </div>
-                  <div className="text-xs font-bold text-[#1a0dab] line-clamp-1">
-                    {editingPost.metaTitle || editingPost.seoTitle || editingPost.title || 'Article Title'}
-                  </div>
-                  <div className="text-[11px] text-gray-600 line-clamp-2 leading-tight">
-                    {editingPost.metaDescription || editingPost.excerpt || 'Article summary will appear here in search engine results...'}
-                  </div>
                 </div>
-              </div>
+                <p className="text-xs text-gray-500 font-inter">
+                  Select which UN Sustainable Development Goals this initiative aligns with.
+                </p>
 
-              {/* Category & Status */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Article Category</label>
-                  <select
-                    value={editingPost.category || 'Climate Action'}
-                    onChange={e => setEditingPost({ ...editingPost, category: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-lg"
-                  >
-                    <option value="Climate Action">Climate Action</option>
-                    <option value="Youth Leadership">Youth Leadership</option>
-                    <option value="Coastal Resilience">Coastal Resilience</option>
-                    <option value="Policy & Advocacy">Policy & Advocacy</option>
-                    <option value="Loss and Damage">Loss and Damage</option>
-                    <option value="Renewable Energy">Renewable Energy</option>
-                    <option value="Field Action">Field Action</option>
-                    <option value="Community Voices">Community Voices</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-4 pt-1">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={editingPost.featured || false}
-                      onChange={e => setEditingPost({ ...editingPost, featured: e.target.checked })}
-                      className="w-3.5 h-3.5 rounded text-[#E8521A]"
-                    />
-                    <span>Featured Article</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={editingPost.published !== false}
-                      onChange={e => setEditingPost({ ...editingPost, published: e.target.checked })}
-                      className="w-3.5 h-3.5 rounded text-[#1A6B3C]"
-                    />
-                    <span>Published</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* SDGs Selection */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
-                <label className="block text-xs font-bold text-gray-700">
-                  Select UN SDGs (SDG 1 - 17)
-                </label>
-                <div className="grid grid-cols-6 gap-1.5 pt-1">
+                <div className="grid grid-cols-6 sm:grid-cols-6 gap-1.5 pt-1 max-h-36 overflow-y-auto">
                   {sdgs.map(s => {
                     const isSelected = (editingPost.sdgIds || editingPost.sdgs || []).includes(s.number);
                     return (
@@ -2314,8 +1558,8 @@ export function EnhancedBlogsTab() {
                         key={s.number}
                         onClick={() => toggleSdg(s.number)}
                         title={`SDG ${s.number}: ${s.title || s.name}`}
-                        className={`h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all cursor-pointer ${
-                          isSelected ? 'ring-2 ring-black scale-105 shadow-sm text-white' : 'opacity-35 hover:opacity-80 text-white'
+                        className={`h-9 rounded-xl flex items-center justify-center text-xs font-black transition-all cursor-pointer ${
+                          isSelected ? 'ring-2 ring-black scale-105 shadow-sm text-white' : 'opacity-30 hover:opacity-80 text-white'
                         }`}
                         style={{ backgroundColor: s.color }}
                       >
@@ -2325,28 +1569,281 @@ export function EnhancedBlogsTab() {
                   })}
                 </div>
               </div>
-
-              {/* Submit Buttons */}
-              <div className="pt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingPost(null)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-700 hover:bg-gray-100 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#0A3320] text-[#F0ECD8] hover:bg-[#1A6B3C] shadow-sm disabled:opacity-50 cursor-pointer transition-all"
-                >
-                  {saving ? 'Saving...' : 'Save Article'}
-                </button>
-              </div>
             </div>
-          </div>
-        </form>
-      )}
+
+            {/* ── STEP 5: ADVANCED OPTIONS (COLLAPSIBLE ACCORDION, COLLAPSED BY DEFAULT) ── */}
+            <div className="bg-gray-50/70 rounded-2xl border border-gray-200 overflow-hidden shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-100/60 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Globe size={18} className="text-emerald-700" />
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900 font-inter">
+                      Advanced Options (SEO, Custom URL Slug, Search Preview & Extra Features)
+                    </h4>
+                    <p className="text-[11px] text-gray-500">
+                      Optional: automatically generated from your title and summary if left blank.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                  <span>{showAdvancedSettings ? 'Hide Options' : 'Show Options'}</span>
+                  {showAdvancedSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </button>
+
+              {showAdvancedSettings && (
+                <div className="p-5 sm:p-6 border-t border-gray-200 bg-white space-y-6">
+                  {/* Custom URL Slug */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-800">
+                        Custom Web Address (URL Slug)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleSyncSlugFromTitle}
+                          className="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <RefreshCw size={11} /> Sync from Title
+                        </button>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          type="button"
+                          onClick={checkSlugAvailability}
+                          disabled={slugChecking || !editingPost.slug}
+                          className="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer disabled:opacity-50"
+                        >
+                          {slugChecking ? 'Checking...' : 'Check Availability'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-gray-400 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                        https://youthclimatenetwork.org/blog/
+                      </span>
+                      <input
+                        type="text"
+                        value={editingPost.slug || ''}
+                        onChange={e => handleSlugChange(e.target.value)}
+                        className="flex-1 px-3 py-2 text-xs font-mono bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#1A6B3C]"
+                        placeholder="article-slug"
+                      />
+                    </div>
+                    {slugStatus && (
+                      <div className={`flex items-center gap-1.5 text-[11px] font-semibold pt-1 ${
+                        slugStatus.available ? 'text-emerald-700' : 'text-red-600'
+                      }`}>
+                        {slugStatus.available ? <Check size={13} /> : <AlertCircle size={13} />}
+                        <span>{slugStatus.message || (slugStatus.available ? 'Slug is available!' : 'Slug is taken')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SEO Metadata */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-800">
+                        Google Search & Social Sharing SEO
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAutoGenerateSEO}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer inline-flex items-center gap-1"
+                      >
+                        <Sparkles size={11} className="text-amber-500" />
+                        <span>Auto-Generate SEO from Content</span>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Google Search Title (Meta Title)
+                        </label>
+                        <input
+                          type="text"
+                          value={editingPost.metaTitle || editingPost.seoTitle || ''}
+                          onChange={e => setEditingPost({ ...editingPost, metaTitle: e.target.value, seoTitle: e.target.value })}
+                          placeholder="Custom Google title (defaults to article headline)"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-lg"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Google Search Description (Meta Description)
+                        </label>
+                        <input
+                          type="text"
+                          value={editingPost.metaDescription || ''}
+                          onChange={e => setEditingPost({ ...editingPost, metaDescription: e.target.value })}
+                          placeholder="1-2 sentences shown on Google search results"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Topic Tags */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-gray-700">
+                        Search Tags & Topics
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAutoGenerateTags}
+                        className="text-[11px] font-bold text-emerald-700 hover:underline cursor-pointer inline-flex items-center gap-1"
+                      >
+                        <Sparkles size={11} className="text-amber-500" /> Auto-Suggest Tags
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {(editingPost.tags || []).map((tag: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200"
+                        >
+                          <span>#{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="text-gray-400 hover:text-red-600 cursor-pointer"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={newTagInput}
+                        onChange={e => setNewTagInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag(newTagInput);
+                          }
+                        }}
+                        placeholder="Type a tag and press Enter..."
+                        className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddTag(newTagInput)}
+                        className="px-3 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg cursor-pointer"
+                      >
+                        Add Tag
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1 items-center">
+                      <span className="text-[10px] text-gray-400">Popular:</span>
+                      {popularTopics.slice(0, 6).map(pt => (
+                        <button
+                          key={pt}
+                          type="button"
+                          onClick={() => handleAddTag(pt)}
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 hover:bg-emerald-50 hover:text-emerald-800 text-gray-600 transition-colors"
+                        >
+                          +{pt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AEO Q&A FAQs */}
+                  <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                        <HelpCircle size={14} className="text-amber-700" />
+                        <span>Optional Q&A FAQs for this Article</span>
+                      </h5>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPost((prev: any) => ({
+                            ...prev,
+                            faqs: [...(prev.faqs || []), { question: '', answer: '' }]
+                          }));
+                        }}
+                        className="text-[11px] font-semibold text-amber-900 hover:underline cursor-pointer"
+                      >
+                        + Add Question
+                      </button>
+                    </div>
+
+                    {(editingPost.faqs || []).map((faq: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-white rounded-lg border border-amber-200 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <input
+                            type="text"
+                            value={faq.question}
+                            onChange={e => {
+                              const updated = [...editingPost.faqs];
+                              updated[idx].question = e.target.value;
+                              setEditingPost({ ...editingPost, faqs: updated });
+                            }}
+                            placeholder="Question..."
+                            className="w-full text-xs font-semibold px-2 py-1 border-b focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = editingPost.faqs.filter((_: any, i: number) => i !== idx);
+                              setEditingPost({ ...editingPost, faqs: updated });
+                            }}
+                            className="text-gray-400 hover:text-red-600 ml-2"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={faq.answer}
+                          onChange={e => {
+                            const updated = [...editingPost.faqs];
+                            updated[idx].answer = e.target.value;
+                            setEditingPost({ ...editingPost, faqs: updated });
+                          }}
+                          placeholder="Authoritative answer..."
+                          className="w-full text-xs px-2 py-1 bg-gray-50 rounded border border-gray-100"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── BOTTOM ACTIONS ── */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingPost(null);
+                  setIsNew(false);
+                }}
+                className="px-5 py-2.5 rounded-xl text-xs font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0A3320] hover:bg-[#1A6B3C] text-[#F0ECD8] shadow-md transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Check size={14} />
+                <span>{saving ? 'Saving Article...' : (isNew ? 'Publish Article' : 'Save Changes')}</span>
+              </button>
+            </div>
+          </form>
+        );
+      })()}
     </div>
   );
 }
