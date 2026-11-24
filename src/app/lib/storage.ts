@@ -641,9 +641,9 @@ const DEFAULT_NEWS: NewsItem[] = [
 const DEFAULT_EVENTS: EventItem[] = [
   {
     id: '1',
-    title: 'Annual Climate Symposium 2025',
-    title_bn: 'বার্ষিক জলবায়ু সিম্পোজিয়াম ২০২৫',
-    date: '2025-03-22',
+    title: 'Annual Climate Symposium 2026',
+    title_bn: 'বার্ষিক জলবায়ু সিম্পোজিয়াম ২০২৬',
+    date: '2026-04-22',
     location: 'Dhaka, Bangladesh',
     location_bn: 'ঢাকা, বাংলাদেশ',
     description: 'Join climate scientists, policymakers, and youth advocates for a full-day symposium on South Asia\'s climate future. Registration open to youth under 35.',
@@ -653,9 +653,9 @@ const DEFAULT_EVENTS: EventItem[] = [
   },
   {
     id: '2',
-    title: 'National Tree Plantation Drive 2025',
-    title_bn: 'জাতীয় বৃক্ষরোপণ কর্মসূচি ২০২৫',
-    date: '2025-06-05',
+    title: 'National Tree Plantation Drive 2026',
+    title_bn: 'জাতীয় বৃক্ষরোপণ কর্মসূচি ২০২৬',
+    date: '2026-06-05',
     location: 'Nationwide, Bangladesh',
     location_bn: 'সারাদেশে, বাংলাদেশ',
     description: 'Join thousands of volunteers across Bangladesh to plant 10,000 native trees on World Environment Day. Volunteer registration now open.',
@@ -665,9 +665,9 @@ const DEFAULT_EVENTS: EventItem[] = [
   },
   {
     id: '3',
-    title: 'Youth Leadership Academy 2025 — Applications Open',
-    title_bn: 'যুব নেতৃত্ব একাডেমে ২০২৫ — আবেদন আহ্বান',
-    date: '2025-01-15',
+    title: 'Youth Leadership Academy 2026 — Applications Open',
+    title_bn: 'যুব নেতৃত্ব একাডেমি ২০২৬ — আবেদন আহ্বান',
+    date: '2026-08-15',
     location: 'Khulna & Online',
     location_bn: 'খুলনা এবং অনলাইন',
     description: 'Applications are now open for the 4th cohort of our flagship Youth Leadership Academy. 60 places available for youth aged 18–30.',
@@ -679,11 +679,11 @@ const DEFAULT_EVENTS: EventItem[] = [
     id: '4',
     title: 'Climate Resilience Workshop — Coastal Communities',
     title_bn: 'জলবায়ু সহনশীলতা কর্মশালা — উপকূলীয় সম্প্রদায়',
-    date: '2025-02-10',
+    date: '2026-10-10',
     location: 'Satkhira, Bangladesh',
     location_bn: 'সাতক্ষীরা, বাংলাদেশ',
     description: 'A 2-day workshop for community leaders and farmers on climate-smart agriculture, flood preparedness, and disaster risk reduction.',
-    description_bn: 'কৃষক ও সামাজিক নেতাদের জন্য জলবায়ু-সহনশীল কৃষি ও দুর্যোগ প্রস্তুতির ২ দিনের কর্মশালা।',
+    description_bn: 'জলবায়ু-সহনশীল কৃষি ও দুর্যোগ প্রস্তুতি বিষয়ক ২ দিনের বিশেষ কর্মশালা।',
     type: 'Workshop',
     type_bn: 'কর্মশালা',
   },
@@ -1009,6 +1009,79 @@ export const saveInternshipPosts = (posts: InternshipPost[]): void => setItem('y
 // Hero Carousel
 export const getCarouselItems = (): HeroCarouselItem[] => getItem('ycn_carousel_items', DEFAULT_CAROUSEL);
 export const saveCarouselItems = (items: HeroCarouselItem[]): void => setItem('ycn_carousel_items', items);
+
+// FAQs
+export const DEFAULT_FAQS: FaqItem[] = [
+  {
+    id: '1',
+    question: 'What is Youth Climate Network (YCN) Bangladesh?',
+    question_bn: 'ইয়ুথ ক্লাইমেট নেটওয়ার্ক (YCN) বাংলাদেশ কী?',
+    answer: 'Youth Climate Network (YCN) Bangladesh is a youth-led climate advocacy and community action organization established in 2023. We empower young leaders, students, and coastal communities across Bangladesh to build climate resilience, restore fragile ecosystems, and champion environmental justice.',
+    answer_bn: 'ইয়ুথ ক্লাইমেট নেটওয়ার্ক (YCN) বাংলাদেশ ২০২৩ সালে প্রতিষ্ঠিত একটি যুব-নেতৃত্বাধীন জলবায়ু অ্যাডভোকেসি ও সামাজিক উন্নয়ন সংস্থা। আমরা বাংলাদেশের উপকূলীয় অঞ্চলসহ দেশজুড়ে তরুণদের নেতৃত্ব বিকাশ, পরিবেশ সুরক্ষা, ম্যানগ্রোভ বনায়ন ও জলবায়ু নীতি সংস্কারে কাজ করছি।',
+    category: 'About YCN',
+    category_bn: 'ওয়াইসিএন পরিচিতি',
+    order: 1,
+    active: true,
+  },
+  {
+    id: '2',
+    question: 'How can I join YCN as a volunteer or district chapter leader?',
+    question_bn: 'আমি কীভাবে ওয়াইসিএন-এ স্বেচ্ছাসেবক বা জেলা চ্যাপ্টার লিডার হিসেবে যোগ দিতে পারি?',
+    answer: 'Anyone aged 15–35 passionate about environmental sustainability can register through our "Get Involved" page. We offer hands-on volunteer roles in coastal mangrove planting, WASH campaigns, climate education, policy advocacy, and digital storytelling across 12+ districts.',
+    answer_bn: 'পরিবেশ ও জলবায়ু সুরক্ষায় আগ্রহী ১৫ থেকে ৩৫ বছর বয়সী যেকোনো তরুণ-তরুণী আমাদের "Get Involved" পৃষ্ঠার মাধ্যমে যুক্ত হতে পারেন। উপকূলীয় বনায়ন, পানি ও স্বাস্থ্যবিধি, জলবায়ু শিক্ষা এবং নীতি সংস্কার কার্যক্রমে অংশগ্রহণের সুযোগ রয়েছে।',
+    category: 'Volunteering',
+    category_bn: 'স্বেচ্ছাসেবা',
+    order: 2,
+    active: true,
+  },
+  {
+    id: '3',
+    question: 'What are YCN\'s core thematic programs and initiatives?',
+    question_bn: 'ওয়াইসিএন-এর মূল কাজের ক্ষেত্র ও কর্মসূচিগুলো কী কী?',
+    answer: 'Our work is structured across 20 thematic pillars, focusing on Coastal Resilience, Mangrove Restoration, Clean Water (WASH), Climate Justice, Loss & Damage advocacy, and Eco-Anxiety mental health support through our flagship platform Mind Shantara.',
+    answer_bn: 'আমাদের কর্মসূচিগুলো ২০টি মূল স্তম্ভে বিভক্ত—যার মধ্যে উপকূলীয় সুরক্ষা, সুন্দরবন ও ম্যানগ্রোভ পুনরুদ্ধার, সুপেয় পানি ও স্যানিটেশন (WASH), জলবায়ু নীতি অ্যাডভোকেসি এবং মানসিক স্বাস্থ্য প্ল্যাটফর্ম "মাইন্ড শান্তারা" উল্লেখযোগ্য।',
+    category: 'Programs',
+    category_bn: 'কর্মসূচি',
+    order: 3,
+    active: true,
+  },
+  {
+    id: '4',
+    question: 'Is YCN an officially registered non-profit organization in Bangladesh?',
+    question_bn: 'ওয়াইসিএন কি একটি সরকারিভাবে নিবন্ধিত অলাভজনক সংস্থা?',
+    answer: 'Yes. YCN is registered under the Societies Registration Act XXI of 1860 (Registration No. S-13962/2023) by the Registrar of Joint Stock Companies and Firms (RJSC), Government of the People\'s Republic of Bangladesh.',
+    answer_bn: 'হ্যাঁ, ওয়াইসিএন গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের যৌথ মূলধন কোম্পানি ও ফার্মসমূহের পরিদপ্তর (RJSC) কর্তৃক সোসাইটি রেজিস্ট্রেশন অ্যাক্ট ১৮৬০-এর অধীনে নিবন্ধিত (নিবন্ধন নং: S-13962/2023)।',
+    category: 'About YCN',
+    category_bn: 'ওয়াইসিএন পরিচিতি',
+    order: 4,
+    active: true,
+  },
+  {
+    id: '5',
+    question: 'How does YCN ensure transparency in donations and funds?',
+    question_bn: 'ওয়াইসিএন অনুদান এবং আর্থিক তহবিলে স্বচ্ছতা কীভাবে নিশ্চিত করে?',
+    answer: '100% of public donations directly fund frontline operations—such as sapling distribution, emergency cyclone response, and community water filters. Our accounts are audited annually, and financial summaries are publicly available in our Annual Impact Reports.',
+    answer_bn: 'অনুদান সরাসরি মাঠপর্যায়ের প্রকল্পে ব্যয় হয়—যেমন চারা রোপণ, উপকূলীয় দুর্যোগে খাদ্য ও বিশুদ্ধ পানি সহায়তা। প্রতি বছর চার্টার্ড অ্যাকাউন্ট্যান্ট দ্বারা অডিট সম্পন্ন করে বার্ষিক প্রতিবেদনে প্রকাশ করা হয়।',
+    category: 'Impact & Funding',
+    category_bn: 'তহবিল ও অনুদান',
+    order: 5,
+    active: true,
+  },
+  {
+    id: '6',
+    question: 'Can academic institutions, NGOs, or corporations partner with YCN?',
+    question_bn: 'শিক্ষাপ্রতিষ্ঠান, এনজিও বা করপোরেট প্রতিষ্ঠান কীভাবে অংশীদার হতে পারে?',
+    answer: 'We warmly welcome institutional collaborations! Schools, universities, local NGOs, and global partners can submit a formal inquiry via our Partner page or email us directly at youthclimatenetworkbd@gmail.com.',
+    answer_bn: 'আমরা যেকোনো শিক্ষাপ্রতিষ্ঠান, দেশি-বিদেশি এনজিও এবং সহযোগী সংস্থার সাথে যৌথভাবে কাজ করতে আগ্রহী। আমাদের পার্টনার পেজে গিয়ে বা সরাসরি ইমেইলে যোগাযোগ করতে পারেন।',
+    category: 'Partnership',
+    category_bn: 'অংশীদারিত্ব',
+    order: 6,
+    active: true,
+  }
+];
+
+export const getFaqs = (): FaqItem[] => getItem('ycn_faqs', DEFAULT_FAQS);
+export const saveFaqs = (faqs: FaqItem[]): void => setItem('ycn_faqs', faqs);
 
 // Admin auth
 export const checkAdminAuth = (): boolean => !!localStorage.getItem('ycn_admin_user');

@@ -391,7 +391,18 @@ export function Navbar() {
                   );
                 }
 
-                return (
+                return link.isExternal ? (
+                  <a
+                    key={link.path + link.label}
+                    href={link.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block py-2.5 text-base font-medium border-b border-white/5"
+                    style={{ color: active ? '#E8521A' : '#F0ECD8' }}
+                  >
+                    {labelText}
+                  </a>
+                ) : (
                   <Link
                     key={link.path + link.label}
                     to={link.path}

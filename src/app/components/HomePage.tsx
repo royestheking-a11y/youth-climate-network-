@@ -11,7 +11,8 @@ import * as Icons from 'lucide-react';
 import { apiNewsletter, apiProgram } from '../lib/api';
 import { useStats, useNews, useEvents, useCarousel, usePartners, useBlogs, useFaqs, optimizeImageUrl } from '../lib/api';
 import type { NewsItem, EventItem, BlogPost, FaqItem } from '../lib/storage';
-import { getNews, getEvents, getCarouselItems } from '../lib/storage';
+import { getNews, getEvents, getCarouselItems, getFaqs } from '../lib/storage';
+import { allPrograms } from '../lib/data';
 import { CarouselSkeleton, CardSkeleton } from './ui/Skeletons';
 import logo1 from '../../imports/Asset_1.webp';
 import heroBgOrange from '../../imports/image-3.webp';
@@ -78,7 +79,8 @@ function StatCounter({ value, label, suffix = '+', delay = 0, icon: Icon }: { va
 
 function ProgramCard({ program }: { program: any }) {
   const { t } = useLanguage();
-  const Icon = (Icons as any)[program.iconName || 'Box'] || Icons.Box;
+  const Icon = (Icons as any)[program.iconName || ''] || program.icon || Icons.Box;
+  const programSlug = program.slug || program.id;
   return (
     <motion.div
       variants={fadeUp}
@@ -86,7 +88,7 @@ function ProgramCard({ program }: { program: any }) {
       className="h-full"
     >
       <Link
-        to={`/our-work/${program.slug}`}
+        to={`/our-work/${programSlug}`}
         className="flex flex-col h-full rounded-2xl overflow-hidden group bg-white border border-gray-100 hover:border-emerald-500/30 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(26,107,60,0.08)] relative"
       >
         {/* Top accent bar */}
@@ -121,6 +123,10 @@ function ProgramCard({ program }: { program: any }) {
 
 function NewsCard({ item }: { item: NewsItem }) {
   const { t, lang } = useLanguage();
+  const title = lang === 'bn' && item.title_bn ? item.title_bn : item.title;
+  const excerpt = lang === 'bn' && item.excerpt_bn ? item.excerpt_bn : item.excerpt;
+  const category = lang === 'bn' && item.category_bn ? item.category_bn : item.category;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -133,9 +139,12 @@ function NewsCard({ item }: { item: NewsItem }) {
       <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100">
         <img
           src={optimizeImageUrl(item.image, { width: 600 })}
-          alt={t(item.title)}
+          alt={title}
           loading="lazy"
           decoding="async"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80';
+          }}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
@@ -143,7 +152,7 @@ function NewsCard({ item }: { item: NewsItem }) {
           className="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full text-white shadow-sm"
           style={{ backgroundColor: '#E8521A', fontFamily: 'Inter, sans-serif' }}
         >
-          {t(item.category)}
+          {category}
         </span>
       </div>
       <div className="p-6 flex flex-col flex-1">
@@ -152,10 +161,10 @@ function NewsCard({ item }: { item: NewsItem }) {
           <span>{new Date(item.date).toLocaleDateString(lang === 'en' ? 'en-GB' : 'bn-BD', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
         </div>
         <h3 className="font-bold mb-3 flex-1 line-clamp-2 text-gray-900 group-hover:text-[#1A6B3C] transition-colors font-poppins text-base leading-snug">
-          {t(item.title)}
+          {title}
         </h3>
         <p className="text-sm mb-5 line-clamp-2 text-gray-600 font-inter leading-relaxed">
-          {t(item.excerpt)}
+          {excerpt}
         </p>
         <Link
           to={item.category === 'Blog' ? `/blog` : `/impact`}
@@ -632,30 +641,35 @@ function HomeFaqSection({ faqs }: { faqs: FaqItem[] }) {
 }
 
 function EventRow({ event }: { event: EventItem }) {
-  const { t, lang } = useLanguage();
-  const d = new Date(event.date);
+  const { lang } = useLanguage();
+  const d = event.date ? new Date(event.date) : new Date();
+  const safeDate = !isNaN(d.getTime()) ? d : new Date();
+  const title = lang === 'bn' && event.title_bn ? event.title_bn : event.title;
+  const type = lang === 'bn' && event.type_bn ? event.type_bn : event.type;
+  const location = lang === 'bn' && event.location_bn ? event.location_bn : event.location;
+
   return (
     <div className="flex gap-4 p-4.5 rounded-2xl bg-white border border-gray-100 hover:border-emerald-500/30 hover:shadow-lg transition-all duration-300 group">
       <div className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#0A3320] to-[#1A6B3C] text-white shadow-sm">
         <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8521A] font-inter leading-none mb-1">
-          {d.toLocaleDateString(lang === 'en' ? 'en' : 'bn-BD', { month: 'short' })}
+          {safeDate.toLocaleDateString(lang === 'en' ? 'en' : 'bn-BD', { month: 'short' })}
         </span>
         <span className="font-black text-xl leading-none text-[#F0ECD8] font-poppins">
-          {lang === 'en' ? d.getDate() : d.getDate().toLocaleString('bn-BD')}
+          {lang === 'en' ? safeDate.getDate() : safeDate.getDate().toLocaleString('bn-BD')}
         </span>
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-[#1A6B3C] border border-emerald-100">
-            {t(event.type)}
+            {type}
           </span>
         </div>
         <p className="text-sm font-bold text-gray-900 group-hover:text-[#1A6B3C] transition-colors leading-snug truncate font-poppins">
-          {t(event.title)}
+          {title}
         </p>
         <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400 font-inter">
           <MapPin size={12} className="text-[#E8521A]" />
-          <span className="truncate">{t(event.location)}</span>
+          <span className="truncate">{location}</span>
         </div>
       </div>
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 group-hover:bg-[#E8521A] group-hover:text-white text-gray-400 transition-all self-center flex-shrink-0">
@@ -761,6 +775,9 @@ function HeroSlider() {
                 loading={idx === 0 ? "eager" : "lazy"}
                 fetchPriority={idx === 0 ? "high" : "auto"}
                 decoding={idx === 0 ? "sync" : "async"}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1920&q=80';
+                }}
                 className={`w-full h-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
                   isActive ? 'scale-105' : 'scale-100'
                 }`}
@@ -867,6 +884,7 @@ export function HomePage() {
   const { data: partnersData = [] } = usePartners();
   const { data: allBlogs = [], isLoading: blogsLoading } = useBlogs();
   const { data: faqsData = [] } = useFaqs();
+  const faqs = (faqsData && faqsData.length > 0) ? faqsData : getFaqs();
   
   const news = (allNews && allNews.length > 0)
     ? allNews.filter(n => n.category !== 'Blog').slice(0, 3)
@@ -879,17 +897,17 @@ export function HomePage() {
   const events = (allEvents && allEvents.length > 0)
     ? allEvents.slice(0, 4)
     : getEvents().slice(0, 4);
-  
-
 
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dynamicPrograms, setDynamicPrograms] = useState<any[]>([]);
+  const [dynamicPrograms, setDynamicPrograms] = useState<any[]>(() => allPrograms.slice(0, 6));
 
   useEffect(() => {
     apiProgram.getAll().then(data => {
-      setDynamicPrograms(data.slice(0, 6)); // Display first 6 on homepage
+      if (data && data.length > 0) {
+        setDynamicPrograms(data.slice(0, 6)); // Display first 6 on homepage
+      }
     }).catch(console.error);
   }, []);
 
@@ -1346,7 +1364,7 @@ export function HomePage() {
       {/* ══════════════════════════════════════════
           06 — FREQUENTLY ASKED QUESTIONS (FAQ)
       ══════════════════════════════════════════ */}
-      <HomeFaqSection faqs={faqsData} />
+      <HomeFaqSection faqs={faqs} />
 
       {/* ══════════════════════════════════════════
           NEWSLETTER (STAY INFORMED)

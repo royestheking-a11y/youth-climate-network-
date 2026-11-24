@@ -5,6 +5,7 @@ import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, A
 // removed unused logo import
 import footerBg from '../../imports/image-4.webp';
 import { useLanguage } from '../lib/LanguageContext';
+import { allPrograms } from '../lib/data';
 
 const quickLinks = [
   { label: 'About YCN', path: '/about' },
@@ -25,7 +26,7 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [subStatus, setSubStatus] = useState<null | 'success' | 'exists'>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [programs, setPrograms] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>(() => allPrograms.slice(0, 5));
 
   const socials = [
     { Icon: Facebook, href: siteSettings?.facebookUrl || 'https://www.facebook.com/youthclimatenetwork', label: 'Facebook' },
@@ -36,7 +37,9 @@ export function Footer() {
   ];
 
   useEffect(() => {
-    apiProgram.getAll().then(data => setPrograms(data)).catch(console.error);
+    apiProgram.getAll().then(data => {
+      if (data && data.length > 0) setPrograms(data.slice(0, 5));
+    }).catch(console.error);
   }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
@@ -186,20 +189,24 @@ export function Footer() {
               {t('Programs')}
             </h4>
             <ul className="space-y-2.5">
-              {programs.slice(0, 5).map((prog) => (
-                <li key={prog.slug}>
-                  <Link
-                    to={`/our-work/${prog.slug}`}
-                    className="text-sm flex items-center gap-2 transition-all duration-150"
-                    style={{ color: '#F0ECD8' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#7FAF8A'; (e.currentTarget as HTMLElement).style.paddingLeft = '6px'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#F0ECD8'; (e.currentTarget as HTMLElement).style.paddingLeft = '0'; }}
-                  >
-                    <ArrowRight size={12} style={{ opacity: 0.5 }} />
-                    {lang === 'en' ? prog.title : prog.title_bn}
-                  </Link>
-                </li>
-              ))}
+              {programs.slice(0, 5).map((prog) => {
+                const progSlug = prog.slug || prog.id;
+                const progTitle = lang === 'en' ? (prog.title || prog.name) : (prog.title_bn || prog.title || prog.name);
+                return (
+                  <li key={progSlug || progTitle}>
+                    <Link
+                      to={`/our-work/${progSlug}`}
+                      className="text-sm flex items-center gap-2 transition-all duration-150"
+                      style={{ color: '#F0ECD8' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#7FAF8A'; (e.currentTarget as HTMLElement).style.paddingLeft = '6px'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#F0ECD8'; (e.currentTarget as HTMLElement).style.paddingLeft = '0'; }}
+                    >
+                      <ArrowRight size={12} style={{ opacity: 0.5 }} />
+                      {progTitle}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

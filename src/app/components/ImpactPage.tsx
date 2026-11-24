@@ -152,11 +152,6 @@ export function ImpactPage() {
 
     return (
       <div ref={ref} className="p-4 sm:p-5 rounded-2xl text-center bg-white shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-center h-full min-w-0">
-        <SEO
-          title="Impact"
-          description="See the real-world impact of the Youth Climate Network. From trees planted to policy changes, discover our data-driven achievements in environmental action."
-          keywords="youth climate network impact, climate achievements, environmental progress, trees planted, policy success, climate data bangladesh"
-        />
         <div className="font-bold mb-1" style={{ fontSize: 'clamp(1.35rem, 2.5vw, 1.85rem)', fontFamily: 'Poppins, sans-serif', color: '#0A3320', lineHeight: 1.1, wordBreak: 'break-all' }}>
           {displayVal}{displaySuffix}
         </div>
@@ -177,11 +172,18 @@ export function ImpactPage() {
         className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col cursor-pointer"
         onClick={() => setSelectedNews(item)}
       >
-        <div className="h-44 overflow-hidden">
-          <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+        <div className="h-44 overflow-hidden bg-gray-100">
+          <img
+            src={item.image}
+            alt={item.title}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80';
+            }}
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          />
         </div>
         <div className="p-5 flex flex-col flex-1">
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full self-start mb-3" style={{ backgroundColor: '#E8F5EE', color: '#1A6B3C' }}>{item.category}</span>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full self-start mb-3" style={{ backgroundColor: '#E8521A15', color: '#E8521A' }}>{item.category}</span>
           <h3 className="font-semibold mb-2 flex-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#1F2937', fontSize: '0.95rem' }}>{item.title}</h3>
           <p className="text-xs mb-3" style={{ color: '#9CA3AF' }}>{displayDate}</p>
           <p className="text-sm leading-relaxed" style={{ color: '#6B7280' }}>{item.excerpt.slice(0, 100)}...</p>
@@ -192,6 +194,11 @@ export function ImpactPage() {
 
   return (
     <div>
+      <SEO
+        title="Impact"
+        description="See the real-world impact of the Youth Climate Network. From trees planted to policy changes, discover our data-driven achievements in environmental action."
+        keywords="youth climate network impact, climate achievements, environmental progress, trees planted, policy success, climate data bangladesh"
+      />
       {/* Hero */}
       <section className="pt-32 pb-16 relative overflow-hidden" style={{ backgroundColor: '#0A3320' }}>
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at 30% 50%, #E8521A 0%, transparent 50%)' }} />

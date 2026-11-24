@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import {
-  getStats, getNews, getEvents, getPartners, getCarouselItems
+  getStats, getNews, getEvents, getPartners, getCarouselItems, getFaqs
 } from './storage';
 import type {
   ImpactStats, NewsItem, EventItem, TeamMember, Partner,
@@ -106,7 +106,7 @@ export const useCaseStudies = () => useSWR<CaseStudy[]>(`${API_URL}/case-studies
 export const useVolunteerTracks = () => useSWR<VolunteerTrack[]>(`${API_URL}/volunteer-tracks`, fetcher);
 export const useCopHistory = () => useSWR<CopHistoryItem[]>(`${API_URL}/cop-history`, fetcher);
 export const usePolicyPositions = () => useSWR<PolicyPositionItem[]>(`${API_URL}/policy-positions`, fetcher);
-export const useFaqs = () => useSWR<FaqItem[]>(`${API_URL}/faqs`, fetcher);
+export const useFaqs = () => useSWR<FaqItem[]>(`${API_URL}/faqs`, fetcher, { fallbackData: getFaqs(), revalidateOnMount: true });
 
 
 // Generic factory for simple entities
