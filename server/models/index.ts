@@ -470,6 +470,7 @@ const siteSettingsSchema = new mongoose.Schema({
   maintenanceEndTime: { type: String, default: "" },
   maintenanceNotice: { type: String, default: "Scheduled System Maintenance in Progress" },
   maintenanceNotice_bn: { type: String, default: "পরিকল্পিত সিস্টেম রক্ষণাবেক্ষণ চলমান রয়েছে" },
+  maintenanceBgImage: { type: String, default: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2560&q=85" },
 });
 
 

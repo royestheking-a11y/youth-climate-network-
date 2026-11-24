@@ -64,6 +64,7 @@ export function SiteSettingsTab() {
         maintenanceEndTime: settings.maintenanceEndTime || '',
         maintenanceNotice: settings.maintenanceNotice || 'Scheduled System Maintenance in Progress',
         maintenanceNotice_bn: settings.maintenanceNotice_bn || 'পরিকল্পিত সিস্টেম রক্ষণাবেক্ষণ চলমান রয়েছে',
+        maintenanceBgImage: settings.maintenanceBgImage || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2560&q=85',
       });
     }
   }, [settings]);
@@ -408,6 +409,44 @@ export function SiteSettingsTab() {
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1 font-inter">
                   Leave blank if completion time is open-ended.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 font-inter">
+                  Natural View Background Image URL (Optional Custom Image)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                  <input
+                    type="text"
+                    value={formData.maintenanceBgImage || ''}
+                    onChange={e => handleChange('maintenanceBgImage', e.target.value)}
+                    placeholder="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2560&q=85"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-xs font-medium focus:ring-2 focus:ring-[#1A6B3C] focus:outline-none"
+                  />
+                  <label className="px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors flex-shrink-0">
+                    <Upload size={14} />
+                    <span>Upload Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const url = await uploadFile(file);
+                          handleChange('maintenanceBgImage', url);
+                          setStatusMsg({ text: 'Maintenance background image uploaded!', type: 'success' });
+                        } catch (err: any) {
+                          setStatusMsg({ text: err.message || 'Upload failed', type: 'error' });
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1 font-inter">
+                  Defaults to a high-definition green mangrove nature landscape.
                 </p>
               </div>
             </div>

@@ -204,6 +204,7 @@ export interface SiteSettings {
   maintenanceEndTime?: string;
   maintenanceNotice?: string;
   maintenanceNotice_bn?: string;
+  maintenanceBgImage?: string;
 }
 
 export interface CopHistoryItem {
